@@ -2690,7 +2690,7 @@ function matTable(raw) {
 }
 // Forge funds: the coins the forge has on hand. Starts from a set amount, then goes up with the forge's own sell orders
 // (and donations) and down with its buy orders. Apprentices' orders are their own money and don't count.
-const FUNDS_DEFAULT = { base: 207, at: 1792381560000 };
+const FUNDS_DEFAULT = { base: 206, at: 1792381560000 };
 function forgeFunds() {
   const f = state.funds && Number.isFinite(state.funds.base) ? state.funds : FUNDS_DEFAULT;
   const apprIds = new Set((state.apprWork || []).filter(w => w.kind === "sell").map(w => w.id));
