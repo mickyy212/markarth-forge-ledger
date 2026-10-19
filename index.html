@@ -143,6 +143,32 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .pp-row .rank-bar { height: 7px; margin: 6px 0 4px; }
 .pp-row .pp-sub { font-size: .8rem; color: var(--muted); }
 .pp-row.done { border-color: #4f8a4a; } .pp-row.done .pp-sub { color: #8fd18a; }
+.pp-banner { margin: 0 0 10px; padding: 10px 12px; border-radius: 8px; font-weight: 700; text-align: center; color: #1a1200; background: linear-gradient(90deg, #e3b04a, #ffd77a, #e3b04a); background-size: 200% 100%; animation: ppShine 2.5s linear infinite; }
+.pp-banner button { margin-left: 8px; font: inherit; font-size: .8rem; padding: 2px 10px; border-radius: 999px; border: 1px solid #1a1200; background: transparent; color: #1a1200; cursor: pointer; }
+@keyframes ppShine { to { background-position: -200% 0; } }
+#myRankSec .sec-head .pm-toggle, #myRankSec .sec-head .btn-ghost { margin-left: 6px; }
+#promoFx { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center; overflow: hidden; background: radial-gradient(circle at 50% 45%, rgba(40,20,0,.55), rgba(0,0,0,.88) 70%); animation: pfxIn .5s ease-out; }
+#promoFx[hidden] { display: none; }
+#promoCanvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.pfx-rays { position: absolute; left: 50%; top: 45%; width: 220vmax; height: 220vmax; margin: -110vmax 0 0 -110vmax; pointer-events: none; opacity: .35;
+  background: repeating-conic-gradient(from 0deg, var(--pfx, #ffcf5a) 0 6deg, transparent 6deg 18deg); animation: pfxSpin 18s linear infinite; mask: radial-gradient(circle, #000 0, transparent 45%); -webkit-mask: radial-gradient(circle, #000 0, transparent 45%); }
+.pfx-card { position: relative; text-align: center; padding: 28px 34px 22px; border-radius: 16px; max-width: min(92vw, 520px); border: 2px solid var(--pfx, #ffcf5a);
+  background: linear-gradient(160deg, rgba(60,36,10,.96), rgba(20,12,4,.96)); box-shadow: 0 0 60px var(--pfx, #ffcf5a), inset 0 0 30px rgba(255,200,90,.15); animation: pfxPop 4s ease-in-out infinite; }
+.pfx-kicker { font-size: .8rem; letter-spacing: .25em; text-transform: uppercase; color: #d8b77a; }
+.pfx-title { font: 900 clamp(2.6rem, 11vw, 4.6rem)/1 Georgia, serif; letter-spacing: .06em; margin: 8px 0 6px; color: #fff3cf;
+  text-shadow: 0 0 12px var(--pfx, #ffcf5a), 0 0 30px var(--pfx, #ffcf5a), 0 4px 0 #6b3c00; animation: pfxGlow 1.6s ease-in-out infinite alternate; }
+.pfx-name { font-size: 1.3rem; font-weight: 700; color: #fff; }
+.pfx-rank { display: inline-block; margin: 10px 0 4px; padding: 6px 16px; border-radius: 999px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; background: var(--pfx, #ffcf5a); color: #120a00; animation: pfxBob 2s ease-in-out infinite; }
+.pfx-rate { color: #ffe3a3; margin-top: 6px; }
+#pfxClose { margin-top: 16px; padding: 6px 18px; border-radius: 999px; border: 1px solid #d8b77a; background: transparent; color: #f5deb0; font: inherit; cursor: pointer; }
+@keyframes pfxIn { from { opacity: 0; } }
+@keyframes pfxSpin { to { transform: rotate(360deg); } }
+@keyframes pfxPop { 0% { transform: scale(.4) rotate(-6deg); opacity: 0; } 8% { transform: scale(1.12) rotate(2deg); opacity: 1; } 13% { transform: scale(1) rotate(0); } 90% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.04); } }
+@keyframes pfxGlow { to { text-shadow: 0 0 20px var(--pfx, #ffcf5a), 0 0 55px var(--pfx, #ffcf5a), 0 4px 0 #6b3c00; } }
+@keyframes pfxBob { 50% { transform: translateY(-4px) scale(1.05); } }
+.pfx-shake { animation: pfxShake .5s; }
+@keyframes pfxShake { 20% { transform: translate(-6px, 3px); } 40% { transform: translate(5px, -4px); } 60% { transform: translate(-4px, 2px); } 80% { transform: translate(3px, -2px); } }
+@media (prefers-reduced-motion: reduce) { .pfx-rays, .pfx-card, .pfx-title, .pfx-rank { animation: none; } }
 .pp-note { margin-top: 10px; font-size: .78rem; color: var(--muted); }
 .rank-pct { float: right; font-weight: 700; color: var(--ink); }
 #testR { margin-left: auto; }
@@ -1625,10 +1651,26 @@ table.val thead th { color: #cdb995; }
   <section aria-labelledby="myRankH" id="myRankSec" hidden>
     <div class="sec-head">
       <h2 id="myRankH">Promotion Progress</h2>
+      <button type="button" class="pm-toggle" id="testPromo" aria-pressed="false" hidden title="Shows this employee 80% of the way to their next rank. Nothing is saved.">Test Promotion</button>
+      <button type="button" class="btn-ghost" id="promoCelebBtn" hidden title="Plays the promotion celebration (test only; nothing is saved)">Promotion celebration 🎉</button>
       <span class="hint">How close you are to your next rank and a bigger commission.</span>
     </div>
+    <div class="pp-banner" id="ppBanner" hidden></div>
     <div class="panel" id="myRankBody"></div>
   </section>
+<div id="promoFx" hidden aria-live="assertive">
+  <canvas id="promoCanvas"></canvas>
+  <div class="pfx-rays"></div>
+  <div class="pfx-card">
+    <div class="pfx-kicker">By order of the ForgeMaster</div>
+    <div class="pfx-title">PROMOTED!</div>
+    <div class="pfx-name" id="pfxName"></div>
+    <div class="pfx-rank" id="pfxRank"></div>
+    <div class="pfx-rate" id="pfxRate"></div>
+    <button type="button" id="pfxClose">Close</button>
+  </div>
+</div>
+
 
   <section aria-labelledby="myDebtH" id="myDebtSec" hidden>
     <div class="sec-head">
@@ -4098,6 +4140,8 @@ function buildHoldOptions() {
     g.items.map(o => `<option value="${o.key}">${o.name}${statusOf(o.key) ? ` (${STATUS_NAME[statusOf(o.key)].toLowerCase()})` : ""}</option>`).join("") + `</optgroup>`).join(""));
 }
 let me = null;            // signed-in employee {id, pinHash}, kept for this tab only
+let fmAs = false;         // the ForgeMaster is looking through an employee's eyes ("Sign in as"); test switches show only then
+try { fmAs = sessionStorage.getItem("fm-as-emp") === "1"; } catch (_) {}
 try { me = JSON.parse(sessionStorage.getItem("ore-emp") || "null"); } catch (_) {}
 let confirmRemove = null;
 const pendQtyDrafts = new Map(); // pending entry id -> half-typed new amount, kept across redraws
@@ -4324,12 +4368,76 @@ function placeEmployeeView() {
   if (emp) { if (last.nextElementSibling !== sec) last.after(sec); if (sec.nextElementSibling !== $("myRankSec")) sec.after($("myRankSec")); }
   else if ($("pendHome").nextElementSibling !== sec) $("pendHome").after(sec);
 }
+// ---- Promotion celebration. Plays (looping, up to 5 minutes) the first time a promoted employee is signed in, the tab is visible and the
+// Promotion Progress section is on screen. Then e.promoSeen = their rank, so it doesn't play again. "Sign in as" (the ForgeMaster) never marks it seen.
+let testPromo = false, celebOn = false, celebTimer = 0, celebRaf = 0, promoObs = null;
+const CELEB_MS = 5 * 60 * 1000;
+function celebrate(emp, rank) {
+  const fx = $("promoFx"), cv = $("promoCanvas"), col = rank >= 2 ? "#ffcf5a" : "#6fb4ff";
+  fx.style.setProperty("--pfx", col);
+  $("pfxName").textContent = emp.name; $("pfxRank").textContent = `${RANK_NAME[rank]} ${PROF[emp.prof].name.toLowerCase()}`;
+  $("pfxRate").textContent = `Your commission is now ${RANK_PCT[rank]}%`;
+  fx._cleanup && fx._cleanup();
+  fx.hidden = false; celebOn = true; clearTimeout(celebTimer); cancelAnimationFrame(celebRaf);
+  celebTimer = setTimeout(stopCelebrate, CELEB_MS);
+  const ctx = cv.getContext("2d"), parts = [], cols = [col, "#fff3cf", "#ff9a3c", "#ffffff", "#ffd36b"];
+  let W = 0, H = 0, last = 0, nextBurst = 0;
+  const size = () => { W = cv.width = innerWidth * devicePixelRatio; H = cv.height = innerHeight * devicePixelRatio; };
+  size(); addEventListener("resize", size);
+  const burst = (x, y, n, sp) => { for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = (0.3 + Math.random()) * sp;
+    parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - sp * .3, life: 1, c: cols[i % cols.length], s: (2 + Math.random() * 4) * devicePixelRatio, rot: Math.random() * 6, spark: Math.random() < .4 }); } };
+  const rain = () => { for (let i = 0; i < 4; i++) parts.push({ x: Math.random() * W, y: -10, vx: (Math.random() - .5) * 2, vy: 2 + Math.random() * 3, life: 1.6, c: cols[i % cols.length], s: (3 + Math.random() * 4) * devicePixelRatio, rot: Math.random() * 6, spark: false }); };
+  const tick = t => {
+    if (!celebOn) return;
+    const dt = Math.min(50, t - (last || t)) / 16.7; last = t;
+    if (t >= nextBurst) { const d = devicePixelRatio; burst(W * (.2 + Math.random() * .6), H * (.15 + Math.random() * .35), 90, 9 * d); burst(W / 2, H * .45, 60, 13 * d);
+      nextBurst = t + 3800 + Math.random() * 1200; const card = document.querySelector(".pfx-card"); card.classList.remove("pfx-shake"); void card.offsetWidth; card.classList.add("pfx-shake"); }
+    if (parts.length < 900) rain();
+    ctx.clearRect(0, 0, W, H); ctx.globalCompositeOperation = "lighter";
+    for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i];
+      p.vy += .12 * dt * devicePixelRatio; p.vx *= .99; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += .1 * dt; p.life -= (p.spark ? .018 : .007) * dt;
+      if (p.life <= 0 || p.y > H + 20) { parts.splice(i, 1); continue; }
+      ctx.globalAlpha = Math.min(1, p.life); ctx.fillStyle = p.c;
+      if (p.spark) { ctx.beginPath(); ctx.arc(p.x, p.y, p.s * .6, 0, 7); ctx.fill(); }
+      else { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillRect(-p.s, -p.s / 3, p.s * 2, p.s * .7); ctx.restore(); } }
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
+    celebRaf = requestAnimationFrame(tick);
+  };
+  celebRaf = requestAnimationFrame(tick);
+  fx._cleanup = () => removeEventListener("resize", size);
+  renderMyRank();
+}
+function stopCelebrate() {
+  celebOn = false; clearTimeout(celebTimer); cancelAnimationFrame(celebRaf);
+  const fx = $("promoFx"); fx.hidden = true; fx._cleanup && fx._cleanup(); fx._cleanup = null;
+  renderMyRank();
+}
+function watchPromo(emp) {
+  if (celebOn || promoObs) return;
+  if (!("IntersectionObserver" in window)) { startPromo(emp); return; }
+  promoObs = new IntersectionObserver(es => { if (es.some(x => x.isIntersecting) && document.visibilityState === "visible") { const c = currentEmp(); promoObs.disconnect(); promoObs = null; if (c && !unlocked && !fmAs && (c.rank || 0) > (c.promoSeen || 0)) startPromo(c); } }, { threshold: 0.35 });
+  promoObs.observe($("myRankSec"));
+}
+function startPromo(emp) {
+  emp.promoSeen = emp.rank || 0; celebrate(emp, emp.rank || 1);
+  if (!readOnly) persist();
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && !unlocked) { const c = currentEmp(); if (c && !fmAs && (c.rank || 0) > (c.promoSeen || 0)) { promoObs && promoObs.disconnect(); promoObs = null; watchPromo(c); } } });
 // Employee's own "Your progress" menu: the same progress bar as the roster, counted in coins, with a rough amount of their kind of material.
 const RANK_MAT = { prospector: ["iron", "Iron Ore", "ores"], woodcutter: ["regular", "Charcoal", "charcoal / wood"], hunter: ["leather", "Leather", "leather"] };
 function renderMyRank() {
   const emp = !unlocked && currentEmp(), sec = $("myRankSec"), show = !!emp && !isApprentice(emp) && RANK_PROFS.has(emp.prof);
-  sec.hidden = !show; if (!show) return;
-  const x = rankStatus(emp), lc = leatherCost(), [mk, mName, mKind] = RANK_MAT[emp.prof], mc = rawCost(mk) || 1;
+  sec.hidden = !show; $("testPromo").hidden = $("promoCelebBtn").hidden = !(show && fmAs); if (!show) { $("ppBanner").hidden = true; return; }
+  if (!fmAs) testPromo = false;
+  $("testPromo").setAttribute("aria-pressed", testPromo);
+  let x = rankStatus(emp);
+  if (testPromo && !x.top) { const need = x.need, used = 0.8 * (1 + RANK_USED) * need - need;   // 80% overall: all bought, the rest used
+    x = { ...x, bought: need, used: round2(used), buyLeft: 0, useLeft: round2(RANK_USED * need - used) }; }
+  const fresh = (emp.rank || 0) > (emp.promoSeen || 0);
+  $("ppBanner").hidden = !fresh && !celebOn;
+  if (fresh || celebOn) $("ppBanner").innerHTML = `🎉 ${celebOn && !fresh ? "Promotion celebration (test)" : `You've been promoted to ${esc(profTitle(emp))}!`} <button type="button" id="ppReplay">Celebrate again</button>`;
+  if (fresh && !fmAs) watchPromo(emp);
+  const lc = leatherCost(), [mk, mName, mKind] = RANK_MAT[emp.prof], mc = rawCost(mk) || 1;
   const cn = n => coins(round2(n)), eq = n => `≈ ${fmtQty(Math.round(n / mc))} ${mName}`;
   const pct = x.top ? 100 : Math.floor(100 * (Math.min(x.bought, x.need) + Math.min(x.used, RANK_USED * x.need)) / ((1 + RANK_USED) * x.need));
   const b = x.bought * lc, u = x.used * lc, need = (x.need || 0) * lc;
@@ -4344,7 +4452,7 @@ function renderMyRank() {
     return `<div class="pp-row${left < 0.005 ? " done" : ""}"><div class="pp-top"><span>${label}</span><b>${cn(have)} / ${cn(goal)}</b></div>
       <div class="rank-bar r${x.r + 1}"><span style="width:${p}%"></span></div>
       <div class="pp-sub">${left < 0.005 ? "Done ✓" : `${cn(left)} coins to go (${eq(left)})`}</div></div>`; };
-  $("myRankBody").innerHTML = tiles + `<div class="pp-head"><span>Progress to ${x.next}</span><span class="pp-big">${pct}%</span></div>
+  $("myRankBody").innerHTML = tiles + `<div class="pp-head"><span>Progress to ${x.next}${testPromo ? ` <span class="hint">(test)</span>` : ""}</span><span class="pp-big">${pct}%</span></div>
     <div class="rank-bar r${x.r + 1} pp-main" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></div>
     <div class="pp-rows">${row("Materials sold to the forge", b, need)}${row("Your materials used in sales", u, RANK_USED * need)}</div>
     <div class="pp-note">Both must be done to be promoted. Counted in coins at the forge's material cost; ${mName} is a rough guide, all ${mKind} you sell the forge count.</div>`;
@@ -4857,7 +4965,7 @@ $("lockForm").addEventListener("submit", async e => {
   try { h = await sha256($("lockPw").value.trim()); } catch (_) {}
   if (h === PW_HASH) {
     unlocked = true; $("lockPw").value = ""; $("lockErr").textContent = "";
-    try { sessionStorage.setItem("forge-debt-unlocked", PW_HASH); } catch (_) {}
+    try { sessionStorage.setItem("forge-debt-unlocked", PW_HASH); sessionStorage.removeItem("fm-as-emp"); } catch (_) {} fmAs = false;
     fmView = "buysell"; bsMode = "sell"; purchaseMode = true; priceMode = false;   // signing in opens Buy / Sell, in Purchase mode
     try { sessionStorage.setItem("fm-price-mode", "0"); } catch (_) {}
     try { sessionStorage.setItem("fm-view", fmView); sessionStorage.setItem("fm-purchase-mode", "1"); } catch (_) {}
@@ -5058,13 +5166,19 @@ $("lockBtn").addEventListener("click", () => {
 });
 
 $("fmMatEmp").addEventListener("change", () => { openPie = null; render(); });
+$("testPromo").addEventListener("click", () => { testPromo = !testPromo; renderMyRank(); toast(testPromo ? "Test Promotion on: shown 80% of the way to the next rank (nothing saved)" : "Test Promotion off"); });
+$("promoCelebBtn").addEventListener("click", () => { const c = currentEmp(); if (!c) return; celebrate(c, Math.min(2, (c.rank || 0) + 1)); });
+$("pfxClose").addEventListener("click", stopCelebrate);
+document.addEventListener("keydown", e => { if (e.key === "Escape" && celebOn) stopCelebrate(); });
+$("myRankSec").addEventListener("click", e => { if (e.target.id !== "ppReplay") return; const c = currentEmp(); if (!c) return;
+  celebrate(c, (c.rank || 0) > 0 && !fmAs ? c.rank : Math.min(2, (c.rank || 0) + 1)); });
 $("fmAsEmp").addEventListener("change", e => {
   const emp = state.employees.find(x => x.id === e.target.value);
   if (!emp || !unlocked) { e.target.value = ""; return; }
   unlocked = false;
   try { sessionStorage.removeItem("forge-debt-unlocked"); } catch (_) {}
-  me = { id: emp.id, pinHash: emp.pinHash };
-  try { sessionStorage.setItem("ore-emp", JSON.stringify(me)); } catch (_) {}
+  me = { id: emp.id, pinHash: emp.pinHash }; fmAs = true; testPromo = false;
+  try { sessionStorage.setItem("ore-emp", JSON.stringify(me)); sessionStorage.setItem("fm-as-emp", "1"); } catch (_) {}
   empFilter = emp.name; render(); window.scrollTo({ top: 0 }); toast(`Signed in as ${emp.name}`);
 });
 // Employees can sign in from the Pending section or the box at the top; both lead to the same signed-in state.
@@ -5073,7 +5187,8 @@ async function empSignIn(empId, pinEl, errEl) {
   if (!emp) { errEl.textContent = "Pick your name first."; return; }
   let h = ""; try { h = await hashPin(emp.name, pinEl.value); } catch (_) {}
   if (h !== emp.pinHash) { errEl.textContent = "Wrong PIN. Check with the ForgeMaster if you're not sure what it is."; pinEl.select(); return; }
-  me = { id: emp.id, pinHash: emp.pinHash }; $("siPin").value = ""; $("tsPin").value = ""; $("siErr").textContent = ""; $("tsErr").textContent = "";
+  me = { id: emp.id, pinHash: emp.pinHash }; fmAs = false; testPromo = false; try { sessionStorage.removeItem("fm-as-emp"); } catch (_) {}
+  $("siPin").value = ""; $("tsPin").value = ""; $("siErr").textContent = ""; $("tsErr").textContent = "";
   try { sessionStorage.setItem("ore-emp", JSON.stringify(me)); } catch (_) {}
   empFilter = emp.name; render(); toast(`Signed in as ${emp.name}`);
 }
@@ -5758,7 +5873,7 @@ function checkPromotion(e) {
   const p = progressOf(e);
   for (let r = 2; r >= 1; r--) { const need = RANK_LEATHER[r] * leatherCost();
     if ((e.rank || 0) < r && p.bought >= need - 1e-9 && p.used >= RANK_USED * need - 1e-9) {
-      e.rank = r; state.log.unshift({ at: Date.now(), by: "ForgeMaster", fm: true, kind: "hold-c", text: `${e.name} is promoted to ${profTitle(e)}: the forge has bought ${RANK_LEATHER[r]} Leather's worth of their materials and used ${Math.round(RANK_USED * 100)}% of it in sales. They now earn ${RANK_PCT[r]}% commission.` });
+      e.rank = r; e.promotedAt = Date.now(); state.log.unshift({ at: Date.now(), by: "ForgeMaster", fm: true, kind: "hold-c", text: `${e.name} is promoted to ${profTitle(e)}: the forge has bought ${RANK_LEATHER[r]} Leather's worth of their materials and used ${Math.round(RANK_USED * 100)}% of it in sales. They now earn ${RANK_PCT[r]}% commission.` });
       return; } }
 }
 // What's left before the next rank, in Leather's worth.
