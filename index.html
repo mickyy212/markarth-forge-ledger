@@ -542,6 +542,8 @@ ul.loan-list li .hint { grid-column: 2 / -1; font-size: .8rem; }
 .funds-box form { display: flex; gap: 6px; align-items: center; margin-left: auto; }
 .funds-box input { width: 110px; }
 .funds-box .hint { flex: 1 1 100%; margin: 0; }
+.pf-x { padding: 3px 8px; font-size: .78rem; }
+.pf-del { display: inline-flex; gap: 4px; } .pf-del button { padding: 3px 8px; font-size: .78rem; }
 .mc-warn { margin: 4px 0 8px; color: #ff4d42; font-weight: 800; line-height: 1.35; }
 .watch-btn.sell-watch { padding: 8px 14px; font-size: .9rem; margin-right: auto; }
 .watch-btn.seen { animation: none; background: var(--surface); color: var(--ink); border-color: var(--accent); font-weight: 700; letter-spacing: .02em; }
@@ -2706,6 +2708,27 @@ function renderFunds() {
     <form id="fundsForm"><label class="vh" for="fundsSet">Set forge funds</label><input id="fundsSet" type="number" step="0.01" placeholder="${f.now}" aria-label="Set forge funds"><button class="btn-ghost" type="submit">Set funds</button></form>
     <p class="hint">${coins(f.base)} on ${shortDate(f.at)}${f.inc ? `, +${coins(f.inc)} from sell orders` : ""}${f.out ? `, −${coins(f.out)} on buy orders` : ""}. Updates by itself with every forge sell and buy order; use Set funds to correct it.</p>`;
 }
+// Removing a paid sell order or a received buy order from the records (ForgeMaster only). Profit, Forge funds and Trends update;
+// the stockpile is left as it is (use Add / Remove on the stockpile if goods need correcting).
+let pfDelAsk = "";
+const buyKey = h => `${h.at}|${h.who}|${h.item}|${h.qty}|${h.price}`;
+const pfDelBtn = k => pfDelAsk === k
+  ? `<span class="pf-del"><button type="button" class="btn-danger" data-pfdel="${esc(k)}" data-yes="1">Remove</button><button type="button" class="btn-ghost" data-pfdel="">Cancel</button></span>`
+  : `<button type="button" class="btn-ghost pf-x" data-pfdel="${esc(k)}" aria-label="Remove this order">Remove</button>`;
+function removePaidOrder(k) {
+  if (k.startsWith("s:")) {
+    const [cid, idx] = k.slice(2).split(":"), c = state.customers.find(x => x.id === cid), i = Number(idx);
+    const p = c && c.purchases[i]; if (!p) return toast("That order is already gone.");
+    c.purchases.splice(i, 1);
+    if (p.orderId) { state.apprWork = (state.apprWork || []).filter(w => w.id !== p.orderId); state.debtSales = (state.debtSales || []).filter(d => d.id !== p.orderId); }
+    commit({ kind: "minus", fm: true, text: `ForgeMaster removed a paid sell order: ${c.name}, ${p.lines && p.lines.length ? linesText(p.lines) : p.item} (${coins(Number(p.coin) || 0)} coins)` });
+  } else {
+    const key = k.slice(2), i = (state.buyHistory || []).findIndex(h => buyKey(h) === key); if (i < 0) return toast("That order is already gone.");
+    const h = state.buyHistory.splice(i, 1)[0];
+    commit({ kind: "minus", fm: true, text: `ForgeMaster removed a received buy order: ${h.who}, ${h.qty} ${buyName(h.item)} (${coins(round2(h.qty * h.price))} coins)` });
+  }
+  toast("Order removed. Profit updated.");
+}
 function renderProfit() {
   $("profitSec").hidden = !unlocked; if (!unlocked) return;
   renderFunds();
@@ -2734,13 +2757,13 @@ function renderProfit() {
   const pie = pieSvgHtml ? `<h3 class="sub-h">Profit and buy order cost</h3><div class="pie-box">${pieSvgHtml}</div>${total < -0.004 ? `<p class="hint" style="margin:0">Buy orders cost ${coins(-total)} coins more than sell orders brought in this period.</p>` : ""}` : "";
   if ($("pfPie").dataset.html !== pie) { $("pfPie").dataset.html = pie; $("pfPie").innerHTML = pie; }
   $("pfMats").innerHTML = "";
-  $("pfRows").innerHTML = sales.length ? `<div class="cat-wrap"><table class="val pie-table bh-table"><thead><tr><th scope="col">Date</th><th scope="col">Customer</th><th scope="col">Items</th><th scope="col">Income</th></tr></thead><tbody>
-    ${sales.slice(0, 200).map(x => `<tr><td>${shortDate(x.at)}</td><td>${esc(x.who)}</td><td class="bh-items">${esc(x.text)}</td><td class="gain">+${coins(x.final)}</td></tr>`).join("")}
+  $("pfRows").innerHTML = sales.length ? `<div class="cat-wrap"><table class="val pie-table bh-table"><thead><tr><th scope="col">Date</th><th scope="col">Customer</th><th scope="col">Items</th><th scope="col">Income</th><th scope="col"><span class="vh">Remove</span></th></tr></thead><tbody>
+    ${sales.slice(0, 200).map(x => `<tr><td>${shortDate(x.at)}</td><td>${esc(x.who)}</td><td class="bh-items">${esc(x.text)}</td><td class="gain">+${coins(x.final)}</td><td>${pfDelBtn("s:" + x.key)}</td></tr>`).join("")}
     </tbody></table></div>${sales.length > 200 ? `<p class="hint">Showing the latest 200 of ${sales.length}.</p>` : ""}` : `<div class="empty">No paid sell orders ${pfPeriod === "all" ? "yet" : "in this period"}.</div>`;
   const buys = forgeBuys;
   $("pfBuyTiles").innerHTML = `<div class="ms-tile"><span>Deliveries</span><b>${buys.length}</b></div><div class="ms-tile"><span>Spent</span><b>${coins(buyCost)}</b></div>`;
-  $("pfBuyRows").innerHTML = buys.length ? `<div class="cat-wrap"><table class="val pie-table bh-table"><thead><tr><th scope="col">Date</th><th scope="col">Seller</th><th scope="col">Item</th><th scope="col">Paid</th></tr></thead><tbody>
-    ${buys.slice(0, 200).map(x => `<tr><td>${shortDate(x.at)}</td><td>${esc(x.who)}</td><td class="bh-items">${x.qty.toLocaleString()} × ${esc(buyName(x.item))}</td><td class="loss">${x.price > 0 ? "−" + coins(round2(x.qty * x.price)) : "free"}</td></tr>`).join("")}
+  $("pfBuyRows").innerHTML = buys.length ? `<div class="cat-wrap"><table class="val pie-table bh-table"><thead><tr><th scope="col">Date</th><th scope="col">Seller</th><th scope="col">Item</th><th scope="col">Paid</th><th scope="col"><span class="vh">Remove</span></th></tr></thead><tbody>
+    ${buys.slice(0, 200).map(x => `<tr><td>${shortDate(x.at)}</td><td>${esc(x.who)}</td><td class="bh-items">${x.qty.toLocaleString()} × ${esc(buyName(x.item))}</td><td class="loss">${x.price > 0 ? "−" + coins(round2(x.qty * x.price)) : "free"}</td><td>${pfDelBtn("b:" + buyKey(x))}</td></tr>`).join("")}
     </tbody></table></div>${buys.length > 200 ? `<p class="hint">Showing the latest 200 of ${buys.length}.</p>` : ""}` : `<div class="empty">No buy orders received ${pfPeriod === "all" ? "yet" : "in this period"}.</div>`;
 }
 // What bought goods are worth: stockpile goods at Stockpile value, other price-list items at their listed cost.
@@ -4068,6 +4091,12 @@ $("empFilter").addEventListener("change", e => { empFilter = e.target.value; ren
 $("resBox").addEventListener("input", updateResPreview);
 $("resBox").addEventListener("change", updateResPreview);
 $("trPeriod").addEventListener("click", e => { const b = e.target.closest("[data-trp]"); if (!b) return; trPeriod = b.dataset.trp; render(); });
+$("profitSec").addEventListener("click", e => {
+  const b = e.target.closest("[data-pfdel]"); if (!b || readOnly || !unlocked) return;
+  const k = b.dataset.pfdel;
+  if (b.dataset.yes) { pfDelAsk = ""; removePaidOrder(k); render(); return; }
+  pfDelAsk = k; render();
+});
 $("fundsBox").addEventListener("submit", e => {
   e.preventDefault(); if (readOnly || !unlocked) return;
   const raw = $("fundsSet").value.trim(), v = round2(Number(raw));
