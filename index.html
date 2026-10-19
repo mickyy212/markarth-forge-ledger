@@ -109,6 +109,76 @@ button { font: inherit; font-weight: 600; border-radius: 4px; border: 1px solid 
 button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .btn-add { background: var(--accent); color: var(--accent-ink); }
 .btn-sub { background: transparent; color: var(--danger); border-color: var(--danger); }
+.ingot-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 12px; }
+#ingotToggle[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+#emptyStockWrap #testStock { margin-right: 8px; }
+#pfCommRows .cat-wrap, #pfBank .cat-wrap { max-height: none; }
+.comm-box { border: 1px dashed var(--line); border-radius: 8px; padding: 8px 10px; display: grid; gap: 4px; }
+.comm-box.test { border-color: #b07ad6; background: rgba(176,122,214,.08); }
+.comm-box .ln { display: flex; justify-content: space-between; gap: 10px; }
+.comm-box .comm-ln span:last-child { color: var(--danger); font-family: var(--mono); }
+.comm-box .comm-profit { font-weight: 700; border-top: 1px solid var(--line); padding-top: 4px; }
+.comm-box .comm-profit span:last-child { font-family: var(--mono); }
+.comm-box .comm-profit s { opacity: .6; font-weight: 400; margin-right: 4px; }
+#testS { margin-left: auto; }
+#testP { margin-left: auto; }
+.funds-box.test-p { border-color: #b07ad6 !important; }
+.test-p-note { margin: 6px 0 0; padding: 6px 10px; border: 1px dashed #b07ad6; border-radius: 8px; background: rgba(176,122,214,.08); }
+.rank-badge { display: inline-block; font-size: .65rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; padding: 2px 7px; border-radius: 999px; vertical-align: middle; }
+.rank-badge.r1 { background: #3d7fd1; color: #fff; } .rank-badge.r2 { background: #c9902e; color: #1a1200; }
+.rank-line { margin-top: 4px; font-size: .82rem; line-height: 1.35; color: var(--muted); padding: 6px 8px; border: 1px dashed #b07ad6; border-radius: 6px; background: rgba(176,122,214,.08); }
+.rank-line b { color: var(--ink); }
+.rank-line.real { border-style: solid; border-color: var(--line, #5a4632); background: rgba(255,255,255,.03); }
+.rank-bar { position: relative; height: 10px; margin: 6px 0 4px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
+.rank-bar > span { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: linear-gradient(90deg, #c9761e, #f0a640); }
+.rank-bar.r1 > span { background: linear-gradient(90deg, #2f6cb8, #5aa0f0); } .rank-bar.r2 > span { background: linear-gradient(90deg, #a87420, #e3b04a); }
+.pp-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-weight: 700; color: var(--ink); }
+.pp-head .pp-big { font: 700 1.3rem var(--mono); }
+.pp-main { height: 14px; margin: 6px 0 14px; }
+.pp-rows { display: grid; gap: 10px; }
+.pp-row { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.pp-row .pp-top { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: .85rem; }
+.pp-row .pp-top span { font-size: .74rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 700; }
+.pp-row .pp-top b { font-family: var(--mono); }
+.pp-row .rank-bar { height: 7px; margin: 6px 0 4px; }
+.pp-row .pp-sub { font-size: .8rem; color: var(--muted); }
+.pp-row.done { border-color: #4f8a4a; } .pp-row.done .pp-sub { color: #8fd18a; }
+.pp-note { margin-top: 10px; font-size: .78rem; color: var(--muted); }
+.rank-pct { float: right; font-weight: 700; color: var(--ink); }
+#testR { margin-left: auto; }
+.test-ranks { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; margin-bottom: 4px; }
+.test-ranks .tr-one { display: inline-flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.test-ranks .chip { padding: 3px 8px; font-size: .78rem; }
+.pf-comm-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.ing-quick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
+.ing-adj { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.ing-adj input { width: 76px; }
+.ing-table td.num { white-space: nowrap; }
+.craft-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-bottom: 12px; }
+.craft-form label { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.craft-form input { width: 110px; }
+#craftBody h3 { margin: 14px 0 6px; font-size: 15px; }
+.short, tr.short td { color: var(--danger); }
+.mrow.short { font-weight: 600; }
+.pin-note { font-size: .72rem; line-height: 1.25; color: var(--muted); white-space: nowrap; }
+.pin-note b { color: var(--ink); }
+.ingot-lvl > summary { cursor: pointer; font-family: var(--display, inherit); font-size: 1.15rem; font-weight: 700; padding: 10px 0; list-style-position: inside; }
+.ingot-lvl[open] > summary { margin-bottom: 8px; }
+#ingotLvlBody { display: block; }
+#ingotLvlBody input { width: 90px; }
+#ingotLvlSec .cat-wrap { max-height: none; }
+.ore.ing-grey { opacity: .45; filter: grayscale(1); }
+.ing-grey-row td { opacity: .55; }
+#ingotSec, #craftSec { grid-template-columns: minmax(0, 1fr); min-width: 0; }
+#ingots, #craftBody { min-width: 0; max-width: 100%; }
+#craftBody { display: block; }
+#ingotSec .cat-wrap, #craftSec .cat-wrap { max-height: none; }
+.ing-table { min-width: 0 !important; width: 100%; }
+@media (max-width: 560px) {
+  .ing-table thead th:nth-child(3) { display: none; }
+  .ing-table tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+  .ing-table td:nth-child(3) { grid-column: 1 / -1; padding-top: 0; }
+}
 .btn-ghost { background: transparent; color: var(--muted); border-color: var(--line); font-weight: 500; font-size: .85rem; padding: 4px 10px; }
 .btn-ghost:hover { color: var(--ink); border-color: var(--ink); }
 .btn-return { background: transparent; color: var(--ok); border-color: var(--ok); font-size: .85rem; padding: 4px 10px; }
@@ -351,6 +421,11 @@ form.order-form .quick input { flex: 0 0 76px; width: 76px; }
 .stat-badge { display: inline-block; font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
 .stat-badge.halt { background: var(--danger); color: var(--accent-ink); }
 .stat-badge.need { background: var(--ok); color: var(--accent-ink); }
+.ore.st-halt { opacity: .5; filter: grayscale(1); }   /* Not buying: greyed out */
+.ore.st-halt:hover, .ore.st-halt:focus-within { opacity: .8; }
+.stat-badge.dire { background: #d42a1c; color: #fff; box-shadow: 0 0 0 2px #ffd0c8 inset; animation: direPulse 1.2s ease-in-out infinite alternate; }
+@keyframes direPulse { from { filter: brightness(1); } to { filter: brightness(1.35); } }
+@media (prefers-reduced-motion: reduce) { .stat-badge.dire { animation: none; } }
 .ore .stat-badge { margin-left: auto; }
 .lvl-legend { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: .85rem; color: var(--muted); }
 .lv-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
@@ -381,7 +456,8 @@ table.bp-table td.bulk { color: var(--ok); font-weight: 700; }
 .ap-stock-toggle { margin: 6px 0 14px; }
 #persSec .pers-h { margin: 18px 0 10px; }
 #persSec .pers-h:first-child { margin-top: 4px; }
-#persSec .auto-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 10px; }
+#lvlSec select.st-manual { border-color: var(--accent); }
+#persSec .auto-row, #lvlSec .auto-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 10px; }
 #persSec .ore.pers-x { opacity: .7; }
 #persSec .ore.pers-x::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
   background: linear-gradient(to top right, transparent calc(50% - 2px), rgba(230,60,50,.85) calc(50% - 2px), rgba(230,60,50,.85) calc(50% + 2px), transparent calc(50% + 2px)),
@@ -477,6 +553,7 @@ ul.collect { list-style: none; margin: 4px 0; padding: 0; display: grid; gap: 3p
 .ms-split { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 12px; align-items: start; }
 .ms-split > .panel { margin-top: 0; }
 @media (max-width: 860px) { .ms-split { grid-template-columns: 1fr; } }
+.ms-split.ms-one { grid-template-columns: minmax(0, 1fr); }
 #mdOwed.owed-grid, #fmMdOwed.owed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
 #mdOwed.owed-grid > .empty, #fmMdOwed.owed-grid > .empty { grid-column: 1 / -1; }
 #mdOwed.owed-grid > .md-debt, #fmMdOwed.owed-grid > .md-debt { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; align-content: start; }
@@ -729,7 +806,8 @@ body {
 .ore .count { text-shadow: 0 2px 0 rgba(0,0,0,.5); }
 #sellForm .card-banner { background: transparent; box-shadow: none; border: 0; border-left: 3px solid var(--accent); border-radius: 0; padding: 2px 0 2px 10px; }
 #sellForm .disc-row { border-top: 1px solid #5a4a3c; }
-.acct.owes-forge { border-color: var(--danger); background: linear-gradient(180deg, rgba(200, 50, 50, .22), rgba(120, 20, 20, .18)), linear-gradient(180deg, var(--iron-hi), var(--iron-lo)); box-shadow: inset 4px 0 0 var(--danger), 0 8px 22px rgba(0,0,0,.45); }
+.acct.owes-forge { border: 2px solid #ff3b2f; background: linear-gradient(180deg, rgba(255, 45, 30, .55), rgba(190, 20, 10, .45)), linear-gradient(180deg, var(--iron-hi), var(--iron-lo)); box-shadow: inset 6px 0 0 #ff3b2f, 0 0 18px rgba(255, 50, 30, .45), 0 8px 22px rgba(0,0,0,.45); }
+.acct.owes-forge .owe-to, .acct.owes-forge .owe-to b { color: #fff; }
 .acct .owe-badge { margin-left: auto; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #fff; background: var(--danger); border-radius: 999px; padding: 2px 8px; }
 .ore.lv-red, .ore.lv-yellow, .ore.lv-green { box-shadow: inset 6px 0 0 currentColor, 0 8px 22px rgba(0,0,0,.45); }
 .ore.lv-red { color: var(--lv-red); } .ore.lv-yellow { color: var(--lv-yellow); } .ore.lv-green { color: var(--lv-green); }
@@ -801,6 +879,7 @@ table.val thead th { color: #cdb995; }
   <button type="button" class="watch-btn" id="helpVidBtn" hidden>WATCH THIS!!</button>
   <div class="panel lock top-emp" id="topEmp" role="region" aria-labelledby="topEmpH">
     <form id="topEmpForm" class="fm-sign-form">
+      <span class="pin-note">Default PIN: <b>1234</b><br>(changeable in Pending menu)</span>
       <h2 id="topEmpH" class="fm-sign-lbl">Employee</h2>
       <select id="tsWho" aria-label="Your name"></select>
       <input id="tsPin" type="text" class="pin" inputmode="numeric" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" maxlength="12" placeholder="PIN" aria-label="Your PIN">
@@ -844,7 +923,7 @@ table.val thead th { color: #cdb995; }
       <button type="button" role="tab" data-view="debt">Forge debt</button>
     </div>
     <div class="fm-acts">
-      <button type="button" class="pm-toggle" id="pmToggle" aria-pressed="true" title="Purchase mode shows only Buy / Sell, Stockpiles and Profit">Purchase mode</button>
+      <button type="button" class="pm-toggle" id="pmToggle" aria-pressed="true" title="On: Buy / Sell, Stockpiles and Profit. Off: Trends, Customer service, Employee roster and Forge debt">Purchase mode</button>
       <button type="button" class="pm-toggle" id="pcToggle" aria-pressed="false" title="Price changes shows only Price tracking">Price changes</button>
       <select id="fmAsEmp" aria-label="Sign in as an employee"></select>
       <button type="button" class="btn-ghost" id="fmLock">Lock</button>
@@ -930,10 +1009,23 @@ table.val thead th { color: #cdb995; }
     </div>
     <div id="persBody"></div>
   </section>
+  <div class="ingot-bar" id="ingotBar" data-views="stock" hidden><button type="button" class="btn-ghost" id="ingotToggle" aria-pressed="false">Ingot view</button><span class="hint">Ingots on hand and smelting more from the stockpile</span></div>
+  <section aria-labelledby="ingotH" id="ingotSec" data-views="stock" hidden>
+    <div class="sec-head"><h2 id="ingotH">Ingot stockpile</h2><span class="hint">Confirmed sell orders take the ingots they need from here.</span></div>
+    <div class="ing-quick"><span class="hint">Iron, Steel &amp; Corundum Ingots:</span><button type="button" class="btn-add" data-ingbulk="5">+5 of each</button><button type="button" class="btn-add" data-ingbulk="10">+10 of each</button><button type="button" class="pm-toggle" id="ingBulkCraft" aria-pressed="false" title="On: the buttons smelt the ingots from stockpile ore and fuel. Off: they just add ingots.">Count as crafted</button></div>
+    <div id="ingots"></div>
+  </section>
+  <section aria-labelledby="craftH" id="craftSec" data-views="stock" hidden>
+    <div class="sec-head"><h2 id="craftH">Crafted ingots</h2><span class="hint">Smelt stockpile ore and fuel into ingots. The ore and fuel come out of the stockpile; the ingots go onto the ingot stockpile.</span></div>
+    <div class="panel" id="craftBody"></div>
+  </section>
+  <section aria-label="Ingot sufficiency goals" id="ingotLvlSec" data-views="stock" hidden>
+    <details class="ingot-lvl" id="ingotLvlDet"><summary>Ingot sufficiency goals</summary><div class="panel" id="ingotLvlBody"></div></details>
+  </section>
   <section aria-labelledby="stockH" id="sec-ores" data-views="stock">
     <div class="sec-head">
       <h2 id="stockH">Main stockpile</h2>
-      <span class="empty-stock" id="emptyStockWrap" hidden><button type="button" class="btn-ghost" id="emptyStock">Empty stockpile</button><span id="emptyStockAsk" hidden>Set every item in all three stockpiles to 0? <button type="button" class="btn-danger" id="emptyStockYes">Yes, empty it</button> <button type="button" class="btn-ghost" id="emptyStockNo">Cancel</button></span></span>
+      <span class="empty-stock" id="emptyStockWrap" hidden><button type="button" class="pm-toggle" id="testStock" aria-pressed="false" title="Adds 300 of every ore, wood &amp; charcoal and leather item for testing. Turning it off takes them back out.">Test stock</button><button type="button" class="btn-ghost" id="emptyStock">Empty stockpile</button><span id="emptyStockAsk" hidden>Set every item in all three stockpiles to 0? <button type="button" class="btn-danger" id="emptyStockYes">Yes, empty it</button> <button type="button" class="btn-ghost" id="emptyStockNo">Cancel</button></span></span>
       <span class="sync" id="sync">Loading…</span>
     </div>
     <p class="hint" id="stockHint">Only the ForgeMaster can add or remove stockpile items directly. Miners, wood cutters and hunters add theirs by logging it under Pending and depositing it.</p>
@@ -962,8 +1054,9 @@ table.val thead th { color: #cdb995; }
       <span class="hint">ForgeMaster only. Counts below "Red below" show red, between the two numbers yellow, and at "Green at" or more green. Leave both blank for no colour.</span>
     </div>
     <div class="panel">
+      <div class="auto-row"><button type="button" class="btn-ghost" id="autoStockBtn">Disable AutoStock Pile</button><span class="hint" id="autoStockHint"></span></div>
       <div class="lvl-legend"><span class="lv-dot red"></span>Low <span class="lv-dot yellow"></span>Additional stock needed <span class="lv-dot green"></span>Well stocked
-        <span class="stat-badge halt">Not buying</span><span class="stat-badge need">High need</span></div>
+        <span class="stat-badge halt">Not buying</span><span class="stat-badge need">High need</span><span class="stat-badge dire">Dire need</span></div>
       <div class="cat-wrap"><table class="val lvl-table">
         <thead><tr><th scope="col">Item</th><th scope="col">In stock</th><th scope="col">Red below</th><th scope="col">Green at</th><th scope="col">Collecting</th></tr></thead>
         <tbody id="lvlBody"></tbody>
@@ -974,7 +1067,7 @@ table.val thead th { color: #cdb995; }
   <section aria-labelledby="valH" id="valueSec" data-views="stock" hidden>
     <div class="sec-head">
       <h2 id="valH">Stockpile value</h2>
-      <span class="log-tools"><span class="hint" id="valHint">ForgeMaster only. Resale value at current prices, in coins.</span><button class="btn-ghost" id="valEdit" type="button">Edit prices</button></span>
+      <span class="log-tools"><span class="hint" id="valHint">ForgeMaster only. Resale value at current prices, in coins.</span><button type="button" class="pm-toggle" id="valIngToggle" aria-pressed="true">Include ingots</button><button class="btn-ghost" id="valEdit" type="button">Edit prices</button></span>
     </div>
     <div class="panel val-panel">
       <div class="val-wrap">
@@ -1161,6 +1254,7 @@ table.val thead th { color: #cdb995; }
     <div class="sec-head">
       <h2 id="sellH">Sell orders</h2>
       <button type="button" class="watch-btn sell-watch" id="sellHelpBtn" hidden>WATCH THIS!!</button>
+      <button type="button" class="pm-toggle" id="testS" aria-pressed="false" hidden title="Try the commission rules on a pretend stockpile. Nothing is saved, and orders can't be confirmed while it's on.">Test S</button>
       <span class="hint">Orders from customers. Base cost is materials only, from the Markarth ledger.</span>
     </div>
     <div class="panel">
@@ -1205,6 +1299,7 @@ table.val thead th { color: #cdb995; }
         </div>
         <div class="opt-row">
           <label class="check" id="sellReachWrap"><input type="checkbox" id="sellReach"> Member of the Reach</label>
+          <label class="check" id="sellNoCommWrap" hidden><input type="checkbox" id="sellNoComm"> No commission on this order</label>
           <label class="check" id="sellDebtWrap"><input type="checkbox" id="sellDebt"> Debted material <span class="tip" tabindex="0" role="note" data-tip="Prospectors and wood cutters: the sale pays toward their debt" title="Prospectors and wood cutters: the sale pays toward their debt" aria-label="Prospectors and wood cutters: the sale pays toward their debt">i</span></label>
         </div>
         <div class="debt-pick" id="sellDebtBox" hidden>
@@ -1224,6 +1319,7 @@ table.val thead th { color: #cdb995; }
         </div>
         <div class="card-banner" id="sellCard" hidden></div>
         <div class="quote wide" id="sellQuote" aria-live="polite"></div>
+        <div class="wide4" id="sellComm"></div>
         <div class="pie-wrap" id="sellPie"></div>
         <button class="btn-add" type="submit">Confirm sell order</button>
       </form>
@@ -1302,7 +1398,7 @@ table.val thead th { color: #cdb995; }
   <section aria-labelledby="profitH" id="profitSec" data-views="profit" hidden>
     <div class="sec-head">
       <h2 id="profitH">Profit</h2>
-      <span class="hint">ForgeMaster only. Profit is sell orders minus buy orders: what customers paid, less what the forge paid for goods. Apprentice blacksmiths' orders aren't included.</span>
+      <span class="hint">ForgeMaster only. Profit is sell orders minus buy orders and employee commissions: what customers paid, less what the forge paid for goods and the 2% commissions it owes. Apprentice blacksmiths' orders aren't included.</span>
     </div>
     <div class="panel">
       <div class="chips" role="group" aria-label="Period" id="pfPeriod">
@@ -1312,7 +1408,9 @@ table.val thead th { color: #cdb995; }
         <button type="button" class="chip" data-pfp="month" aria-pressed="false">This month</button>
         <button type="button" class="chip" data-pfp="30" aria-pressed="false">Last 30 days</button>
         <button type="button" class="chip" data-pfp="7" aria-pressed="false">Last 7 days</button>
+        <button type="button" class="pm-toggle" id="testP" aria-pressed="false" title="Adds sample sales (some with commissions) and buys from employees to this tab only. Nothing is saved.">Test P</button>
       </div>
+      <p class="hint test-p-note" id="testPNote" hidden></p>
       <div class="funds-box" id="fundsBox"></div>
       <div class="ms-tiles pf-tiles" id="pfTiles"></div>
       <div class="pie-wrap" id="pfPie"></div>
@@ -1327,6 +1425,13 @@ table.val thead th { color: #cdb995; }
       <h3 class="sub-h">Buy orders received</h3>
       <div class="ms-tiles" id="pfBuyTiles"></div>
       <div id="pfBuyRows"></div>
+    </div>
+    <div class="panel">
+      <div class="pf-comm-head"><h3 class="sub-h">Commissions</h3><button type="button" class="pm-toggle" id="testC" aria-pressed="false" title="Shows Claude's practice commission orders in this section only. Nothing is saved and profit isn't changed.">Test C</button></div>
+      <p class="hint" style="margin:0 0 8px">2% of the sale price, owed to the employee who supplied 90% or more of an order's material of their kind. Counted against profit.</p>
+      <div class="ms-tiles" id="pfCommTiles"></div>
+      <div id="pfCommRows"></div>
+      <div id="pfBank"></div>
     </div>
   </section>
 
@@ -1445,6 +1550,7 @@ table.val thead th { color: #cdb995; }
   <section aria-labelledby="rosterH" id="rosterSec" data-views="roster" hidden>
     <div class="sec-head">
       <h2 id="rosterH">Employee roster</h2>
+      <button type="button" class="pm-toggle" id="testR" aria-pressed="false" title="Shows each employee's commission earned and how much Leather's worth is left before their next rank.">Test R</button>
       <span class="hint">ForgeMaster only. Each employee signs in with their PIN to log their own ore.</span>
     </div>
     <div class="panel">
@@ -1470,13 +1576,15 @@ table.val thead th { color: #cdb995; }
   <section aria-labelledby="mySalesH" id="mySalesSec" hidden>
     <div class="sec-head">
       <h2 id="mySalesH">Sales from your materials</h2>
-      <span class="hint">Orders that used materials the forge owes you for. You get the whole sale price, less only the cost of materials your job doesn't supply, paid toward that debt. Anything above the debt is owed to you in coins.</span>
+      <button type="button" class="watch-btn sell-watch" id="commVidBtn" hidden>WATCH THIS!!</button>
+      <span class="hint" id="mySalesHint">Orders that used materials the forge owes you for. You get the whole sale price, less only the cost of materials your job doesn't supply, paid toward that debt. Anything above the debt is owed to you in coins.</span>
     </div>
     <div class="ms-split">
     <div class="panel">
       <div class="ms-tiles" id="msTiles"></div>
       <div class="pie-wrap" id="msPie"></div>
       <div id="msRows"></div>
+      <div id="msComm"></div>
     </div>
     <div class="panel" id="owedPanel">
       <h3 class="sub-h">The forge owes you</h3>
@@ -1512,6 +1620,14 @@ table.val thead th { color: #cdb995; }
       </div>
       <div id="calcOut"></div>
     </div>
+  </section>
+
+  <section aria-labelledby="myRankH" id="myRankSec" hidden>
+    <div class="sec-head">
+      <h2 id="myRankH">Promotion Progress</h2>
+      <span class="hint">How close you are to your next rank and a bigger commission.</span>
+    </div>
+    <div class="panel" id="myRankBody"></div>
   </section>
 
   <section aria-labelledby="myDebtH" id="myDebtSec" hidden>
@@ -1905,7 +2021,7 @@ function filterCat() {
 // ---- Recipes: what each item takes to make, from the Markarth Blacksmithing Ledger ----
 // Ingots are smelted from ore plus fuel. The ore part goes to a prospector, the fuel part to a wood cutter, on debted-material orders.
 const SMELT = {
-  "iron-ingot": [["iron-ore", 6], ["poor-charcoal", 6]], "steel-ingot": [["iron-ore", 6], ["charcoal", 6]],
+  "iron-ingot": [["iron-ore", 6], ["poor-charcoal", 6]], "steel-ingot": [["iron-ore", 3], ["corundum-ore", 3], ["charcoal", 6]],
   "silver-ingot": [["silver-ore", 6], ["charcoal", 6]], "gold-ingot": [["gold-ore", 6], ["charcoal", 6]],
   "corundum-ingot": [["corundum-ore", 8], ["poor-charcoal", 8]], "orichalcum-ingot": [["orichalcum-ore", 6], ["charcoal-briquettes", 6]],
   "quicksilver-ingot": [["quicksilver-ore", 6], ["coke", 6]], "refined-moonstone": [["moonstone", 6], ["charcoal-briquettes", 6]],
@@ -1914,7 +2030,7 @@ const SMELT = {
 const ORE_MATS = new Set(["iron-ore", "corundum-ore", "silver-ore", "gold-ore", "orichalcum-ore", "moonstone", "quicksilver-ore", "malachite-ore", "ebony-ore",
   "dwarven-metal-ingot", "lg-deco-dwemer-strut", "lg-dwemer-strut", "bent-dwemer-scrap", "lg-dwemer-plate-metal", "sm-dwemer-plate-metal", "solid-dwemer-metal"]);
 // The ledger prices the strips on finer weapons at half price.
-const EXTRA_MATS = { "strips-half": { name: "Leather Strips (½ price)", base: 0.5 } };
+const EXTRA_MATS = { "strips-half": { name: "Leather Strips (½ price)", base: 0.5 }, "leather-half": { name: "Leather (½ price)", base: 0.5 } };
 const R = s => s.split(",").map(p => { const m = p.trim().match(/^([\d.]+) (.+)$/); return [m[2], Number(m[1])]; });
 const DEFAULT_RECIPES = {
   "fur-shawl-coat": "6 leather, 3 leather-strips", "fur-skirt-sleevecoat": "5 leather, 3 leather-strips", "fur-coat": "4 leather, 3 leather-strips",
@@ -1976,7 +2092,11 @@ const DEFAULT_RECIPES = {
   "copper-onyx-circlet": "1 corundum-ingot", "copper-ruby-circlet": "1 corundum-ingot, 1 ruby", "copper-sapphire-circlet": "1 corundum-ingot, 1 sapphire",
   "copper-moonstone-circlet": "1 corundum-ingot, 1 refined-moonstone", "jade-sapphire-circlet": "1 refined-malachite, 1 sapphire",
   "jade-emerald-circlet": "1 refined-malachite, 1 emerald", "leather-strips": "0.25 leather",
+  "steel-arrows": "1 steel-ingot, 1 firewood",
 };
+const SHEET_RECIPE_IDS = new Set(["bosmer-armor", "bosmer-boots", "bosmer-gloves", "bosmer-helmet", "bosmer-plate-armor", "bosmer-plate-boots", "bosmer-plate-gauntlets", "bosmer-plate-helmet", "bosmer-wild-armor", "bosmer-wild-boots", "bosmer-wild-gloves", "bosmer-wild-helmet", "bosmer-set", "bosmer-plate-set", "bosmer-wild-set", "bosmer-mask", "bosmer-cape", "bosmer-shoulder-cape", "dunmer-armor", "dunmer-boots", "dunmer-gauntlets", "dunmer-helmet", "dunmer-set", "dunmer-shield", "iron-banded-armor", "iron-armor", "iron-boots", "iron-gauntlets", "iron-helmet", "iron-banded-set", "iron-set", "iron-shield", "steel-armor", "steel-boots", "steel-gauntlets", "steel-helmet", "steel-set", "steel-shield", "orcish-hide-armor", "orcish-hide-boots", "orcish-hide-gauntlets", "orcish-hide-helmet", "orcish-armor", "orcish-boots", "orcish-gauntlets", "orcish-helmet", "orcish-hide-set", "orcish-heavy-set", "orcish-shield", "dwarven-armor", "dwarven-boots", "dwarven-gauntlets", "dwarven-helmet", "dwarven-set", "dwarven-shield", "altmer-gilded-armor", "altmer-elven-armor", "altmer-elven-boots", "altmer-elven-gauntlets", "altmer-elven-helmet", "altmer-gilded-set", "altmer-elven-set", "altmer-elven-shield", "glass-armor", "glass-boots", "glass-gauntlets", "glass-helmet", "glass-set", "glass-shield", "iron-pickaxe-wood-axe", "iron-dagger", "iron-sword", "iron-war-axe", "iron-mace", "iron-greatsword", "iron-battleaxe", "iron-warhammer", "iron-long-bow", "iron-arrows-x80", "steel-dagger", "steel-sword", "steel-war-axe", "steel-mace", "steel-greatsword", "steel-battleaxe", "steel-warhammer", "steel-bow", "steel-arrows-x80", "orcish-dagger", "orcish-sword", "orcish-war-axe", "orcish-mace", "orcish-greatsword", "orcish-battleaxe", "orcish-warhammer", "orcish-bow", "orcish-arrows-x80", "altmer-dagger", "altmer-elven-sword", "altmer-elven-war-axe", "altmer-elven-mace", "altmer-elven-greatsword", "altmer-elven-battleaxe", "altmer-elven-warhammer", "altmer-elven-bow", "altmer-elven-arrows-x80", "bosmer-blade", "bosmer-bow", "dwarven-dagger", "dwarven-sword", "dwarven-war-axe", "dwarven-mace", "dwarven-greatsword", "dwarven-battleaxe", "dwarven-warhammer", "dwarven-bow", "dwarven-arrows-x80", "glass-dagger", "glass-sword", "glass-war-axe", "glass-mace", "glass-greatsword", "glass-battleaxe", "glass-warhammer", "glass-bow", "glass-arrows-x80"]);
+// Every armor piece and weapon, read from the Markarth Blacksmithing Ledger (materials and amounts per item). These replace the older guesses.
+Object.assign(DEFAULT_RECIPES, {"bosmer-armor": "1 leather, 3 leather-strips, 1 iron-ingot, 4 refined-moonstone", "bosmer-boots": "1 leather, 2 leather-strips, 1 iron-ingot, 2 refined-moonstone", "bosmer-gloves": "1 leather, 2 leather-strips, 1 iron-ingot, 1 refined-moonstone", "bosmer-helmet": "1 leather, 1 leather-strips, 1 iron-ingot, 2 refined-moonstone", "bosmer-plate-armor": "1 leather, 3 leather-strips, 1 iron-ingot, 1 corundum-ingot, 4 refined-moonstone", "bosmer-plate-boots": "1 leather, 2 leather-strips, 1 iron-ingot, 1 corundum-ingot, 2 refined-moonstone", "bosmer-plate-gauntlets": "1 leather, 2 leather-strips, 1 iron-ingot, 1 corundum-ingot, 1 refined-moonstone", "bosmer-plate-helmet": "1 leather, 1 leather-strips, 1 iron-ingot, 1 corundum-ingot, 2 refined-moonstone", "bosmer-wild-armor": "1 leather, 3 leather-strips, 2 refined-moonstone, 4 refined-malachite", "bosmer-wild-boots": "1 leather, 2 leather-strips, 1 refined-moonstone, 2 refined-malachite", "bosmer-wild-gloves": "1 leather, 2 leather-strips, 1 refined-moonstone, 1 refined-malachite", "bosmer-wild-helmet": "1 leather, 1 leather-strips, 1 refined-moonstone, 2 refined-malachite", "bosmer-set": "4 leather, 8 leather-strips, 4 iron-ingot, 9 refined-moonstone", "bosmer-plate-set": "4 leather, 8 leather-strips, 4 iron-ingot, 4 corundum-ingot, 9 refined-moonstone", "bosmer-wild-set": "4 leather, 8 leather-strips, 5 refined-moonstone, 9 refined-malachite", "bosmer-mask": "1 leather, 1 leather-strips", "bosmer-cape": "2 leather, 2 leather-strips", "bosmer-shoulder-cape": "2 leather, 1 leather-strips", "dunmer-armor": "1 leather, 3 leather-strips, 2 refined-moonstone, 4 refined-malachite", "dunmer-boots": "1 leather, 2 leather-strips, 1 refined-moonstone, 2 refined-malachite", "dunmer-gauntlets": "1 leather, 2 leather-strips, 1 refined-moonstone, 1 refined-malachite", "dunmer-helmet": "1 leather, 1 leather-strips, 1 refined-moonstone, 2 refined-malachite", "dunmer-set": "4 leather, 8 leather-strips, 5 refined-moonstone, 9 refined-malachite", "dunmer-shield": "2 leather-strips, 1 refined-moonstone, 4 refined-malachite", "iron-banded-armor": "3 leather-strips, 5 iron-ingot, 1 corundum-ingot", "iron-armor": "3 leather-strips, 5 iron-ingot", "iron-boots": "2 leather-strips, 3 iron-ingot", "iron-gauntlets": "2 leather-strips, 2 iron-ingot", "iron-helmet": "2 leather-strips, 3 iron-ingot", "iron-banded-set": "9 leather-strips, 13 iron-ingot, 1 corundum-ingot", "iron-set": "9 leather-strips, 13 iron-ingot", "iron-shield": "1 leather-strips, 4 iron-ingot", "steel-armor": "3 leather-strips, 1 iron-ingot, 4 steel-ingot", "steel-boots": "2 leather-strips, 1 iron-ingot, 3 steel-ingot", "steel-gauntlets": "2 leather-strips, 1 iron-ingot, 2 steel-ingot", "steel-helmet": "2 leather-strips, 1 iron-ingot, 2 steel-ingot", "steel-set": "9 leather-strips, 4 iron-ingot, 11 steel-ingot", "steel-shield": "1 leather-strips, 1 iron-ingot, 3 steel-ingot", "orcish-hide-armor": "4 leather, 3 leather-strips, 1 orichalcum-ingot", "orcish-hide-boots": "2 leather, 2 leather-strips, 1 orichalcum-ingot", "orcish-hide-gauntlets": "1 leather, 2 leather-strips, 1 orichalcum-ingot", "orcish-hide-helmet": "2 leather, 1 leather-strips, 1 orichalcum-ingot", "orcish-armor": "3 leather-strips, 1 iron-ingot, 4 orichalcum-ingot", "orcish-boots": "2 leather-strips, 1 iron-ingot, 3 orichalcum-ingot", "orcish-gauntlets": "2 leather-strips, 1 iron-ingot, 2 orichalcum-ingot", "orcish-helmet": "2 leather-strips, 1 iron-ingot, 2 orichalcum-ingot", "orcish-hide-set": "9 leather, 8 leather-strips, 4 orichalcum-ingot", "orcish-heavy-set": "9 leather-strips, 4 iron-ingot, 11 orichalcum-ingot", "orcish-shield": "1 leather-strips, 1 iron-ingot, 3 orichalcum-ingot", "dwarven-armor": "3 leather-strips, 1 iron-ingot, 1 steel-ingot, 3 dwarven-metal-ingot", "dwarven-boots": "2 leather-strips, 1 iron-ingot, 1 steel-ingot, 2 dwarven-metal-ingot", "dwarven-gauntlets": "2 leather-strips, 1 iron-ingot, 1 steel-ingot, 1 dwarven-metal-ingot", "dwarven-helmet": "2 leather-strips, 1 iron-ingot, 1 steel-ingot, 2 dwarven-metal-ingot", "dwarven-set": "9 leather-strips, 4 iron-ingot, 4 steel-ingot, 8 dwarven-metal-ingot", "dwarven-shield": "1 leather-strips, 1 iron-ingot, 1 steel-ingot, 2 dwarven-metal-ingot", "altmer-gilded-armor": "3 leather-strips, 1 iron-ingot, 4 refined-moonstone, 1 quicksilver-ingot", "altmer-elven-armor": "1 leather, 3 leather-strips, 1 iron-ingot, 4 refined-moonstone", "altmer-elven-boots": "1 leather, 2 leather-strips, 1 iron-ingot, 2 refined-moonstone", "altmer-elven-gauntlets": "1 leather, 2 leather-strips, 1 iron-ingot, 1 refined-moonstone", "altmer-elven-helmet": "1 leather, 1 leather-strips, 1 iron-ingot, 2 refined-moonstone", "altmer-gilded-set": "3 leather, 10 leather-strips, 4 iron-ingot, 9 refined-moonstone, 1 quicksilver-ingot", "altmer-elven-set": "4 leather, 8 leather-strips, 4 iron-ingot, 9 refined-moonstone", "altmer-elven-shield": "2 leather-strips, 1 iron-ingot, 4 refined-moonstone", "glass-armor": "1 leather, 3 leather-strips, 2 refined-moonstone, 4 refined-malachite", "glass-boots": "1 leather, 2 leather-strips, 1 refined-moonstone, 2 refined-malachite", "glass-gauntlets": "1 leather, 2 leather-strips, 1 refined-moonstone, 1 refined-malachite", "glass-helmet": "1 leather, 1 leather-strips, 1 refined-moonstone, 2 refined-malachite", "glass-set": "4 leather, 8 leather-strips, 5 refined-moonstone, 9 refined-malachite", "glass-shield": "2 leather-strips, 1 refined-moonstone, 4 refined-malachite", "iron-pickaxe-wood-axe": "1 iron-ingot", "iron-dagger": "1 leather-strips, 1 iron-ingot", "iron-sword": "1 leather-strips, 2 iron-ingot", "iron-war-axe": "2 leather-strips, 2 iron-ingot", "iron-mace": "2 leather-strips, 3 iron-ingot", "iron-greatsword": "2 leather-strips, 4 iron-ingot", "iron-battleaxe": "2 leather-strips, 4 iron-ingot", "iron-warhammer": "3 leather-strips, 4 iron-ingot", "iron-long-bow": "1 leather-half, 2 leather-strips, 8 firewood", "iron-arrows-x80": "1 iron-ingot, 1 firewood", "steel-dagger": "1 leather-strips, 1 iron-ingot, 1 steel-ingot", "steel-sword": "1 leather-strips, 1 iron-ingot, 2 steel-ingot", "steel-war-axe": "2 leather-strips, 1 iron-ingot, 2 steel-ingot", "steel-mace": "1 leather-strips, 1 iron-ingot, 3 steel-ingot", "steel-greatsword": "3 leather-strips, 2 iron-ingot, 4 steel-ingot", "steel-battleaxe": "2 leather-strips, 1 iron-ingot, 4 steel-ingot", "steel-warhammer": "3 leather-strips, 1 iron-ingot, 4 steel-ingot", "steel-bow": "1 leather-half, 2 leather-strips, 2 steel-ingot, 8 firewood", "steel-arrows-x80": "1 steel-ingot, 1 firewood", "orcish-dagger": "1 strips-half, 1 iron-ingot, 1 orichalcum-ingot", "orcish-sword": "1 strips-half, 1 iron-ingot, 2 orichalcum-ingot", "orcish-war-axe": "2 strips-half, 1 iron-ingot, 2 orichalcum-ingot", "orcish-mace": "1 strips-half, 1 iron-ingot, 3 orichalcum-ingot", "orcish-greatsword": "3 strips-half, 2 iron-ingot, 4 orichalcum-ingot", "orcish-battleaxe": "2 strips-half, 1 iron-ingot, 4 orichalcum-ingot", "orcish-warhammer": "3 strips-half, 1 iron-ingot, 4 orichalcum-ingot", "orcish-bow": "1 iron-ingot, 2 orichalcum-ingot", "orcish-arrows-x80": "1 orichalcum-ingot, 1 firewood", "altmer-dagger": "1 strips-half, 1 iron-ingot, 1 refined-moonstone, 1 quicksilver-ingot", "altmer-elven-sword": "1 strips-half, 1 iron-ingot, 1 refined-moonstone, 1 quicksilver-ingot", "altmer-elven-war-axe": "2 strips-half, 1 iron-ingot, 1 refined-moonstone, 1 quicksilver-ingot", "altmer-elven-mace": "1 strips-half, 1 iron-ingot, 2 refined-moonstone, 1 quicksilver-ingot", "altmer-elven-greatsword": "3 strips-half, 2 iron-ingot, 2 refined-moonstone, 1 quicksilver-ingot", "altmer-elven-battleaxe": "2 strips-half, 2 iron-ingot, 2 refined-moonstone, 1 quicksilver-ingot", "altmer-elven-warhammer": "3 strips-half, 2 iron-ingot, 2 refined-moonstone, 1 quicksilver-ingot", "altmer-elven-bow": "2 refined-moonstone, 1 quicksilver-ingot", "altmer-elven-arrows-x80": "1 refined-moonstone, 1 firewood", "bosmer-blade": "1 strips-half, 1 iron-ingot, 1 refined-moonstone, 1 quicksilver-ingot", "bosmer-bow": "2 refined-moonstone, 1 quicksilver-ingot", "dwarven-dagger": "1 strips-half, 1 iron-ingot, 1 steel-ingot, 1 dwarven-metal-ingot", "dwarven-sword": "1 strips-half, 1 iron-ingot, 1 steel-ingot, 1 dwarven-metal-ingot", "dwarven-war-axe": "2 strips-half, 1 iron-ingot, 1 steel-ingot, 1 dwarven-metal-ingot", "dwarven-mace": "1 strips-half, 1 iron-ingot, 1 steel-ingot, 2 dwarven-metal-ingot", "dwarven-greatsword": "3 strips-half, 2 iron-ingot, 2 steel-ingot, 2 dwarven-metal-ingot", "dwarven-battleaxe": "2 strips-half, 1 iron-ingot, 2 steel-ingot, 2 dwarven-metal-ingot", "dwarven-warhammer": "3 strips-half, 1 iron-ingot, 2 steel-ingot, 2 dwarven-metal-ingot", "dwarven-bow": "1 iron-ingot, 2 dwarven-metal-ingot", "dwarven-arrows-x80": "1 dwarven-metal-ingot, 1 firewood", "glass-dagger": "1 strips-half, 1 refined-moonstone, 1 refined-malachite", "glass-sword": "1 strips-half, 1 refined-moonstone, 1 refined-malachite", "glass-war-axe": "2 strips-half, 1 refined-moonstone, 1 refined-malachite", "glass-mace": "1 strips-half, 1 refined-moonstone, 2 refined-malachite", "glass-greatsword": "3 strips-half, 2 refined-moonstone, 2 refined-malachite", "glass-battleaxe": "2 strips-half, 2 refined-moonstone, 2 refined-malachite", "glass-warhammer": "3 strips-half, 2 refined-moonstone, 3 refined-malachite", "glass-bow": "1 refined-moonstone, 2 refined-malachite", "glass-arrows-x80": "1 refined-malachite, 1 firewood"});
 // Recipes worked out from the ledger's prices where the sheet's rows didn't line up. Shown as "check" in the price list.
 const EST_RECIPES = new Set(["fur-collar", "hide-armor", "hide-boots", "hide-gauntlets", "hide-helmet", "hide-shield", "hide-set", "studded-set",
   "iron-banded-armor", "iron-set", "iron-banded-set", "steel-boots", "steel-gauntlets", "steel-helmet", "steel-set", "steel-armor",
@@ -1988,6 +2108,7 @@ const EST_RECIPES = new Set(["fur-collar", "hide-armor", "hide-boots", "hide-gau
   "dwarven-armor", "dwarven-boots", "dwarven-gauntlets", "dwarven-helmet", "dwarven-set", "dwarven-dagger", "dwarven-sword", "dwarven-war-axe",
   "dwarven-mace", "dwarven-bow", "dwarven-greatsword", "dwarven-battleaxe", "dwarven-warhammer",
   "glass-mace", "glass-greatsword", "glass-battleaxe", "glass-warhammer", "glass-bow", "glass-arrows-x80", "silver-moonstone-amulet", "copper-moonstone-circlet"]);
+for (const id of Object.keys(DEFAULT_RECIPES)) if (SHEET_RECIPE_IDS.has(id)) EST_RECIPES.delete(id);
 function matInfo(key) {
   const c = catalog().find(i => i.id === key) || DEFAULT_CATALOG.find(i => i.id === key);
   if (c) return { name: c.name, base: c.base };
@@ -2006,7 +2127,7 @@ function recipeFor(id) {
 }
 // Split one unit of a material by who supplies it: ore (prospectors), fuel (wood cutters), leather (hunters), other (the forge).
 const FUEL_MATS = new Set(["firewood", "poor-charcoal", "charcoal", "charcoal-briquettes", "coke"]);
-const LEATHER_MATS = new Set(["leather", "leather-strips", "strips-half"]);
+const LEATHER_MATS = new Set(["leather", "leather-strips", "strips-half", "leather-half"]);
 const ROLES = [
   { key: "ore", name: "Ore", short: "ore", prof: "prospector", job: "prospector", color: "#3987e5" },
   { key: "fuel", name: "Charcoal & firewood", short: "charcoal", prof: "woodcutter", job: "wood cutter", color: "#d95926" },
@@ -2128,12 +2249,13 @@ function updateSellQuote() {
     $("sellMats").innerHTML = `<h3>Materials for this order</h3>
       ${top.length ? `<div class="mrow">${top.join(" · ")}</div>` : ""}
       ${sm.length ? `<div class="mrow"><span class="hint">Smelting the ingots takes</span> ${sm.join(" · ")}</div>` : ""}
+      ${apprView() ? "" : stockUseHtml(lines.map(l => ({ itemId: l.itemId, qty: l.qty })))}
       ${om.missing.length ? `<div class="mrow hint">No recipe for ${om.missing.map(l => esc(catalog().find(i => i.id === l.itemId).name)).join(", ")}, so its whole cost counts as the forge's.</div>` : ""}`;
     // Only the order's total material cost, not a line per item.
     $("sellCost").innerHTML = `<h3>Material cost</h3>${apprView() ? `<p class="mc-warn">!!! Never discuss material cost with the customer. Your price is your own, and 20% is the minimum an apprentice should ever charge !!!</p>` : ""}<table class="mc"><tfoot><tr><td>Total material cost</td><td></td><td>${coins(om.total)}</td></tr></tfoot></table>
       <div class="mc-split">${[["ore", "Ore"], ["fuel", "Charcoal & firewood"], ["leather", "Leather"], ["other", "Other (gems, no recipe)"]].filter(([k]) => om[k] > 0.004).map(([k, n]) => `<span><i class="sw-dot" style="background:${ROLE[k] ? ROLE[k].color : FORGE_COLOR}"></i>${n} ${coins(om[k])}</span>`).join("")}</div>`;
   }
-  if (!lines.length) { $("sellQuote").innerHTML = `<span class="hint">The price appears here once items are added.</span>`; $("sellPie").innerHTML = ""; $("dpSum").innerHTML = ""; lastSellPie = ""; return; }
+  if (!lines.length) { $("sellComm").innerHTML = testS && unlocked ? `<div class="comm-box test"><div class="hint"><b>Test S is on.</b> Add an item to see who would earn a commission. Try Iron Armor (split), Steel Ingot (one winner, one deferred) or Iron Ore.</div></div>` : ""; $("sellQuote").innerHTML = `<span class="hint">The price appears here once items are added.</span>`; $("sellPie").innerHTML = ""; $("dpSum").innerHTML = ""; lastSellPie = ""; return; }
   const d = currentDiscount();
   const q = orderQuote(lines.map(l => ({ qty: l.qty, base: l.it.base * (l.perk ? l.perk.factor : 1), fixed: isFixed(l) })), sellProfit, d.pct);
   const perkSave = lines.reduce((a, l) => a + (l.perk ? l.qty * l.it.base * (1 - l.perk.factor) : 0), 0);
@@ -2144,6 +2266,7 @@ function updateSellQuote() {
     ${perkSave ? `<div class="ln perk"><span>Employee tool discount (already taken off above)</span><span>−${coins(perkSave)}</span></div>` : ""}
     ${!unlocked && !d.reach ? "" : `<div class="ln"><span>Discount ${d.pct ? `−${d.pct}% (${esc(d.label)})` : "(none)"}</span><span>${d.pct ? "−" + coins(q.disc) : "–"}</span></div>`}
     <div class="ln final"><span>Final price</span><span>${coins(q.fin)} coins</span></div>${debtedQuoteHtml(lines.map(l => ({ itemId: l.itemId, name: l.it.name, qty: l.qty, base: l.it.base, factor: l.perk ? l.perk.factor : 1, fixed: isFixed(l) })), q, d)}`;
+  $("sellComm").innerHTML = commPreviewHtml(lines, q.fin, round2(q.fin - q.sub));
 }
 // ---- Debted material: one employee gets the whole sale price, less the cost of the materials their job doesn't supply ----
 // lines: [{ itemId, name, qty, base, factor, fixed }]; roles: the material types employees supplied.
@@ -2463,9 +2586,25 @@ function renderMySales() {
   const mine = all.filter(s => showHiddenSales ? isHidden(s) : !isHidden(s));
   if (showHiddenSales && !hiddenN) showHiddenSales = false;
   $("mySalesSec").hidden = !emp || isApprentice(emp); if ($("mySalesSec").hidden) return;
+  // No debts either way: the section only talks about commissions.
+  const noDebt = !all.length && !state.debts.some(d => sameName(d.who, emp.name) && !d.orderId) && !state.edebts.some(d => sameName(d.who, emp.name));
+  const comm = (state.commissions || []).filter(c => sameName(c.who, emp.name));
+  $("mySalesHint").textContent = noDebt
+    ? `Orders made from materials the forge bought from you. When ${Math.round(COMMISSION_SHARE * 100)}% or more of an order's ${(ROLE[roleForProf(emp.prof)] || { name: "materials" }).name.toLowerCase()} came from you, you earn a ${COMMISSION_PCT}% commission on the sale.`
+    : "Orders that used materials the forge owes you for. You get the whole sale price, less only the cost of materials your job doesn't supply, paid toward that debt. Anything above the debt is owed to you in coins.";
+  $("owedPanel").hidden = noDebt && !state.debts.some(d => sameName(d.who, emp.name));
+  $("mySalesSec").querySelector(".ms-split").classList.toggle("ms-one", $("owedPanel").hidden);
+  const commHtml = comm.length ? `<h3 class="sub-h">Commission sales</h3>` + comm.map(c => `<div class="ms-row">
+      <div class="ms-top"><span><b>${esc(c.customer)}</b> <span class="hint">${shortDate(c.at)}</span></span><span class="bulk-badge">${c.pct || COMMISSION_PCT}% commission${c.split ? " (split)" : ""}</span></div>
+      <div class="hint">${c.lines.map(l => `${l.qty} × ${esc(l.name)}`).join(", ")}</div>
+      <div class="ms-money"><span>Final price <b>${coins(c.final)}</b></span>${c.fromBank ? `<span>From an earlier deferred claim</span>` : `<span>Your ${(ROLE[c.role] || { name: "materials" }).name.toLowerCase()} <b>${c.share}%</b> <span class="hint">(${fmtQty(c.units)} of ${fmtQty(c.total)})</span></span>`}<span>Commission <b class="gain">+${coins(c.amount)}</b></span></div>
+    </div>`).join("") : "";
+  if ($("msComm").dataset.html !== commHtml) { $("msComm").dataset.html = commHtml; $("msComm").innerHTML = commHtml; }
   const my = s => s.contribs.filter(c => sameName(c.who, emp.name));
   const gross = mine.reduce((a, s) => a + my(s).reduce((b, c) => b + c.used, 0), 0), mat = mine.reduce((a, s) => a + my(s).reduce((b, c) => b + Math.min(c.mat, c.used), 0), 0);
-  $("msTiles").innerHTML = `<div class="ms-tile"><span>Orders</span><b>${mine.length}</b></div><div class="ms-tile"><span>Gross income</span><b>${coins(gross)}</b></div>
+  $("msTiles").innerHTML = noDebt
+    ? `<div class="ms-tile"><span>Commission sales</span><b>${comm.length}</b></div><div class="ms-tile"><span>Commission earned</span><b class="gain">+${coins(round2(comm.reduce((a, c) => a + c.amount, 0)))}</b></div>`
+    : `<div class="ms-tile"><span>Orders</span><b>${mine.length}</b></div><div class="ms-tile"><span>Gross income</span><b>${coins(gross)}</b></div>
     <div class="ms-tile"><span>Your materials</span><b>${coins(mat)}</b></div><div class="ms-tile"><span>Profit above materials</span><b class="gain">+${coins(round2(gross - mat))}</b></div>`;
   // Where the money from these sales went, like the "What would I earn?" pie.
   const fin = round2(mine.reduce((a, s) => a + s.final, 0)), others = round2(mine.reduce((a, s) => a + s.contribs.filter(c => !sameName(c.who, emp.name)).reduce((b, c) => b + c.used, 0), 0));
@@ -2485,10 +2624,11 @@ function renderMySales() {
           return (isHidden(s) ? `<button type="button" class="btn-return" data-mshide="${s.id}" data-show="1">Unhide</button>` : `<button type="button" class="btn-ghost" data-mshide="${s.id}">Hide</button>`)
             + (rq ? `<span class="bulk-badge">Removal asked, waiting for the ForgeMaster</span><button type="button" class="btn-ghost" data-srmact="cancel" data-id="${rq.id}">Cancel request</button>` : ""); })()}</div>
       ${openPie === s.id ? salePie(s, emp.name) : ""}
-    </div>`).join("") : `<div class="empty">${hiddenN && !showHiddenSales ? "All your sales are hidden." : "No sales have used your materials yet."}</div>`;
+    </div>`).join("") : noDebt ? (comm.length ? "" : `<div class="empty">No commission sales yet. Sell materials to the forge and you'll be credited when an order is made from them.</div>`) : `<div class="empty">${hiddenN && !showHiddenSales ? "All your sales are hidden." : "No sales have used your materials yet."}</div>`;
   $("msRows").insertAdjacentHTML("afterbegin", hiddenN ? `<div class="srm-box" style="margin-bottom:8px"><button type="button" class="btn-ghost" data-mshidden aria-pressed="${showHiddenSales}">${showHiddenSales ? "Back to your sales" : `Show hidden (${hiddenN})`}</button></div>` : "");
   if (keepWhy != null && $("srmReason")) { $("srmReason").value = keepWhy; if (hadFocus) $("srmReason").focus(); }
   renderCalc(emp);
+  if (noDebt) $("calcPanel").hidden = true;   // the debt calculator only matters when there's a debt
 }
 
 // ---- Apprentice blacksmiths: the orders they made and the forge's profit on them ----
@@ -2625,6 +2765,157 @@ const STOCK_MAT = { "iron-ore": "iron", "corundum-ore": "corundum", "silver-ore"
   firewood: "firewood", "poor-charcoal": "poor", charcoal: "regular", "charcoal-briquettes": "briquettes", coke: "coke",
   leather: "leather", "leather-strips": "leatherstrips" };
 const GROUP_ROLE = { ores: "ore", coal: "fuel", leather: "leather" };
+// ---- Ingots: smelted from stockpile ore and fuel (Crafted ingots), used up by sell orders ----
+const INGOTS = [["iron-ingot", "Iron Ingot"], ["steel-ingot", "Steel Ingot"], ["corundum-ingot", "Corundum Ingot"], ["silver-ingot", "Silver Ingot"], ["gold-ingot", "Gold Ingot"],
+  ["orichalcum-ingot", "Orichalcum Ingot"], ["quicksilver-ingot", "Quicksilver Ingot"], ["refined-moonstone", "Refined Moonstone"], ["refined-malachite", "Refined Malachite"]].map(([key, name]) => ({ key, name }));
+const INGOT_NAME = Object.fromEntries(INGOTS.map(i => [i.key, i.name]));
+const INGOT_LEVEL_DEFAULT = { low: 2, high: 5 };
+// Stockpile value includes the ingot stockpile (on by default; the switch turns it off). An ingot is worth what its ore and fuel cost: the Stockpile value
+// price of each, or the price list's when a material has no stockpile price.
+let valIngots = true;
+const STOCK_TO_CAT = { iron: "iron-ore", corundum: "corundum-ore", silver: "silver-ore", gold: "gold-ore", orichalcum: "orichalcum-ore", moonstone: "moonstone",
+  quicksilver: "quicksilver-ore", malachite: "malachite-ore", poor: "poor-charcoal", regular: "charcoal", briquettes: "charcoal-briquettes", coke: "coke", firewood: "firewood" };
+const ingotMatCost = id => round2(smeltNeeds(id, 1).reduce((a, x) => a + x.per * (PRICE[x.key] != null ? PRICE[x.key] : matCost(STOCK_TO_CAT[x.key])), 0));
+// No goal for Corundum Ingots; Refined Malachite has none either and its card is greyed out.
+const INGOT_NO_GOAL = new Set(["corundum-ingot", "refined-malachite"]), INGOT_GREY = new Set(["refined-malachite"]);
+const ingotLevel = k => INGOT_GREY.has(k) ? { low: null, high: null } : (state.ingotLevels && state.ingotLevels[k]) || (INGOT_NO_GOAL.has(k) ? { low: null, high: null } : INGOT_LEVEL_DEFAULT);
+function ingotLevelClass(k, n) { const l = ingotLevel(k); if (l.low == null && l.high == null) return "";
+  if (l.low != null && n < l.low) return "lv-red"; if (l.high != null && n >= l.high) return "lv-green"; return "lv-yellow"; }
+let ingotView = false, craftIngot = "iron-ingot", craftQty = "1";
+const ingAdj = {};
+const ingotsOf = () => state.ingots || (state.ingots = {});
+// Where one unit of a recipe material is kept: the ingot stockpile or a main-stockpile item. Half-price strips / leather are still one each.
+function stockSpot(k) {
+  if (INGOT_NAME[k]) return { ingot: true, key: k, name: INGOT_NAME[k] };
+  const m = k === "strips-half" ? "leather-strips" : k === "leather-half" ? "leather" : k, key = STOCK_MAT[m];
+  return key ? { ingot: false, key, name: key === "dwarven" ? "Dwarven Metal Ingot" : NAME[key] } : null;
+}
+// What a sell order takes from the stockpile: the item itself when it's a stocked good (an ingot, ore, leather…), otherwise its recipe's
+// direct materials (ingots, leather, strips, firewood). Never the ore and charcoal that went into the ingots: Crafted ingots handles that.
+function orderStockUse(lines) {
+  const use = new Map();
+  const add = (sp, q) => { const id = (sp.ingot ? "i:" : "s:") + sp.key, x = use.get(id) || { ...sp, qty: 0 }; x.qty += q; use.set(id, x); };
+  for (const l of lines) {
+    const qty = Number(l.qty) || 0, self = l.itemId ? stockSpot(l.itemId) : null;
+    if (self) { add(self, qty); continue; }
+    const rec = l.itemId ? recipeFor(l.itemId) : null; if (!rec) continue;
+    for (const [k, q] of rec) { const sp = stockSpot(k); if (sp) add(sp, q * qty); }
+  }
+  return [...use.values()].map(x => ({ ...x, qty: round2(x.qty), have: x.ingot ? (ingotsOf()[x.key] || 0) : (state.stock[x.key] || 0) }));
+}
+// ---- Where stockpile goods came from. Only goods bought from an employee on a buy order carry a hidden tag (not ForgeMaster additions,
+// pending or deposits). The tag follows them through smelting, ore and charcoal alike, so a sale where one employee supplied 90% or more of the
+// material their job can supply (ore, charcoal & firewood, or leather) pays them a 2% commission.
+const COMMISSION_PCT = 2, COMMISSION_SHARE = 0.9;
+const lotsOf = () => state.lots || (state.lots = []);            // raw goods: { id, who, key, qty, at }
+const ingLotsOf = () => state.ingotLots || (state.ingotLots = []); // smelted batches: { id, key, qty, at, comp: [{ who, role, per }] } (per = raw units in one ingot)
+const addLot = (who, key, qty) => lotsOf().push({ id: uid(), who, key, qty, at: Date.now() });
+const roleOfKey = k => { const g = groupOf(k); return g ? GROUP_ROLE[g.id] : ""; };
+// Material cost of one unit of a stockpile item (price list), used to weigh competing commission claims.
+const RAW_CAT = { leather: "leather", leatherstrips: "leather-strips", dwarven: "dwarven-metal-ingot", ebony: "ebony-ore" };
+const rawCost = k => matCost(STOCK_TO_CAT[k] || RAW_CAT[k] || "") || 0;
+// Untagged stock is whatever isn't on a lot; the commission share counts all of the order's material of that kind, tagged or not.
+// Goods bought from employees are used first (oldest first), then anything else in the stockpile. have = stock before taking. Returns [{ who, role, units }].
+function drawTagged(list, key, qty, have, credit) {
+  const mine = list.filter(l => l.key === key).sort((a, b) => a.at - b.at);
+  let excess = mine.reduce((a, l) => a + l.qty, 0) - have;   // stock was removed by hand: the tags go with it, oldest first
+  for (const l of mine) { if (excess <= 1e-9) break; const t = Math.min(excess, l.qty); l.qty = round2(l.qty - t); excess -= t; }
+  let left = qty;
+  for (const l of mine) { if (left <= 1e-9) break; const t = Math.min(left, l.qty); if (t <= 0) continue; l.qty = round2(l.qty - t); left -= t; credit(l, t); }
+}
+function drawLots(key, qty, have) {
+  const out = []; drawTagged(lotsOf(), key, qty, have, (l, t) => out.push({ who: l.who, role: roleOfKey(key), key, units: t, val: t * rawCost(key) }));
+  state.lots = lotsOf().filter(l => l.qty > 1e-9); return out;
+}
+function drawIngots(key, qty, have) {
+  const out = []; drawTagged(ingLotsOf(), key, qty, have, (l, t) => { for (const c of l.comp) out.push({ who: c.who, role: c.role, key: c.key, units: c.per * t, val: (c.vper || 0) * t }); });
+  state.ingotLots = ingLotsOf().filter(l => l.qty > 1e-9); return out;
+}
+// Raw units (and their cost) per role in one ingot (e.g. a Steel Ingot: 6 ore + 6 charcoal).
+const ingotRoleUnits = id => { const r = {}; for (const [k, q] of SMELT[id] || []) { const role = roleOfKey(STOCK_MAT[k]); if (role) r[role] = (r[role] || 0) + q; } return r; };
+const ingotRoleVal = id => { const r = {}; for (const [k, q] of SMELT[id] || []) { const sk = STOCK_MAT[k], role = roleOfKey(sk); if (role) r[role] = (r[role] || 0) + q * rawCost(sk); } return r; };
+function takeOrderStock(lines) {
+  const use = orderStockUse(lines), short = [], credit = [], total = {}, roleVal = {}, rawUse = {};
+  for (const u of use) {
+    const take = Math.min(u.have, u.qty), left = round2(Math.max(0, u.have - u.qty));
+    if (u.ingot) { credit.push(...drawIngots(u.key, take, u.have)); for (const [r, n] of Object.entries(ingotRoleUnits(u.key))) total[r] = (total[r] || 0) + n * u.qty;
+      for (const [r, v] of Object.entries(ingotRoleVal(u.key))) roleVal[r] = (roleVal[r] || 0) + v * u.qty;
+      for (const [k, q] of SMELT[u.key] || []) { const sk = STOCK_MAT[k]; if (sk) rawUse[sk] = (rawUse[sk] || 0) + q * u.qty; } ingotsOf()[u.key] = left; }
+    else { credit.push(...drawLots(u.key, take, u.have)); const r = roleOfKey(u.key); if (r) { total[r] = (total[r] || 0) + u.qty; roleVal[r] = (roleVal[r] || 0) + u.qty * rawCost(u.key); } rawUse[u.key] = (rawUse[u.key] || 0) + u.qty; state.stock[u.key] = left; }
+    if (u.qty > u.have + 1e-9) short.push(`${fmtQty(round2(u.qty - u.have))} ${u.name}`);
+  }
+  // Each employee's share of the raw material of their kind in this order
+  const by = new Map(); for (const c of credit) { const k = c.who + "|" + c.role, x = by.get(k) || { units: 0, val: 0, mats: {} }; x.units += c.units; x.val += c.val || 0; if (c.key) x.mats[c.key] = round2((x.mats[c.key] || 0) + c.units); by.set(k, x); }
+  const shares = [...by].map(([k, x]) => { const [who, role] = k.split("|"); return { who, role, units: round2(x.units), val: round2(x.val), mats: x.mats, total: round2(total[role] || 0), share: total[role] ? x.units / total[role] : 0 }; });
+  return { use, short, shares, roleVal, rawUse };
+}
+// Smelting, per ingot, from the ledger's Crafted Materials table (SMELT), in main-stockpile items.
+const smeltNeeds = (id, qty) => (SMELT[id] || []).map(([k, q]) => { const key = STOCK_MAT[k]; return { key, name: NAME[key], per: q, need: q * qty, have: state.stock[key] || 0 }; });
+const canSmelt = id => { const n = smeltNeeds(id, 1); return n.length ? Math.min(...n.map(x => Math.floor(x.have / x.per))) : 0; };
+function stockUseHtml(lines) {
+  const use = orderStockUse(lines); if (!use.length) return "";
+  const short = use.some(u => u.qty > u.have + 1e-9);
+  return `<div class="mrow"><span class="hint">Taken from the stockpile when confirmed:</span> ${use.map(u => `<span class="${u.qty > u.have + 1e-9 ? "short" : ""}">${fmtQty(u.qty)} ${esc(u.name)} <span class="hint">(have ${fmtQty(u.have)})</span></span>`).join(" · ")}</div>
+    ${short ? `<div class="mrow short">Not enough in stock for the items in red. You can still confirm; those go down to 0.</div>` : ""}`;
+}
+function renderIngots() {
+  $("ingotToggle").setAttribute("aria-pressed", ingotView);
+  $("ingotToggle").textContent = ingotView ? "Show full stockpile" : "Ingot view";
+  if (!unlocked || !ingotView) return;
+  const ing = ingotsOf(), focus = document.activeElement;
+  // Ingot cards, laid out like the ore stockpile: built once (so a half-typed amount survives), numbers and colours updated every time.
+  const box = $("ingots");
+  if (!box.dataset.built) { box.dataset.built = "1";
+    const card = (key, name, adj) => `<div class="ore${INGOT_GREY.has(key) ? " ing-grey" : ""}" id="icard-${key}">
+        <div class="ore-top"><span class="ore-name">${esc(name)}</span></div>
+        <div class="count" id="ic-${key}">0</div>
+        <div class="lvl-txt" id="ilt-${key}"></div>
+        ${adj ? `<div class="adjust"><input type="number" id="iq-${key}" data-ingqty="${key}" min="1" step="1" value="1" aria-label="${esc(name)} quantity">
+          <button class="btn-add" data-ingadd="${key}" aria-label="Add ${esc(name)}">Add</button><button class="btn-sub" data-ingrm="${key}" aria-label="Remove ${esc(name)}">Remove</button></div>`
+          : `<div class="held">Kept on the main stockpile as Dwarven</div>`}
+      </div>`;
+    box.innerHTML = `<div class="ores">${INGOTS.map(i => card(i.key, i.name, true)).join("")}${card("dwarven", "Dwarven Metal Ingot", true)}</div>`; }
+  const paint = (key, n, lc, goal) => {
+    $("ic-" + key).innerHTML = `${fmtQty(n)}<small>${n === 1 ? "ingot" : "ingots"}</small>`;
+    const c = $("icard-" + key); c.classList.remove("lv-red", "lv-yellow", "lv-green"); if (lc) c.classList.add(lc);
+    const lt = $("ilt-" + key); lt.className = "lvl-txt " + lc; lt.textContent = lc ? LEVEL_TEXT[lc] + (goal != null ? ` (goal: ${goal.toLocaleString()})` : "") : "";
+  };
+  for (const i of INGOTS) { const n = ing[i.key] || 0, l = ingotLevel(i.key); paint(i.key, n, ingotLevelClass(i.key, n), l.high); }
+  { const n = state.stock.dwarven || 0, l = levelFor("dwarven"); paint("dwarven", n, levelClass("dwarven", n), l ? l.high : null); }
+  // Sufficiency goals (collapsible, bottom of Ingot view)
+  const lb = $("ingotLvlBody");
+  if (!lb.dataset.built) { lb.dataset.built = "1";
+    lb.innerHTML = `<div class="cat-wrap"><table class="val lvl-table"><thead><tr><th scope="col">Ingot</th><th scope="col">In stock</th><th scope="col">Red below</th><th scope="col">Goal (green at)</th></tr></thead><tbody>
+      ${INGOTS.map(i => INGOT_GREY.has(i.key) ? `<tr class="ing-grey-row"><td>${i.name}</td><td id="ilv-n-${i.key}"></td><td colspan="2" class="hint">No goal</td></tr>`
+        : `<tr><td>${i.name}</td><td id="ilv-n-${i.key}"></td><td><input type="number" min="0" step="1" data-ilow="${i.key}" aria-label="${i.name}: red below"></td><td><input type="number" min="0" step="1" data-ihigh="${i.key}" aria-label="${i.name}: goal"></td></tr>`).join("")}
+      <tr><td>Dwarven Metal Ingot</td><td id="ilv-n-dwarven"></td><td><input type="number" min="0" step="1" data-ilow="dwarven" aria-label="Dwarven Metal Ingot: red below"></td><td><input type="number" min="0" step="1" data-ihigh="dwarven" aria-label="Dwarven Metal Ingot: goal"></td></tr></tbody></table></div>
+      <p class="hint">Below "Red below" the card shows red, from there up to the goal yellow, and at the goal or more green. Leave both blank for no colour. Every ingot starts with a goal of ${INGOT_LEVEL_DEFAULT.high} and red below ${INGOT_LEVEL_DEFAULT.low}, except Corundum Ingot (no goal) and Refined Malachite (no goal, greyed out).</p>`; }
+  { const l = levelsMap().dwarven || {}; $("ilv-n-dwarven").textContent = fmtQty(state.stock.dwarven || 0);
+    for (const [attr, v] of [["ilow", l.low], ["ihigh", l.high]]) { const el = lb.querySelector(`[data-${attr}="dwarven"]`); if (el !== document.activeElement) el.value = v ?? ""; } }
+  for (const i of INGOTS) { const l = ingotLevel(i.key); $("ilv-n-" + i.key).textContent = fmtQty(ing[i.key] || 0);
+    for (const [attr, v] of [["ilow", l.low], ["ihigh", l.high]]) { const el = lb.querySelector(`[data-${attr}="${i.key}"]`); if (el && el !== document.activeElement) el.value = v ?? ""; } }
+  // Crafted ingots: the form is built once so typing isn't interrupted; the numbers below it are redrawn every time.
+  const body = $("craftBody");
+  if (!body.dataset.built) { body.dataset.built = "1";
+    body.innerHTML = `<form id="craftForm" class="craft-form"><label>Ingot<select id="craftWhich"></select></label><label>How many<input id="craftQty" type="number" min="1" step="1" value="1"></label>
+      <button type="button" class="btn-ghost" id="craftMax">Most I can make</button><button type="submit" class="btn-return">Make ingots</button></form><div id="craftBatch"></div><div id="craftAll"></div>`; }
+  // Option labels are rewritten in place, so "can make" stays current even while the dropdown is open or focused.
+  const sel = $("craftWhich"); if (sel.options.length !== INGOTS.length) sel.innerHTML = INGOTS.map(i => `<option value="${i.key}"></option>`).join("");
+  INGOTS.forEach((i, k) => { const t = `${i.name} (can make ${canSmelt(i.key).toLocaleString()})`; if (sel.options[k].textContent !== t) sel.options[k].textContent = t; });
+  if (document.activeElement !== sel) sel.value = craftIngot;
+  if (document.activeElement !== $("craftQty")) $("craftQty").value = craftQty;
+  const q = Math.floor(Number(craftQty)), ok = q >= 1, needs = smeltNeeds(craftIngot, ok ? q : 0), can = canSmelt(craftIngot);
+  $("craftBatch").innerHTML = `<h3>Materials for ${ok ? q.toLocaleString() : "…"} ${INGOT_NAME[craftIngot]}</h3>
+    <div class="cat-wrap"><table class="val"><thead><tr><th scope="col">Material</th><th scope="col">Per ingot</th><th scope="col">Needed</th><th scope="col">In stockpile</th><th scope="col">Left after</th></tr></thead><tbody>
+    ${needs.map(n => `<tr class="${n.need > n.have ? "short" : ""}"><td>${esc(n.name)}</td><td>${n.per}</td><td><b>${n.need.toLocaleString()}</b></td><td>${n.have.toLocaleString()}</td><td>${n.need > n.have ? `short ${(n.need - n.have).toLocaleString()}` : (n.have - n.need).toLocaleString()}</td></tr>`).join("")}</tbody></table></div>
+    <p class="hint">The stockpile has enough for <b>${can.toLocaleString()}</b> ${INGOT_NAME[craftIngot]}. Making them takes these out of the stockpile and adds the ingots to the ingot stockpile.</p>`;
+  const smeltKeys = [...new Set(INGOTS.flatMap(i => smeltNeeds(i.key, 1).map(n => n.key)))];
+  $("craftAll").innerHTML = `<h3>What the stockpile can make</h3>
+    <p class="hint craft-stock">In the stockpile now: ${smeltKeys.map(k => `${esc(NAME[k])} <b>${(state.stock[k] || 0).toLocaleString()}</b>`).join(" · ")}. Updates by itself whenever the stockpile changes.</p><div class="cat-wrap"><table class="val"><thead><tr><th scope="col">Ingot</th><th scope="col">Each takes</th><th scope="col">Can make now</th><th scope="col">Runs out first</th></tr></thead><tbody>
+    ${INGOTS.map(i => { const n = smeltNeeds(i.key, 1), c = canSmelt(i.key), lim = n.reduce((a, x) => Math.floor(x.have / x.per) < Math.floor(a.have / a.per) ? x : a, n[0]);
+      return `<tr><td>${i.name}</td><td>${n.map(x => `${x.per} ${esc(x.name)}`).join(" + ")}</td><td><b>${c.toLocaleString()}</b></td><td>${lim ? esc(lim.name) : ""}</td></tr>`; }).join("")}</tbody></table></div>`;
+}
+
 const PAID_COLOR = "#8a5cc7", PROFIT_COLOR = "#2f9e5b", OTHER_COLOR = "#8a8178";
 const COST_PARTS = [...ROLES.map(r => ({ key: r.key, label: `${r.name} cost`, color: r.color })), { key: "other", label: "Other materials (price list)", color: OTHER_COLOR }];
 // The raw materials in some order lines and what they cost. Ingots are smelted back to ore and fuel; strips at half price count as half a strip.
@@ -2633,6 +2924,7 @@ function stockCost(lines) {
   const add = (k, q, c) => { const x = raw.get(k) || { q: 0, c: 0 }; x.q += q; x.c += c; raw.set(k, x); };
   const walk = (k, q, depth, top) => {
     if (k === "strips-half") return walk("leather-strips", q * 0.5, depth);
+    if (k === "leather-half") return walk("leather", q * 0.125, depth);
     const qi = QUICK_ITEMS.find(x => x.id === k);
     if (qi) { const c = q * matCost(k) / (1 + QUICK_PROFIT / 100); by.other += c; add("quick:" + k, q, c); return; }
     const sk = STOCK_MAT[k];
@@ -2773,12 +3065,18 @@ function forgeFunds() {
   for (const h of state.buyHistory || []) if (h.at > f.at && !(h.by && h.by !== "ForgeMaster")) out += h.qty * h.price;
   return { ...f, inc: round2(inc), out: round2(out), now: round2(f.base + inc - out) };
 }
+let fundsDraft = "";   // what's typed in Set funds survives any redraw (another person's save, a timer) until it's submitted
 function renderFunds() {
-  const f = forgeFunds(), box = $("fundsBox");
-  if (box.contains(document.activeElement)) return;
-  box.innerHTML = `<div><div class="fl">Forge funds</div><div class="fv${f.now < 0 ? " neg" : ""}">${coins(f.now)} coins</div></div>
-    <form id="fundsForm"><label class="vh" for="fundsSet">Set forge funds</label><input id="fundsSet" type="number" step="0.01" placeholder="${f.now}" aria-label="Set forge funds"><button class="btn-ghost" type="submit">Set funds</button></form>
-    <p class="hint">${coins(f.base)} on ${shortDate(f.at)}${f.inc ? `, +${coins(f.inc)} from sell orders` : ""}${f.out ? `, −${coins(f.out)} on buy orders` : ""}. Updates by itself with every forge sell and buy order; use Set funds to correct it.</p>`;
+  const f = { ...forgeFunds() }, box = $("fundsBox");
+  // Test P: the sample day's sales come in, its buys and commissions go out (shown only while Test P is on).
+  let tpLine = "";
+  if (testP) { const tp = testProfitData(), tin = round2(tp.sales.reduce((a, x) => a + x.final, 0)), tout = round2(tp.buys.reduce((a, x) => a + x.qty * x.price, 0)), tcom = round2(tp.comms.reduce((a, x) => a + x.amount, 0));
+    f.now = round2(f.now + tin - tout - tcom); tpLine = ` <b>Test P:</b> +${coins(tin)} test sales, −${coins(tout)} test buys, −${coins(tcom)} test commissions.`; }
+  if (document.activeElement && document.activeElement.id === "fundsSet") return;
+  box.classList.toggle("test-p", testP);
+  box.innerHTML = `<div><div class="fl">Forge funds${testP ? " (with Test P)" : ""}</div><div class="fv${f.now < 0 ? " neg" : ""}">${coins(f.now)} coins</div></div>
+    <form id="fundsForm"><label class="vh" for="fundsSet">Set forge funds</label><input id="fundsSet" type="number" step="0.01" placeholder="${f.now}" value="${esc(fundsDraft)}" aria-label="Set forge funds"><button class="btn-ghost" type="submit">Set funds</button></form>
+    <p class="hint">${coins(f.base)} on ${shortDate(f.at)}${f.inc ? `, +${coins(f.inc)} from sell orders` : ""}${f.out ? `, −${coins(f.out)} on buy orders` : ""}. Updates by itself with every forge sell and buy order; use Set funds to correct it.${tpLine}</p>`;
 }
 // Removing a paid sell order or a received buy order from the records (ForgeMaster only). Profit, Forge funds and Trends update;
 // the stockpile is left as it is (use Add / Remove on the stockpile if goods need correcting).
@@ -2956,7 +3254,10 @@ function renderProfit() {
   $("pfPeriod").querySelectorAll("[data-pfp]").forEach(b => b.setAttribute("aria-pressed", b.dataset.pfp === pfPeriod));
   // Apprentices' sell and buy orders (and their donations) are theirs: they don't count toward the forge's profit.
   const apprIds = new Set((state.apprWork || []).filter(w => w.kind === "sell").map(w => w.id));
-  const sales = paidSales().filter(s => inPeriod(s.at) && !(s.orderId && apprIds.has(s.orderId)));
+  const tp = testP ? testProfitData() : null;
+  $("testP").setAttribute("aria-pressed", testP); $("testPNote").hidden = !testP;
+  if (tp) $("testPNote").innerHTML = `<b>Test P:</b> ${tp.sales.length} sample sales, ${tp.buys.length} buys from employees and ${tp.comms.length} commissions are added below (marked "test"), including the promotion test run (1000 Iron from Orlog sold inside iron equipment). Nothing is saved.`;
+  const sales = [...(tp ? tp.sales : []), ...paidSales().filter(s => inPeriod(s.at) && !(s.orderId && apprIds.has(s.orderId)))];
   const sum = { gross: 0, cost: zeroSplit(), mat: 0, paid: 0, profit: 0 }, raw = new Map();
   for (const s of sales) {
     const x = saleProfit(s); sum.gross += x.gross; sum.mat += x.mat; sum.paid += x.paid; sum.profit += x.profit;
@@ -2967,26 +3268,88 @@ function renderProfit() {
   for (const k of ["gross", "mat", "paid", "profit"]) sum[k] = round2(sum[k]);
   for (const r in sum.cost) sum.cost[r] = round2(sum.cost[r]);
   // Profit here is simply sell orders minus buy orders: 100 iron bought at 0.40 is −40, a sword sold for 26 is +26.
-  const forgeBuys = (state.buyHistory || []).filter(x => inPeriod(x.at) && !(x.by && x.by !== "ForgeMaster"));
+  const forgeBuys = [...(tp ? tp.buys : []), ...(state.buyHistory || []).filter(x => inPeriod(x.at) && !(x.by && x.by !== "ForgeMaster"))];
   const buyCost = round2(forgeBuys.reduce((a, x) => a + x.qty * x.price, 0));
-  const total = round2(sum.gross - buyCost);
+  const comms = [...(tp ? tp.comms : []), ...(state.commissions || []).filter(c => inPeriod(c.at))], commCost = round2(comms.reduce((a, c) => a + c.amount, 0));
+  const total = round2(sum.gross - buyCost - commCost);
   $("pfTiles").innerHTML = `<div class="ms-tile"><span>Sell order income</span><b>${coins(sum.gross)}</b></div>
     <div class="ms-tile"><span>Buy order cost</span><b class="${buyCost > 0.004 ? "loss" : ""}">${buyCost > 0.004 ? "−" : ""}${coins(buyCost)}</b></div>
+    ${commCost > 0.004 ? `<div class="ms-tile"><span>Commissions</span><b class="loss">−${coins(commCost)}</b></div>` : ""}
     <div class="ms-tile"><span>Profit</span><b class="${total >= 0 ? "gain" : "loss"}">${signed(total)}</b></div>
     <div class="ms-tile"><span>Margin</span><b class="${total >= 0 ? "gain" : "loss"}">${sum.gross > 0.004 ? pctOf(total, sum.gross) : "–"}</b></div>`;
-  const pieSvgHtml = (sum.gross > 0.004 || buyCost > 0.004) ? pieSvg([{ label: "Profit", value: Math.max(0, total), color: PROFIT_COLOR }, { label: "Buy order cost", value: buyCost, color: BUYCOST_COLOR }], [signed(total), "profit"], "ppall") : "";
-  const pie = pieSvgHtml ? `<h3 class="sub-h">Profit and buy order cost</h3><div class="pie-box">${pieSvgHtml}</div>${total < -0.004 ? `<p class="hint" style="margin:0">Buy orders cost ${coins(-total)} coins more than sell orders brought in this period.</p>` : ""}` : "";
+  const pieSvgHtml = (sum.gross > 0.004 || buyCost > 0.004) ? pieSvg([{ label: "Profit", value: Math.max(0, total), color: PROFIT_COLOR }, { label: "Buy order cost", value: buyCost, color: BUYCOST_COLOR },
+    ...(commCost > 0.004 ? [{ label: "Commissions", value: commCost, color: COMM_COLOR }] : [])], [signed(total), "profit"], "ppall") : "";
+  const pie = pieSvgHtml ? `<h3 class="sub-h">${commCost > 0.004 ? "Profit, buy order cost and commissions" : "Profit and buy order cost"}</h3><div class="pie-box">${pieSvgHtml}</div>${total < -0.004 ? `<p class="hint" style="margin:0">Buy orders cost ${coins(-total)} coins more than sell orders brought in this period.</p>` : ""}` : "";
   if ($("pfPie").dataset.html !== pie) { $("pfPie").dataset.html = pie; $("pfPie").innerHTML = pie; }
   $("pfMats").innerHTML = "";
   $("pfRows").innerHTML = sales.length ? `<div class="cat-wrap"><table class="val pie-table bh-table"><thead><tr><th scope="col">Date</th><th scope="col">Customer</th><th scope="col">Items</th><th scope="col">Income</th><th scope="col"><span class="vh">Remove</span></th></tr></thead><tbody>
-    ${sales.slice(0, 200).map(x => `<tr><td>${shortDate(x.at)}</td><td>${esc(x.who)}</td><td class="bh-items">${esc(x.text)}</td><td class="gain">+${coins(x.final)}</td><td>${pfDelBtn("s:" + x.key)}</td></tr>`).join("")}
+    ${sales.slice(0, 200).map(x => `<tr><td>${shortDate(x.at)}</td><td>${esc(x.who)}</td><td class="bh-items">${esc(x.text)}</td><td class="gain">+${coins(x.final)}</td><td>${x.test ? `<span class="hint">test</span>` : pfDelBtn("s:" + x.key)}</td></tr>`).join("")}
     </tbody></table></div>${sales.length > 200 ? `<p class="hint">Showing the latest 200 of ${sales.length}.</p>` : ""}` : `<div class="empty">No paid sell orders ${pfPeriod === "all" ? "yet" : "in this period"}.</div>`;
+  renderPfComm(comms, commCost);
   const buys = forgeBuys;
   $("pfBuyTiles").innerHTML = `<div class="ms-tile"><span>Deliveries</span><b>${buys.length}</b></div><div class="ms-tile"><span>Spent</span><b>${coins(buyCost)}</b></div>`;
   $("pfBuyRows").innerHTML = buys.length ? `<div class="cat-wrap"><table class="val pie-table bh-table"><thead><tr><th scope="col">Date</th><th scope="col">Seller</th><th scope="col">Item</th><th scope="col">Paid</th><th scope="col"><span class="vh">Remove</span></th></tr></thead><tbody>
-    ${buys.slice(0, 200).map(x => `<tr><td>${shortDate(x.at)}</td><td>${esc(x.who)}</td><td class="bh-items">${x.qty.toLocaleString()} × ${esc(buyName(x.item))}</td><td class="loss">${x.price > 0 ? "−" + coins(round2(x.qty * x.price)) : "free"}</td><td>${pfDelBtn("b:" + buyKey(x))}</td></tr>`).join("")}
+    ${buys.slice(0, 200).map(x => `<tr><td>${shortDate(x.at)}</td><td>${esc(x.who)}</td><td class="bh-items">${x.qty.toLocaleString()} × ${esc(buyName(x.item))}</td><td class="loss">${x.price > 0 ? "−" + coins(round2(x.qty * x.price)) : "free"}</td><td>${x.test ? `<span class="hint">test</span>` : pfDelBtn("b:" + buyKey(x))}</td></tr>`).join("")}
     </tbody></table></div>${buys.length > 200 ? `<p class="hint">Showing the latest 200 of ${buys.length}.</p>` : ""}` : `<div class="empty">No buy orders received ${pfPeriod === "all" ? "yet" : "in this period"}.</div>`;
 }
+const COMM_COLOR = "#b07ad6";
+// "Test P": sample sales, buys and commissions shown on the Profit tab only (not saved), to see how commissions change profit. Off on every load.
+let testP = false;
+// A sensible day at the forge: buy only the ore and fuel the orders need, from the employees, at the forge's own buy prices; smelt exactly
+// that; sell the goods at the usual +20% fee; and let the real commission rules decide who earns what. Worked out on a copy, never saved.
+let testPCache = null;
+function testProfitData() {
+  if (testPCache) return testPCache;
+  const now = Date.now(), m = 60000, nm = (n, p) => (state.employees.find(e => sameName(e.name, n)) || state.employees.find(e => e.prof === p) || { name: n }).name;
+  const ore = nm("Orlog", "prospector"), wood = nm("Sylvester", "woodcutter"), wood2 = nm("Oswald", "woodcutter");
+  const smelt = { "iron-ingot": 7, "steel-ingot": 4 };   // Iron Armor 5 + Steel Sword 1 + Steel Helmet 1 Iron Ingots; Steel Sword 2 + Steel Helmet 2 Steel Ingots
+  const need = {}; for (const [k, q] of Object.entries(smelt)) for (const x of smeltNeeds(k, q)) need[x.key] = (need[x.key] || 0) + x.need;
+  const sellers = { iron: ore, corundum: ore, poor: wood2, regular: wood };
+  const buys = Object.entries(need).map(([k, q], i) => ({ at: now - (120 - i * 5) * m, who: sellers[k], item: k, qty: q, price: buyPriceFor(k, q).price, by: "ForgeMaster", test: true }));
+  const orders = [["Bjorn", [["iron-armor", 1]], 60], ["Ra'Jahn", [["steel-sword", 1]], 45], ["Hroki", [["steel-helmet", 1]], 30], ["Lisbet", [["weapon-repair-kits", 5]], 20], ["Bjorn", [["keys", 2]], 10]];
+  const saved = state, cl = v => JSON.parse(JSON.stringify(v || []));
+  state = { ...saved, stock: Object.fromEntries(ALL.map(o => [o.key, 0])), ingots: {}, lots: [], ingotLots: [], commBank: [] };
+  state.stock.leatherstrips = 50;   // strips the forge already had (not from an employee)
+  const sales = [], comms = [];
+  try {
+    for (const b of buys) { state.stock[b.item] += b.qty; addLot(b.who, b.item, b.qty); }
+    for (const [k, q] of Object.entries(smelt)) smeltNow(k, q);
+    orders.forEach(([cust, ls], i) => {
+      const lines = ls.map(([id, qty]) => { const it = catalog().find(x => x.id === id) || { name: id, base: 0, cat: "" }; return { itemId: id, item: it.name, qty, base: it.base, fixed: it.cat === "Common items" }; });
+      const final = orderQuote(lines.map(l => ({ qty: l.qty, base: l.base, fixed: l.fixed })), 20, 0).fin;
+      const sale = { key: "tp" + i, orderId: "tpo" + i, at: now - orders[i][2] * m, who: cust + " (test)", text: linesText(lines), final, lines, contribs: [], test: true };
+      sales.push(sale);
+      const plan = planCommission(final, takeOrderStock(lines), false);
+      for (const w of plan.winners) comms.push({ id: "tpc" + i + w.who, orderId: sale.orderId, at: sale.at, customer: sale.who, lines: lines.map(l => ({ qty: l.qty, name: l.item })), final, who: w.who, role: w.role,
+        pct: w.pct, split: !!w.split, share: w.fromBank ? null : round2(w.share * 100), fromBank: !!w.fromBank, amount: w.amount, test: true });
+    });
+  } finally { state = saved; }
+  const pr = promoTest();   // plus the promotion test run
+  return (testPCache = { sales: [...sales, ...pr.sales].sort((a, b) => b.at - a.at), buys: [...buys, ...pr.buys].sort((a, b) => b.at - a.at), comms: [...comms, ...pr.comms] });
+}
+// "Test C": the practice commission orders, shown in this section only (not saved, not counted in profit). Off every time the page loads.
+let testC = false;
+const TEST_COMMS = (() => { const t = Date.now(); return [{"id": "tc0", "orderId": "tco0", "customer": "Order5 (test)", "lines": [{"qty": 3, "name": "Steel Ingot"}], "final": 34.2, "who": "Sylvester", "role": "fuel", "share": 100, "amount": 0.68, "test": true}, {"id": "tc1", "orderId": "tco1", "customer": "Order4 (test)", "lines": [{"qty": 5, "name": "Corundum Ore"}], "final": 3, "who": "Orlog", "role": "ore", "fromBank": true, "amount": 0.06, "test": true}, {"id": "tc2", "orderId": "tco2", "customer": "Order3 (test)", "lines": [{"qty": 20, "name": "Iron Ore"}], "final": 12, "who": "Orlog", "role": "ore", "fromBank": true, "amount": 0.24, "test": true}, {"id": "tc3", "orderId": "tco3", "customer": "Order2 (test)", "lines": [{"qty": 2, "name": "Iron Ingot"}], "final": 14.4, "who": "Oswald", "role": "fuel", "share": 100, "amount": 0.29, "test": true}, {"id": "tc4", "orderId": "tco4", "customer": "Order1 (test)", "lines": [{"qty": 3, "name": "Steel Ingot"}], "final": 34.2, "who": "Sylvester", "role": "fuel", "share": 100, "amount": 0.68, "test": true}].map((c, i) => ({ ...c, at: t - (i + 1) * 1000 })); })();
+const TEST_BANK = (() => { const t = Date.now(); return [{"id": "tb0", "who": "Orlog", "role": "ore", "mats": {"corundum": 4}, "customer": "Order1 (test)", "test": true}, {"id": "tb1", "who": "Orlog", "role": "ore", "mats": {"iron": 9, "corundum": 9}, "customer": "Order5 (test)", "test": true}].map((b, i) => ({ ...b, at: t - (5 - i) * 1000 })); })();
+// Commissions on the Profit tab: every commission in the period, whether it's still owed, and the claims waiting in the bank.
+function renderPfComm(comms, commCost) {
+  $("testC").setAttribute("aria-pressed", testC);
+  if (testC) { const pc = promoTest().comms; comms = [...TEST_COMMS, ...pc, ...comms]; commCost = round2(commCost + [...TEST_COMMS, ...pc].reduce((a, c) => a + c.amount, 0)); }
+  const owedIds = new Set(state.debts.filter(d => d.item === "coins" && d.orderId).map(d => d.orderId + "|" + String(d.who).toLowerCase()));
+  const isOwed = c => c.test || owedIds.has(c.orderId + "|" + c.who.toLowerCase());
+  const open = comms.filter(isOwed);
+  $("pfCommTiles").innerHTML = `<div class="ms-tile"><span>Commission sales</span><b>${comms.length}</b></div><div class="ms-tile"><span>Commissions</span><b class="${commCost > 0.004 ? "loss" : ""}">${commCost > 0.004 ? "−" : ""}${coins(commCost)}</b></div>
+    <div class="ms-tile"><span>Still owed</span><b>${coins(round2(open.reduce((a, c) => a + c.amount, 0)))}</b></div>`;
+  $("pfCommRows").innerHTML = comms.length ? `<div class="cat-wrap"><table class="val pie-table bh-table"><thead><tr><th scope="col">Date</th><th scope="col">Employee</th><th scope="col">Order</th><th scope="col">Why</th><th scope="col">Commission</th><th scope="col">Status</th></tr></thead><tbody>
+    ${comms.slice(0, 200).map(c => `<tr><td>${shortDate(c.at)}</td><td>${esc(c.who)}</td><td class="bh-items">${esc(c.customer)}: ${c.lines.map(l => `${l.qty} × ${esc(l.name)}`).join(", ")} <span class="hint">(${coins(c.final)})</span></td>
+      <td>${c.fromBank ? "Deferred claim" : `${c.share}% of the ${(ROLE[c.role] || { name: "materials" }).name.toLowerCase()}${c.split ? ` (split ${c.pct}%)` : ""}`}</td><td class="loss">−${coins(c.amount)}</td><td>${c.test ? "Test" : isOwed(c) ? "Owed" : "Settled"}</td></tr>`).join("")}
+    </tbody></table></div>` : `<div class="empty">No commissions ${pfPeriod === "all" ? "yet" : "in this period"}.</div>`;
+  const bank = [...(testC ? TEST_BANK : []), ...(state.commBank || [])];
+  $("pfBank").innerHTML = bank.length ? `<h3 class="sub-h" style="margin-top:12px">Deferred claims waiting</h3><p class="hint" style="margin:0 0 8px">Employees who lost a commission to a bigger claim. Oldest first: each takes the next order made mostly of their kind of material. Employees don't see this list.</p>
+    <div class="cat-wrap"><table class="val pie-table"><thead><tr><th scope="col">Since</th><th scope="col">Employee</th><th scope="col">Kind</th><th scope="col">Claim left</th><th scope="col">From</th></tr></thead><tbody>
+    ${bank.map(b => `<tr><td>${shortDate(b.at)}</td><td>${esc(b.who)}</td><td>${(ROLE[b.role] || { name: "materials" }).name}</td><td>${esc(matsText(b.mats))}</td><td>${esc(b.customer || "")}'s order</td></tr>`).join("")}</tbody></table></div>` : "";
+}
+document.addEventListener("click", e => { if (e.target.closest("#testC")) { testC = !testC; render(); } if (e.target.closest("#testP")) { testP = !testP; testPCache = null; render(); } });
 // What bought goods are worth: stockpile goods at Stockpile value, other price-list items at their listed cost.
 function buyValue(item, qty) {
   if (PRICE[item] != null) return round2(PRICE[item] * qty);
@@ -3237,7 +3600,7 @@ function renderBuyPrices() {
   $("bpNormH").textContent = `Normal (up to ${cfg.normalMax.toLocaleString()})`;
   $("bpBulkH").textContent = `Bulk order (${cfg.bulkMin.toLocaleString()}+)`;
   $("bpCfg").hidden = !unlocked;
-  const sig = JSON.stringify([cfg, state.status || {}, unlocked, apprView()]);
+  const sig = JSON.stringify([cfg, allStatuses(), unlocked, apprView()]);
   if (sig === bpSig) return;
   bpSig = sig;
   if (unlocked) { $("bpNormalMax").value = cfg.normalMax; $("bpBulkMin").value = cfg.bulkMin; }
@@ -3441,7 +3804,7 @@ function renderOrders() {
       const k1 = "as:" + e.id, k2 = "ab:" + e.id;
       // Employees who owe the forge are highlighted red.
       return `<div class="acct${owes.length ? " owes-forge" : ""}">
-        <div class="top"><span class="nm">${esc(e.name)}</span><span class="job">${e.prof ? PROF[e.prof].name : "Any job"}</span>${owes.length ? `<span class="owe-badge">Owes the forge</span>` : ""}</div>
+        <div class="top"><span class="nm">${esc(e.name)}</span><span class="job">${testR && sameName(promoTest().ore, e.name) && RANK_PROFS.has(e.prof) && promoTest().progress.rank > (e.rank || 0) ? `${RANK_NAME[promoTest().progress.rank]} ${PROF[e.prof].name.toLowerCase()} (test)` : profTitle(e)}</span>${owes.length ? `<span class="owe-badge">Owes the forge</span>` : ""}</div>
         <h4>Sold to the forge</h4>
         <div class="cust-stats"><span>Deliveries <b>${sold.length}</b></span><span>Paid out <b>${coins(soldT)}</b></span></div>
         ${sold.length ? `<details data-cust="${k1}" ${openCust.has(k1) ? "open" : ""}><summary>Item history (${sold.length})</summary><ul class="hist">${sold.map(x => `<li><time>${shortDate(x.at)}</time><span>${x.qty.toLocaleString()} × ${esc(buyName(x.item))}</span><span class="c">${coins(x.qty * x.price)}</span></li>`).join("")}</ul></details>` : ""}
@@ -3458,7 +3821,10 @@ function renderOrders() {
 
   // An employee's own debts
   const dEmp = !unlocked ? currentEmp() : null;
-  $("myDebtSec").hidden = !dEmp || isApprentice(dEmp);
+  // Shown only while the employee has an active debt either way (or a debt request still waiting on the ForgeMaster).
+  const hasDebt = dEmp && (state.edebts.some(d => sameName(d.who, dEmp.name)) || state.debts.some(d => sameName(d.who, dEmp.name))
+    || (state.debtRequests || []).some(r => sameName(r.who, dEmp.name)) || (state.resolveReqs || []).some(r => sameName(r.who, dEmp.name)));
+  $("myDebtSec").hidden = !dEmp || isApprentice(dEmp) || !hasDebt;
   if (dEmp) {
     const owe = state.edebts.filter(d => sameName(d.who, dEmp.name)), owed = state.debts.filter(d => sameName(d.who, dEmp.name));
     $("mdOwe").innerHTML = owe.length ? owe.map(d => {
@@ -3536,7 +3902,7 @@ function renderOrders() {
   }
   updateSellQuote(); updateBuyQuote();
 }
-const blank = () => ({ stock: Object.fromEntries(ALL.map(o => [o.key, 0])), pending: [], debts: [], edebts: [], levels: null, status: {}, loyalty: null, prices: {}, contribValue: {}, buyCfg: null, buys: [], buyHistory: [], payments: [], sells: [], customers: [], catalog: null, recipes: {}, debtSales: [], debtRequests: [], purchaseReqs: [], resolveReqs: [], saleRemovals: [], employees: [], contrib: {}, log: [] });
+const blank = () => ({ stock: Object.fromEntries(ALL.map(o => [o.key, 0])), ingots: {}, pending: [], debts: [], edebts: [], levels: null, status: {}, loyalty: null, prices: {}, contribValue: {}, buyCfg: null, buys: [], buyHistory: [], payments: [], sells: [], customers: [], catalog: null, recipes: {}, debtSales: [], debtRequests: [], purchaseReqs: [], resolveReqs: [], saleRemovals: [], employees: [], contrib: {}, log: [] });
 let empFilter = "";
 let fmView = "all", bsMode = "sell", purchaseMode = true;   // Purchase mode: only Buy / Sell, Stockpiles and Profit tabs
 const PM_VIEWS = ["buysell", "stock", "profit"];
@@ -3548,9 +3914,11 @@ try { fmView = sessionStorage.getItem("fm-view") || "all"; } catch (_) {}
 let apView = "sell", apFor = "", apStock = "forge";
 function applyView() {
   $("fmTabs").hidden = !unlocked;
+  $("ingotBar").hidden = $("ingotSec").hidden = $("craftSec").hidden = $("ingotLvlSec").hidden = true;
   if (unlocked && priceMode) fmView = "prices";
   else if (unlocked && fmView === "prices") fmView = "buysell";
   if (unlocked && !priceMode && purchaseMode && !PM_VIEWS.includes(fmView)) { fmView = "buysell"; bsMode = "sell"; }
+  if (unlocked && !priceMode && !purchaseMode && (PM_VIEWS.includes(fmView) || fmView === "all")) fmView = "trends";   // Purchase mode off: Stockpiles, Buy / Sell and Profit are hidden; no Everything tab
   const ap = typeof apprView === "function" && apprView(), apEmp = ap ? currentEmp() : null;
   $("apTabs").hidden = !ap;
   if (ap) {
@@ -3575,9 +3943,12 @@ function applyView() {
   const v = unlocked ? fmView : "all";
   document.querySelectorAll("[data-views]").forEach(el => el.classList.toggle("view-off", v !== "all" && !el.dataset.views.split(" ").includes(v)));
   $("bsToggle").hidden = v !== "buysell";
+  // Ingot view (ForgeMaster, Stockpiles tab): only the ingot stockpile and Crafted ingots show.
+  if (unlocked && v === "stock") { $("ingotBar").hidden = false; $("ingotSec").hidden = $("craftSec").hidden = $("ingotLvlSec").hidden = !ingotView;
+    if (ingotView) document.querySelectorAll("[data-views]").forEach(el => { if (!["ingotBar", "ingotSec", "craftSec", "ingotLvlSec"].includes(el.id) && el.dataset.views.split(" ").includes("stock")) el.classList.add("view-off"); }); }
   document.querySelectorAll("[data-bs]").forEach(el => { if (el.tagName === "SECTION") el.classList.toggle("bs-off", v === "buysell" && el.dataset.bs !== bsMode); });
   $("bsToggle").querySelectorAll("[data-bs]").forEach(b => b.setAttribute("aria-selected", b.dataset.bs === bsMode));
-  $("fmTabs").querySelectorAll("[data-view]").forEach(b => { b.setAttribute("aria-selected", b.dataset.view === v); b.hidden = priceMode ? b.dataset.view !== "prices" : b.dataset.view === "prices" || (purchaseMode && !PM_VIEWS.includes(b.dataset.view)); });
+  $("fmTabs").querySelectorAll("[data-view]").forEach(b => { b.setAttribute("aria-selected", b.dataset.view === v); b.hidden = priceMode ? b.dataset.view !== "prices" : b.dataset.view === "prices" || b.dataset.view === "all" || (purchaseMode ? !PM_VIEWS.includes(b.dataset.view) : PM_VIEWS.includes(b.dataset.view)); });
   $("pcToggle").setAttribute("aria-pressed", priceMode);
   $("pmToggle").setAttribute("aria-pressed", purchaseMode);
 }
@@ -3588,11 +3959,13 @@ const DEFAULT_LEVELS = {
   firewood: { low: 20, high: 50 }, poor: { low: 50, high: 200 }, regular: { low: 50, high: 200 },
   briquettes: { low: 5, high: 50 }, coke: { low: 5, high: 10 },
   leather: { low: 10, high: 60 }, leatherstrips: { low: 10, high: 30 },
+  dwarven: { low: 2, high: 5 },   // Dwarven Metal Ingots: shown and set in Ingot view
 };
 const STATUS = [
   { key: "", name: "Collecting" },
   { key: "halt", name: "Not buying" },
   { key: "need", name: "High need" },
+  { key: "dire", name: "Dire need" },
 ];
 const STATUS_NAME = Object.fromEntries(STATUS.map(x => [x.key, x.name]));
 const levelsMap = () => ({ ...DEFAULT_LEVELS, ...(state.levels || {}) });
@@ -3604,7 +3977,30 @@ function levelClass(k, n) {
   return "lv-yellow";
 }
 const LEVEL_TEXT = { "lv-red": "Low stock", "lv-yellow": "Additional stock needed", "lv-green": "Well stocked" };
-const statusOf = k => (state.status && state.status[k]) || "";
+// AutoStock Pile for the main stockpile (on unless the ForgeMaster turns it off): Not buying at double the goal ("Green at") or more,
+// High need below half of it (never for Quicksilver, Moonstone, Orichalcum, Briquettes, Coke or Leather Strips), otherwise Collecting.
+// Items with no goal are left to the ForgeMaster.
+const autoStockOn = () => !state.autoStockOff;
+const CORE_MATS = new Set(["iron", "corundum", "poor", "regular"]);   // Iron, Corundum, Poor Charcoal, Charcoal: Dire need below a third of the goal
+function mainAutoStatus(k, n) {
+  const l = levelFor(k), goal = l && l.high;
+  if (goal == null) return null;
+  if (n >= goal * 2) return "halt";
+  if (n < goal / 3 && CORE_MATS.has(k)) return "dire";   // core materials below a third of the goal
+  if (n < goal / 2) return PERS_NO_NEED.has(k) ? "" : "need";
+  return "";
+}
+// A status the ForgeMaster picked by hand is kept: AutoStock Pile never changes that item until it's set back to "Auto".
+const isManualStatus = k => !!(state.statusManual && state.statusManual[k]);
+const isAutoStatus = k => autoStockOn() && !isManualStatus(k) && mainAutoStatus(k, state.stock[k] || 0) != null;
+const statusOf = k => {
+  if (isAutoStatus(k)) return mainAutoStatus(k, state.stock[k] || 0);
+  const set = (state.status && state.status[k]) || "";
+  // A hand-set High need still steps up to Dire need when a core material drops below a third of its goal.
+  if (set === "need" && autoStockOn() && CORE_MATS.has(k) && mainAutoStatus(k, state.stock[k] || 0) === "dire") return "dire";
+  return set;
+};
+const allStatuses = () => Object.fromEntries(ALL.map(o => [o.key, statusOf(o.key)]));
 const statusBadge = k => { const st = statusOf(k); return st ? `<span class="stat-badge ${st}">${STATUS_NAME[st]}</span>` : ""; };
 const PROFESSIONS = [
   { key: "", name: "Any (all items)", group: null },
@@ -3673,7 +4069,10 @@ let logWho = "";
 function renderLevels() {
   $("lvlSec").hidden = !unlocked;
   if (!unlocked) return;
-  const sig = JSON.stringify([levelsMap(), state.status || {}]);
+  const sig = JSON.stringify([levelsMap(), allStatuses(), autoStockOn(), state.statusManual || {}]);
+  $("autoStockBtn").textContent = autoStockOn() ? "Disable AutoStock Pile" : "Enable AutoStock Pile";
+  $("autoStockBtn").className = autoStockOn() ? "btn-ghost" : "btn-add";
+  $("autoStockHint").textContent = autoStockOn() ? "AutoStock Pile is on: Not buying at double the goal (\"Green at\") or more, High need below half of it, Dire need below a third of it for Iron, Corundum, Poor Charcoal and Charcoal (High need never for Quicksilver, Moonstone, Orichalcum, Briquettes, Coke or Leather Strips). Anything you pick by hand stays as you set it; pick \"Auto\" to hand it back. Items with no goal are set by hand. Not buying items show no goal." : "AutoStock Pile is off: set Collecting yourself.";
   // Rebuild the table only when settings change, so typing isn't wiped by live refreshes; counts update every time.
   if (renderLevels.sig !== sig) {
     renderLevels.sig = sig;
@@ -3682,7 +4081,9 @@ function renderLevels() {
       return `<tr><td class="ore-c">${sw(o.key)}${o.name}</td><td class="n" id="ln-${o.key}"></td>
         <td><input type="number" min="0" step="1" data-lvl="${o.key}" data-edge="low" value="${l.low ?? ""}" aria-label="${o.name}: red below"></td>
         <td><input type="number" min="0" step="1" data-lvl="${o.key}" data-edge="high" value="${l.high ?? ""}" aria-label="${o.name}: green at"></td>
-        <td><select data-status="${o.key}" aria-label="${o.name}: collecting">${STATUS.map(x => `<option value="${x.key}" ${x.key === statusOf(o.key) ? "selected" : ""}>${x.name}</option>`).join("")}</select></td></tr>`;
+        <td>${(() => { const can = autoStockOn() && mainAutoStatus(o.key, state.stock[o.key] || 0) != null, auto = isAutoStatus(o.key), st = statusOf(o.key);
+          const autoOpt = can ? `<option value="auto" ${auto ? "selected" : ""}>Auto (${STATUS_NAME[mainAutoStatus(o.key, state.stock[o.key] || 0)].toLowerCase()})</option>` : "";
+          return `<select data-status="${o.key}" aria-label="${o.name}: collecting" class="${isManualStatus(o.key) && can ? "st-manual" : ""}">${autoOpt}${STATUS.map(x => `<option value="${x.key}" ${!auto && x.key === st ? "selected" : ""}>${x.name}${can && !auto && x.key === st ? " (set by hand)" : ""}</option>`).join("")}</select>`; })()}</td></tr>`;
     }).join("")).join("");
   }
   for (const o of ALL) { const td = $("ln-" + o.key); if (!td) continue; const n = state.stock[o.key] || 0; td.textContent = n.toLocaleString(); td.className = "n " + levelClass(o.key, n); }
@@ -3690,7 +4091,7 @@ function renderLevels() {
 function buildHoldOptions() {
   const signed = currentEmp();
   const who = signed && !unlocked ? signed.name : $("holdWho").value;
-  const groups = allowedGroups(who), key = groups.map(g => g.id).join(",") + JSON.stringify(state.status || {});
+  const groups = allowedGroups(who), key = groups.map(g => g.id).join(",") + JSON.stringify(allStatuses());
   if ($("holdOre").dataset.groups === key) return;
   $("holdOre").dataset.groups = key;
   setSelect($("holdOre"), groups.map(g => `<optgroup label="${g.label} (${g.who})">` +
@@ -3853,7 +4254,9 @@ const HELP_VIDS = {
   hunter: { src: "hunter-how-to.mp4", title: "Hunters: logging your leather" },
   sell: { src: "sell-how-to.mp4", title: "Sell orders: how to sell" },
   buy: { src: "buy-how-to.mp4", title: "Buy orders: buying materials" },
+  comm: { src: "commission-how-to.mp4", title: "Commissions: sales from your materials" },
 };
+const COMM_PROFS = new Set(["prospector", "woodcutter", "hunter"]);
 // Seen-state for a video key: on the employee record (synced), or this browser for the ForgeMaster.
 function videoSeen(key, emp) {
   if (emp && (emp.sawHelpFor || []).includes(key)) return true;
@@ -3887,6 +4290,7 @@ function syncBuyPendingBtn() {
   btn.textContent = left > 0 ? `Add all their pending (${left.toLocaleString()})` : "All their pending is in the order";
 }
 function renderSellHelpBtn() {
+  $("testS").hidden = !unlocked; $("testS").setAttribute("aria-pressed", testS && unlocked); $("sellNoCommWrap").hidden = !unlocked;
   const emp = !unlocked && currentEmp(), show = unlocked || (emp && isApprentice(emp));
   for (const [id, key] of [["sellHelpBtn", "sell"], ["buyHelpBtn", "buy"]]) {
     const btn = $(id); btn.hidden = !show; if (!show) continue;
@@ -3896,7 +4300,15 @@ function renderSellHelpBtn() {
 }
 // Job videos ("job:<profession>"): "WATCH THIS!!" until the video has been watched to the end once, then "Need help?".
 const helpSeen = emp => videoSeen("job:" + emp.prof, emp);
+// Commission video: prospectors, wood cutters and hunters. "WATCH THIS!!" until watched to the end once, then "Need help?".
+function renderCommBtn() {
+  const emp = !unlocked && currentEmp(), btn = $("commVidBtn");
+  btn.hidden = !(emp && COMM_PROFS.has(emp.prof)); if (btn.hidden) return;
+  const seen = videoSeen("comm", emp);
+  btn.textContent = seen ? "Need help?" : "WATCH THIS!!"; btn.classList.toggle("seen", seen);
+}
 function renderHelpBtn() {
+  renderCommBtn();
   const emp = !unlocked && currentEmp(), btn = $("helpVidBtn");
   btn.hidden = !(emp && HELP_VIDS[emp.prof]);
   if (btn.hidden) return;
@@ -3909,17 +4321,44 @@ function placeEmployeeView() {
   $("crown").classList.toggle("emp-off", !!emp); $("custCrown").classList.toggle("emp-off", !!emp);
   // Employees: the Ore Stockpile Ledger header, then the stockpiles (ore, charcoal, leather), then their Pending section.
   const last = $("sec-leather");
-  if (emp) { if (last.nextElementSibling !== sec) last.after(sec); }
+  if (emp) { if (last.nextElementSibling !== sec) last.after(sec); if (sec.nextElementSibling !== $("myRankSec")) sec.after($("myRankSec")); }
   else if ($("pendHome").nextElementSibling !== sec) $("pendHome").after(sec);
+}
+// Employee's own "Your progress" menu: the same progress bar as the roster, counted in coins, with a rough amount of their kind of material.
+const RANK_MAT = { prospector: ["iron", "Iron Ore", "ores"], woodcutter: ["regular", "Charcoal", "charcoal / wood"], hunter: ["leather", "Leather", "leather"] };
+function renderMyRank() {
+  const emp = !unlocked && currentEmp(), sec = $("myRankSec"), show = !!emp && !isApprentice(emp) && RANK_PROFS.has(emp.prof);
+  sec.hidden = !show; if (!show) return;
+  const x = rankStatus(emp), lc = leatherCost(), [mk, mName, mKind] = RANK_MAT[emp.prof], mc = rawCost(mk) || 1;
+  const cn = n => coins(round2(n)), eq = n => `≈ ${fmtQty(Math.round(n / mc))} ${mName}`;
+  const pct = x.top ? 100 : Math.floor(100 * (Math.min(x.bought, x.need) + Math.min(x.used, RANK_USED * x.need)) / ((1 + RANK_USED) * x.need));
+  const b = x.bought * lc, u = x.used * lc, need = (x.need || 0) * lc;
+  const tiles = `<div class="ms-tiles"><div class="ms-tile"><span>Rank</span><b style="font-family:inherit">${profTitle(emp)}</b></div>
+    <div class="ms-tile"><span>Commission rate</span><b>${RANK_PCT[x.r]}%</b></div>
+    <div class="ms-tile"><span>Commission earned</span><b class="gain">+${cn(x.earned)}</b></div>
+    <div class="ms-tile"><span>Next rank</span><b style="font-family:inherit">${x.top ? "Top rank" : `${x.next} · ${RANK_PCT[x.r + 1]}%`}</b></div></div>`;
+  if (x.top) { $("myRankBody").innerHTML = tiles + `<div class="pp-head"><span>Top rank reached</span><span class="pp-big">100%</span></div>
+    <div class="rank-bar r2 pp-main"><span style="width:100%"></span></div>
+    <div class="pp-note">Sold to the forge: ${cn(b)} coins' worth (${eq(b)}). Used in sales: ${cn(u)} coins' worth.</div>`; return; }
+  const row = (label, have, goal) => { const p = goal > 0 ? Math.min(100, Math.floor(100 * have / goal)) : 0, left = Math.max(0, goal - have);
+    return `<div class="pp-row${left < 0.005 ? " done" : ""}"><div class="pp-top"><span>${label}</span><b>${cn(have)} / ${cn(goal)}</b></div>
+      <div class="rank-bar r${x.r + 1}"><span style="width:${p}%"></span></div>
+      <div class="pp-sub">${left < 0.005 ? "Done ✓" : `${cn(left)} coins to go (${eq(left)})`}</div></div>`; };
+  $("myRankBody").innerHTML = tiles + `<div class="pp-head"><span>Progress to ${x.next}</span><span class="pp-big">${pct}%</span></div>
+    <div class="rank-bar r${x.r + 1} pp-main" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></div>
+    <div class="pp-rows">${row("Materials sold to the forge", b, need)}${row("Your materials used in sales", u, RANK_USED * need)}</div>
+    <div class="pp-note">Both must be done to be promoted. Counted in coins at the forge's material cost; ${mName} is a rough guide, all ${mKind} you sell the forge count.</div>`;
 }
 function render() {
   applyPrices();
   applyView();
+  renderMyRank();
+  renderIngots();
   renderCrown();
   placeEmployeeView();
   document.querySelectorAll("#ores .adjust, #coal .adjust, #leather .adjust").forEach(el => el.hidden = !unlocked);   // forge stockpile: ForgeMaster only; apprentices keep Add/Remove on their personal stockpile
   $("stockHint").hidden = unlocked;
-  $("emptyStockWrap").hidden = !unlocked; if (!unlocked) { $("emptyStockAsk").hidden = true; $("emptyStock").hidden = false; }
+  $("emptyStockWrap").hidden = !unlocked; $("testStock").setAttribute("aria-pressed", !!state.testStock); if (!unlocked) { $("emptyStockAsk").hidden = true; $("emptyStock").hidden = false; }
   $("valueSec").hidden = !unlocked;
   if (unlocked) {
     let vs = 0, vh = 0;
@@ -3932,9 +4371,13 @@ function render() {
       if (pr == null) return `<tr><td class="ore-c">${sw(o.key)}${o.name}</td><td class="na">${priceCell(o.key, pr) || "No price set"}</td><td>${n.toLocaleString()}</td><td class="na">–</td><td>${h.toLocaleString()}</td><td class="na">–</td></tr>`;
       const a = n * pr, b = h * pr; vs += a; vh += b;
       return `<tr><td class="ore-c">${sw(o.key)}${o.name}</td><td>${priceCell(o.key, pr) || coins(pr)}</td><td>${n.toLocaleString()}</td><td>${coins(a)}</td><td>${h.toLocaleString()}</td><td>${coins(b)}</td></tr>`;
-    }).join("")).join("");
+    }).join("")).join("") + (valIngots ? `<tr class="grp"><th colspan="6" scope="rowgroup">Ingots <span class="hint">(valued at material cost)</span></th></tr>` + INGOTS.map(i => {
+      const n = (state.ingots || {})[i.key] || 0, pr = ingotMatCost(i.key), a = n * pr; vs += a;
+      return `<tr><td class="ore-c">${i.name}</td><td title="${esc(smeltNeeds(i.key, 1).map(x => `${x.per} ${x.name}`).join(" + "))}">${coins(pr)}</td><td>${fmtQty(n)}</td><td>${coins(a)}</td><td class="na">–</td><td class="na">–</td></tr>`;
+    }).join("") : "");
     if (!typing) $("valBody").innerHTML = html;   // don't redraw under someone typing a price
     $("valEdit").textContent = valEditing ? "Done" : "Edit prices";
+    $("valIngToggle").setAttribute("aria-pressed", valIngots);
     $("valHint").textContent = valEditing ? "Type a new price and press Enter. Clear a box to go back to the built-in price." : "ForgeMaster only. Resale value at current prices, in coins.";
     $("valStock").textContent = coins(vs); $("valHeld").textContent = coins(vh);
     $("valBig").textContent = coins(vs) + " coins"; $("valAll").textContent = coins(vs + vh) + " coins";
@@ -3973,6 +4416,7 @@ function render() {
     $("h-" + o.key).textContent = h ? `+${h.toLocaleString()} pending` : "";
   }
   document.querySelectorAll("#ores .adjust, #coal .adjust, #leather .adjust").forEach(el => el.hidden = !unlocked);   // forge stockpile: ForgeMaster only; apprentices keep Add/Remove on their personal stockpile
+  if ($("card-dwarven")) $("card-dwarven").hidden = true;   // Dwarven Metal Ingots live in Ingot view (prospectors still log them under Pending)
   // Which stockpiles this viewer gets: everything for the ForgeMaster and visitors; only their own trade for a signed-in employee.
   const signedEmp = !unlocked ? currentEmp() : null;
   const viewGroups = new Set(unlocked ? GROUPS.map(g => g.id) : signedEmp ? allowedGroups(signedEmp.name).map(g => g.id) : []);
@@ -3980,11 +4424,11 @@ function render() {
   $("hdrTotals").hidden = !!signedEmp && !viewGroups.has("ores");
   for (const o of ALL) {
     const card = $("card-" + o.key); if (!card) continue;
-    card.classList.remove("lv-red", "lv-yellow", "lv-green", "st-halt", "st-need");
+    card.classList.remove("lv-red", "lv-yellow", "lv-green", "st-halt", "st-need", "st-dire");
     // Sufficiency colours: ForgeMaster sees all; a signed-in employee sees only their profession's items; visitors see none.
     const lc = viewGroups.has(groupOf(o.key).id) ? levelClass(o.key, state.stock[o.key] || 0) : "";
     if (lc) card.classList.add(lc);
-    const lt = $("lt-" + o.key), goal = lc ? levelFor(o.key).high : null;
+    const lt = $("lt-" + o.key), goal = lc && !(statusOf(o.key) === "halt" && isAutoStatus(o.key)) ? levelFor(o.key).high : null;
     lt.className = "lvl-txt " + lc; lt.textContent = lc ? LEVEL_TEXT[lc] + (goal != null ? ` (goal: ${goal.toLocaleString()})` : "") : "";
     const st = statusOf(o.key); if (st) card.classList.add("st-" + st);
     $("sb-" + o.key).innerHTML = statusBadge(o.key);
@@ -4039,7 +4483,8 @@ function render() {
   $("rosterRows").innerHTML = roster.length ? roster.map(e => {
     const held = state.pending.filter(p => p.who === e.name).reduce((a, p) => a + p.qty, 0);
     return `<div class="r-row">
-      <div><div class="nm">${esc(e.name)}</div><div class="sub">${held ? `${held.toLocaleString()} items pending` : "Nothing pending"}</div></div>
+      <div><div class="nm">${esc(e.name)}${(() => { const tr = testR && sameName(promoTest().ore, e.name) ? Math.max(promoTest().progress.rank, e.rank || 0) : 0, r = RANK_PROFS.has(e.prof) ? Math.max(e.rank || 0, tr) : 0;
+        return r ? ` <span class="rank-badge r${r}">${RANK_NAME[r]}${tr > (e.rank || 0) ? " (test)" : ""}</span>` : ""; })()}</div><div class="sub">${held ? `${held.toLocaleString()} items pending` : "Nothing pending"}</div>${rankLine(e)}</div>
       <div class="r-acts">
         <select data-prof-for="${e.id}" aria-label="Profession of ${esc(e.name)}">${PROFESSIONS.map(p => `<option value="${p.key}" ${p.key === (e.prof || "") ? "selected" : ""}>${p.name}</option>`).join("")}</select>
         <input id="rp-${e.id}" type="text" class="pin" inputmode="numeric" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" maxlength="12" placeholder="New PIN" aria-label="New PIN for ${esc(e.name)}" data-pin-for="${e.id}">
@@ -4329,16 +4774,83 @@ $("profitSec").addEventListener("click", e => {
   if (b.dataset.yes) { pfDelAsk = ""; removePaidOrder(k); render(); return; }
   pfDelAsk = k; render();
 });
+$("fundsBox").addEventListener("input", e => { if (e.target.id === "fundsSet") fundsDraft = e.target.value; });
 $("fundsBox").addEventListener("submit", e => {
-  e.preventDefault(); if (readOnly || !unlocked) return;
-  const raw = $("fundsSet").value.trim(), v = round2(Number(raw));
+  e.preventDefault(); if (readOnly || !unlocked) { toast("Sign in as ForgeMaster to set the forge funds."); return; }
+  const raw = ($("fundsSet").value || fundsDraft).trim(), v = round2(Number(raw));
   if (raw === "" || !Number.isFinite(v)) { toast("Enter the forge's coins."); return; }
   const was = forgeFunds().now;
-  state.funds = { base: v, at: Date.now() }; $("fundsSet").value = ""; $("fundsSet").blur();
+  state.funds = { base: v, at: Date.now() }; fundsDraft = ""; if (document.activeElement) document.activeElement.blur();
   commit({ kind: "hold-c", fm: true, text: `ForgeMaster set forge funds to ${coins(v)} coins (was ${coins(was)})` }); toast("Forge funds updated");
 });
 $("pfPeriod").addEventListener("click", e => { const b = e.target.closest("[data-pfp]"); if (!b) return; pfPeriod = b.dataset.pfp; render(); });
 
+$("valIngToggle").addEventListener("click", () => { valIngots = !valIngots; render(); });
+let ingBulkCraft = false;   // "Count as crafted": off every time the page loads
+$("ingotSec").addEventListener("click", e => {
+  if (e.target.closest("#ingBulkCraft")) { ingBulkCraft = !ingBulkCraft; e.target.closest("#ingBulkCraft").setAttribute("aria-pressed", ingBulkCraft); return; }
+  const b = e.target.closest("[data-ingbulk]"); if (!b) return;
+  if (readOnly || !unlocked) { toast("Only the ForgeMaster can change this."); return; }
+  const n = Number(b.dataset.ingbulk), ing = ingotsOf(), keys = ["iron-ingot", "steel-ingot", "corundum-ingot"];
+  if (ingBulkCraft) {   // smelt them: check the stockpile covers all three together (Iron is shared by Iron and Steel Ingots)
+    const need = {}; for (const k of keys) for (const x of smeltNeeds(k, n)) need[x.key] = (need[x.key] || 0) + x.need;
+    const short = Object.entries(need).filter(([k, q]) => q > (state.stock[k] || 0));
+    if (short.length) { toast(`Not enough ${short.map(([k, q]) => `${NAME[k]} (need ${q}, have ${state.stock[k] || 0})`).join(", ")} to craft ${n} of each.`); return; }
+    for (const k of keys) smeltNow(k, n);
+    commit({ kind: "plus", fm: true, text: `ForgeMaster smelted ${n} each of Iron, Steel and Corundum Ingots from ${Object.entries(need).map(([k, q]) => `${q.toLocaleString()} ${NAME[k]}`).join(", ")}` });
+    toast(`Crafted ${n} Iron, Steel and Corundum Ingots`); return; }
+  for (const k of keys) ing[k] = round2((ing[k] || 0) + n);
+  commit({ kind: "plus", fm: true, text: `ForgeMaster added ${n} each of Iron, Steel and Corundum Ingots to the ingot stockpile` });
+  toast(`Added ${n} Iron, Steel and Corundum Ingots`);
+});
+$("ingotToggle").addEventListener("click", () => { ingotView = !ingotView; render(); window.scrollTo({ top: $("ingotBar").offsetTop - 80 }); });
+$("ingots").addEventListener("input", e => { const k = e.target.dataset.ingqty; if (k) ingAdj[k] = e.target.value; });
+$("ingots").addEventListener("click", e => {
+  const b = e.target.closest("[data-ingadd],[data-ingrm]"); if (!b) return;
+  if (readOnly || !unlocked) { toast("Only the ForgeMaster can change this."); return; }
+  const k = b.dataset.ingadd || b.dataset.ingrm, q = Math.floor(Number($("iq-" + k) ? $("iq-" + k).value : ingAdj[k]));
+  // Dwarven Metal Ingots are still counted as the stockpile's "Dwarven" (prospectors deposit them, buy orders add them), shown here with the ingots.
+  const dw = k === "dwarven", ing = dw ? state.stock : ingotsOf(), have = ing[k] || 0, nm = dw ? "Dwarven Metal Ingot" : INGOT_NAME[k];
+  if (!(q > 0)) { toast("Enter how many."); return; }
+  if (b.dataset.ingrm && q > have) { toast(`Only ${fmtQty(have)} ${nm} in stock.`); return; }
+  ing[k] = round2(have + (b.dataset.ingadd ? q : -q)); ingAdj[k] = ""; if ($("iq-" + k)) $("iq-" + k).value = "1";
+  commit({ kind: b.dataset.ingadd ? "plus" : "minus", fm: true, text: `ForgeMaster ${b.dataset.ingadd ? "added" : "removed"} ${q} ${nm} ${b.dataset.ingadd ? "to" : "from"} the ingot stockpile (now ${fmtQty(ing[k])})` });
+});
+$("ingotLvlBody").addEventListener("change", e => {
+  const k = e.target.dataset.ilow || e.target.dataset.ihigh; if (!k) return;
+  if (readOnly || !unlocked) { toast("Only the ForgeMaster can change this."); return; }
+  const row = e.target.closest("tr"), num = el => el.value.trim() === "" ? null : Math.max(0, Math.floor(Number(el.value)));
+  let low = num(row.querySelector("[data-ilow]")), high = num(row.querySelector("[data-ihigh]"));
+  if (low != null && high != null && low > high) { toast("Red below can't be more than the goal."); render(); return; }
+  if (k === "dwarven") state.levels = { ...levelsMap(), dwarven: { low, high } };
+  else state.ingotLevels = { ...(state.ingotLevels || {}), [k]: { low, high } };
+  commit({ kind: "hold-c", fm: true, text: `Ingot goal for ${k === "dwarven" ? "Dwarven Metal Ingot" : INGOT_NAME[k]}: ${low == null && high == null ? "no colour" : `red below ${low ?? "–"}, goal ${high ?? "–"}`}` });
+});
+$("craftBody").addEventListener("change", e => { if (e.target.id === "craftWhich") { craftIngot = e.target.value; e.target.blur(); render(); } });
+$("craftBody").addEventListener("input", e => { if (e.target.id === "craftQty") { craftQty = e.target.value; renderIngots(); } });
+$("craftBody").addEventListener("click", e => { if (e.target.id === "craftMax") { craftQty = String(Math.max(1, canSmelt(craftIngot))); $("craftQty").value = craftQty; renderIngots(); } });
+// Smelt q ingots: ore and fuel come out of the stockpile (employee-bought goods first, their tags carried onto the ingots). Caller checks there's enough.
+function smeltNow(key, q) {
+  const needs = smeltNeeds(key, q), comp = new Map();
+  for (const n of needs) { for (const c of drawLots(n.key, n.need, n.have)) { const k = c.who + "|" + c.role + "|" + c.key, x = comp.get(k) || { u: 0, v: 0 }; x.u += c.units; x.v += c.val; comp.set(k, x); } state.stock[n.key] = n.have - n.need; }
+  const ing = ingotsOf();
+  if (comp.size) { const have = ing[key] || 0, tagged = ingLotsOf().filter(l => l.key === key).reduce((a, l) => a + l.qty, 0);
+    if (tagged > have) drawIngots(key, 0, have);   // tidy tags on ingots removed by hand
+    ingLotsOf().push({ id: uid(), key, qty: q, at: Date.now(), comp: [...comp].map(([k, x]) => { const [who, role, mk] = k.split("|"); return { who, role, key: mk, per: x.u / q, vper: x.v / q }; }) }); }
+  ing[key] = round2((ing[key] || 0) + q);
+  return needs;
+}
+$("craftBody").addEventListener("submit", e => {
+  e.preventDefault(); if (readOnly || !unlocked) { toast("Only the ForgeMaster can change this."); return; }
+  const q = Math.floor(Number($("craftQty").value || craftQty));
+  if (!(q >= 1)) { toast("Enter how many ingots to make."); return; }
+  const needs = smeltNeeds(craftIngot, q), short = needs.filter(n => n.need > n.have);
+  if (short.length) { toast(`Not enough ${short.map(n => n.name).join(" and ")} for ${q} ${INGOT_NAME[craftIngot]}.`); return; }
+  smeltNow(craftIngot, q); const ing = ingotsOf();
+  craftQty = "1"; if (document.activeElement) document.activeElement.blur();
+  commit({ kind: "plus", fm: true, text: `ForgeMaster smelted ${q} ${INGOT_NAME[craftIngot]} from ${needs.map(n => `${n.need.toLocaleString()} ${n.name}`).join(" and ")} (now ${fmtQty(ing[craftIngot])} on the ingot stockpile)` });
+  toast(`Made ${q} ${INGOT_NAME[craftIngot]}`);
+});
 $("lockForm").addEventListener("submit", async e => {
   e.preventDefault();
   let h = "";
@@ -4418,7 +4930,7 @@ $("ptSrcForm").addEventListener("submit", e => { e.preventDefault(); if (readOnl
   state.priceSheetUrl = $("ptSrc").value.trim(); persist(); toast("Sheet link saved"); fetchPriceSheet(); });
 $("pmToggle").addEventListener("click", () => {
   purchaseMode = !purchaseMode; try { sessionStorage.setItem("fm-purchase-mode", purchaseMode ? "1" : "0"); } catch (_) {}
-  render(); toast(purchaseMode ? "Purchase mode on: Buy / Sell, Stockpiles and Profit" : "Purchase mode off: all tabs shown");
+  render(); toast(purchaseMode ? "Purchase mode on: Buy / Sell, Stockpiles and Profit" : "Purchase mode off: Trends, Customer service, Employee roster and Forge debt");
 });
 // Apprentice's personal stockpile, modelled on the forge's: cards with counts, stock-level colours and collecting status,
 // plus their own "Stock levels & collecting" settings. Kept per employee in state.personal; never touches the forge's stockpile.
@@ -4650,7 +5162,15 @@ $("helpVidBtn").addEventListener("click", () => { $("vidUnderstood").hidden = tr
   try { v.currentTime = 0; v.play().catch(() => {}); } catch (e) {}
   vidKeyOpen = "job:" + emp.prof;   // no Understood button for job videos: watching it all the way through turns it into "Need help?"
 });
+$("sellComm").addEventListener("click", e => { const b = e.target.closest("[data-trank]"); if (!b) return; testRanks[b.dataset.trank] = Number(b.dataset.r); updateSellQuote(); });
+$("testR").addEventListener("click", () => { testR = !testR; $("testR").setAttribute("aria-pressed", testR); render(); });
+$("testS").addEventListener("click", () => { testS = !testS;
+  // Test S starts from the promotion test run: Orlog is an Advanced prospector, everyone else normal. The rank buttons can change it.
+  if (testS) { const pt = promoTest(); testRanks = { [pt.ore]: pt.progress.rank }; } render(); updateSellQuote(); toast(testS ? "Test S on: pretend stockpile, nothing is saved" : "Test S off"); });
+$("sellNoComm").addEventListener("change", () => updateSellQuote());
+$("commVidBtn").addEventListener("click", () => { $("vidUnderstood").hidden = true; openVideo("comm"); vidKeyOpen = "comm"; });
 $("helpVid").addEventListener("ended", () => {
+  if (vidKeyOpen === "comm") { const emp = !unlocked && currentEmp(); if (emp && !videoSeen("comm", emp)) { markVideoSeen("comm", emp); renderCommBtn(); } return; }
   if (!vidKeyOpen.startsWith("job:")) return;
   const emp = !unlocked && currentEmp(); if (!emp || "job:" + emp.prof !== vidKeyOpen || helpSeen(emp)) return;
   markVideoSeen(vidKeyOpen, emp); renderHelpBtn();
@@ -4665,6 +5185,22 @@ $("myJob").addEventListener("change", () => {
   emp.prof = v;
   commit({ kind: "hold-c", text: `${emp.name} changed their job to ${PROF[v].name.toLowerCase()}` });
   toast(`You're now a ${PROF[v].name.toLowerCase()}`);
+});
+// Test stock (ForgeMaster): +300 of every stockpile item, untracked. Turning it off takes the same amounts back out (never below 0).
+const TEST_QTY = 300;
+$("testStock").addEventListener("click", () => {
+  if (readOnly || !unlocked) return;
+  if (!state.testStock) { for (const o of ALL) state.stock[o.key] = (state.stock[o.key] || 0) + TEST_QTY; state.testStock = true;
+    commit({ kind: "plus", fm: true, text: `Test stock on: added ${TEST_QTY} of every ore, wood & charcoal and leather item` }); toast(`Added ${TEST_QTY} of everything for testing`); }
+  else { for (const o of ALL) state.stock[o.key] = Math.max(0, (state.stock[o.key] || 0) - TEST_QTY); delete state.testStock;
+    commit({ kind: "minus", fm: true, text: `Test stock off: took ${TEST_QTY} of every ore, wood & charcoal and leather item back out` }); toast("Test stock removed"); }
+});
+$("autoStockBtn").addEventListener("click", () => {
+  if (readOnly || !unlocked) return;
+  if (autoStockOn()) { state.status = Object.fromEntries(Object.entries(allStatuses()).filter(([, v]) => v)); state.autoStockOff = true; }   // turning it off keeps what it was showing
+  else delete state.autoStockOff;
+  commit({ kind: "hold-c", fm: true, text: `ForgeMaster turned AutoStock Pile ${autoStockOn() ? "on" : "off"} for the main stockpile` });
+  toast(autoStockOn() ? "AutoStock Pile on" : "AutoStock Pile off");
 });
 $("lvlBody").addEventListener("change", e => {
   if (readOnly || !unlocked) return;
@@ -4682,9 +5218,12 @@ $("lvlBody").addEventListener("change", e => {
     commit({ kind: "hold-c", fm: true, text: `Stock levels for ${NAME[k]}: ${lbl}` });
   }
   if (sel) {
-    const k = sel.dataset.status, st = { ...(state.status || {}) };
+    const k = sel.dataset.status, st = { ...(state.status || {}) }, man = { ...(state.statusManual || {}) };
+    if (sel.value === "auto") { delete st[k]; delete man[k]; state.status = st; state.statusManual = man;
+      commit({ kind: "hold-c", fm: true, text: `${NAME[k]}: back on AutoStock Pile (${STATUS_NAME[statusOf(k)].toLowerCase()})` }); return; }
     if (sel.value) st[k] = sel.value; else delete st[k];
-    state.status = st;
+    man[k] = true;   // picked by hand: AutoStock Pile leaves it alone
+    state.status = st; state.statusManual = man;
     commit({ kind: sel.value === "halt" ? "minus" : "plus", text: sel.value ? `${NAME[k]}: ${STATUS_NAME[sel.value].toLowerCase()}` : `${NAME[k]}: collecting again` });
   }
 });
@@ -4953,6 +5492,7 @@ $("sellForm").addEventListener("change", e => {
 });
 $("sellForm").addEventListener("submit", e => {
   e.preventDefault(); if (readOnly || !orderStaff()) return;
+  if (testS) { toast("Test S is on: turn it off to confirm a real order."); return; }
   if (!unlocked) $("sellDebt").checked = false;
   if (apprView() && sellProfit < 20) sellProfit = 20;
   const who = $("sellWho").value.trim(), note = "";
@@ -4988,12 +5528,12 @@ $("sellForm").addEventListener("submit", e => {
   }
   const existing = custByName(who); if (existing && !!existing.reach !== reach) existing.reach = reach;
   // Confirming a sell order means it's paid: it goes straight to the customer's record.
-  const order = { id: oid, by: unlocked ? "ForgeMaster" : (currentEmp() || {}).name || "", who, lines, profit: sellProfit, discount: d.pct, discountLabel: d.label, reach, emp: !!emp, final: q.fin, note, debted, at: Date.now() };
+  const order = { id: oid, by: unlocked ? "ForgeMaster" : (currentEmp() || {}).name || "", who, lines, profit: sellProfit, discount: d.pct, discountLabel: d.label, reach, emp: !!emp, final: q.fin, note, debted, at: Date.now() , noComm: unlocked && $("sellNoComm").checked};
   if (newPays.length) state.payments = [...(state.payments || []), ...newPays];
   if (sale) state.debtSales = [...(state.debtSales || []), sale].slice(-500);
   recordSellPaid(order);
   if (surplusDebt) state.debts.push(surplusDebt);
-  $("sellEmp").checked = false; $("sellDebt").checked = false;
+  $("sellEmp").checked = false; $("sellDebt").checked = false; $("sellNoComm").checked = false;
   commit({ kind: "plus", debt: !!debted, text: `Sell order confirmed: ${who} paid ${coins(q.fin)} coins for ${linesText(lines)}${d.pct && (unlocked || d.reach) ? ` (−${d.pct}% ${d.label})` : ""}${debted ? `. Debted material: ${debted.map(c => `${coins(c.used)} coins to ${c.who} for their ${ROLE[c.role].short} (${coins(c.toDebt)} toward their debt, waiting for confirmation${c.surplus > 0.004 ? `, ${coins(c.surplus)} owed to them in coins` : ""})`).join(", ")}` : ""}` });
   setDiscMode("card");
   sellLines = []; $("sellQty").value = 1; updateSellQuote(); toast("Sell order confirmed and paid");
@@ -5139,7 +5679,7 @@ function receiveBuy(ls, id) {
   ls.fromPending = []; ls.toPersonal = apBy ? apBy.name : "";
   for (const o of ls) {
     if (apBy) { if (NAME[o.item]) { state.personal = state.personal || {}; const pp = state.personal[apBy.id] || (state.personal[apBy.id] = { stock: {}, levels: {}, status: {} }); pp.stock = pp.stock || {}; pp.stock[o.item] = (pp.stock[o.item] || 0) + o.qty; } }
-    else if (Object.prototype.hasOwnProperty.call(state.stock, o.item)) { state.stock[o.item] += o.qty; flash(o.item); }
+    else if (Object.prototype.hasOwnProperty.call(state.stock, o.item)) { state.stock[o.item] += o.qty; flash(o.item); if (emp && !isApprentice(emp)) { addLot(emp.name, o.item, o.qty); addProgress(emp, "bought", o.qty * rawCost(o.item)); } }
     // Buying from an employee takes the goods out of what they're holding as pending, so they aren't counted twice.
     if (emp && NAME[o.item]) { let left = o.qty;
       for (const p of state.pending.filter(p => sameName(p.who, emp.name) && p.ore === o.item).sort((a, b) => a.at - b.at)) {
@@ -5162,6 +5702,165 @@ function recordSellPaid(o) {
   const ls = orderLines(o), single = ls.length === 1;
   c.purchases.push({ at: Date.now(), item: single ? ls[0].item : linesText(ls), qty: single ? ls[0].qty : 1, coin: o.final, lines: ls, orderId: o.id });
   const ds = (state.debtSales || []).find(x => x.id === o.id); if (ds) { ds.status = "paid"; ds.paidAt = Date.now(); }
+  // The forge's own sale uses up its stock: the ingots, leather, strips and firewood the items need (apprentices use their own materials).
+  if (!o.by || o.by === "ForgeMaster") { const t = takeOrderStock(orderLines(o));
+    if (t.use.length) state.log.unshift({ at: Date.now(), by: "ForgeMaster", fm: true, kind: "minus", text: `Taken from the stockpile for ${o.who}'s order: ${t.use.map(u => `${fmtQty(u.qty)} ${u.name}`).join(", ")}${t.short.length ? `. Not enough in stock: ${t.short.join(", ")} short, so those went to 0` : ""}` });
+    applyCommission(o, planCommission(o.final, t, !!o.noComm));
+    // Ranks: how much of each employee's bought material this sale used
+    const usedBy = new Map(); for (const x of t.shares) usedBy.set(x.who, (usedBy.get(x.who) || 0) + (x.val || 0));
+    for (const [n, v] of usedBy) { const e = empByName(n); addProgress(e, "used", v); checkPromotion(e); }
+  }
+}
+// Commissions on a sale. Everyone who supplied 90%+ of their kind of material qualifies (ore, the ore inside ingots, the charcoal that
+// smelted them, or leather). The one whose materials cost the most gets 2% of the final price; if the top two are within 10% of each other
+// by material cost they split it as 2.5% each (5% in all). Anyone else who qualified is banked: their actual materials (e.g. 9 Iron, 9 Corundum)
+// wait in a queue, oldest first, and claim the next order made mostly of that kind of material that uses some of them, ahead of anyone
+// qualifying there. A claim gives up as much of each material as the orders it wins use. The ForgeMaster can switch commission off for one order.
+const COMMISSION_SPLIT_PCT = 2.5, COMMISSION_CLOSE = 0.10;
+// ---- Ranks for prospectors, wood cutters and hunters. Material bought from them on buy orders, and how much of it sales have used,
+// both counted at price-list material cost and shown in Leather (4.00 each). Advanced at 125 Leather's worth, Expert at 250, each once
+// 85% of that amount has gone into sales. Advanced earns 2.5% commission, Expert 3.5%. Ranks never go down.
+const RANK_LEATHER = [0, 125, 250], RANK_PCT = [2, 2.5, 3.5], RANK_EDGE = [0, 0.20, 0.30], RANK_USED = 0.85, RANK_NAME = ["", "Advanced", "Expert"];
+const RANK_PROFS = new Set(["prospector", "woodcutter", "hunter"]);
+let rankOverride = null;   // Test S: pretend ranks
+const leatherCost = () => rawCost("leather") || 4;
+const empNamed = n => state.employees.find(e => sameName(e.name, n));
+function rankOf(name) { if (rankOverride && name in rankOverride) return rankOverride[name]; const e = empNamed(name); return e && RANK_PROFS.has(e.prof) ? (e.rank || 0) : 0; }
+const profTitle = e => { const base = e.prof ? PROF[e.prof].name : "Any job", r = RANK_PROFS.has(e.prof) ? e.rank || 0 : 0; return r ? `${RANK_NAME[r]} ${base.toLowerCase()}` : base; };
+const progressOf = e => ((state.empProgress || {})[e.id]) || { bought: 0, used: 0 };
+function addProgress(e, field, v) { if (!e || !(v > 0)) return; state.empProgress = state.empProgress || {}; const p = state.empProgress[e.id] || (state.empProgress[e.id] = { bought: 0, used: 0 }); p[field] = round2(p[field] + v); }
+let testR = false;
+// The promotion test run (1000 Iron bought from Orlog, sold inside iron equipment until he became an Advanced prospector).
+// Shown only by the test switches (Test C, Test P, Test R); never saved.
+function promoTest() {
+  const now = Date.now(), m = 60000, nm = (n, p) => (state.employees.find(e => sameName(e.name, n)) || state.employees.find(e => e.prof === p) || { name: n }).name;
+  const ore = nm("Orlog", "prospector"), line = (id, qty) => { const it = catalog().find(i => i.id === id) || { name: id }; return { itemId: id, item: it.name, qty }; };
+  const rows = [["Jarl's Steward", [line("iron-set", 10), line("iron-helmet", 1)], 1068, 2, 21.36, 200], ["Markarth Guard", [line("iron-pickaxe-wood-axe", 1)], 7.2, 2, 0.14, 190],
+    ["Bjorn", [line("iron-greatsword", 2)], 59.28, 2, 1.19, 180], ["Ra'Jahn", [line("iron-armor", 1)], 39.6, 2.5, 0.99, 170]];
+  const sales = rows.map(([c, ls, fin, , , mins], i) => ({ key: "pr" + i, orderId: "pro" + i, at: now - mins * m, who: c + " (promotion test)", text: linesText(ls), final: fin, lines: ls, contribs: [], test: true }));
+  const comms = rows.map(([c, ls, fin, pct, amt], i) => ({ id: "prc" + i, orderId: "pro" + i, at: sales[i].at, customer: sales[i].who, lines: ls.map(l => ({ qty: l.qty, name: l.item })), final: fin, who: ore, role: "ore", pct, share: 100, rank: pct > 2 ? 1 : 0, amount: amt, test: true }));
+  const buys = [{ at: now - 240 * m, who: ore, item: "iron", qty: 1000, price: 0.35, bulk: true, by: "ForgeMaster", test: true }];
+  return { ore, sales, comms, buys, progress: { bought: 500, used: 441, rank: 1, earned: 23.68 } };
+}
+function rankLine(e) {
+  const x = rankStatus(e), lv = n => `${fmtQty(round2(n))} Leather`;
+  if (x.none) return `<div class="rank-line">Earned ${coins(x.earned)} in commission · no ranks for this job</div>`;
+  const pt = promoTest(), isT = testR && sameName(pt.ore, e.name), title = isT && x.r > (e.rank || 0) ? `${RANK_NAME[x.r]} ${PROF[e.prof].name.toLowerCase()}` : profTitle(e);
+  // Progress bar: buying and using both count; full once both thresholds are met (then the promotion happens on the next sale).
+  const pct = x.top ? 100 : Math.floor(100 * (Math.min(x.bought, x.need) + Math.min(x.used, RANK_USED * x.need)) / ((1 + RANK_USED) * x.need));
+  const bar = `<div class="rank-bar r${x.top ? 2 : x.r + 1}" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></div>`;
+  return `<div class="rank-line${testR ? "" : " real"}">${isT ? `<b>Includes the promotion test run.</b> ` : ""}${title} · earns ${RANK_PCT[x.r]}% · commission earned <b>${coins(x.earned)}</b>
+    <div><span class="rank-pct">${pct}%</span>${x.top ? "Top rank reached" : `Progress to <b>${x.next}</b>`}</div>${bar}${x.top ? `Top rank. Sold the forge ${lv(x.bought)}'s worth; ${lv(x.used)}'s worth used in sales.`
+    : `${x.next} pays ${RANK_PCT[x.r + 1]}%. Sold the forge ${lv(x.bought)} of ${lv(x.need)}'s worth: <b>${lv(x.buyLeft)} to go</b>. Used in sales ${lv(x.used)} of ${lv(RANK_USED * x.need)}: <b>${lv(x.useLeft)} to go</b>.`}</div>`;
+}
+function checkPromotion(e) {
+  if (!e || !RANK_PROFS.has(e.prof)) return;
+  const p = progressOf(e);
+  for (let r = 2; r >= 1; r--) { const need = RANK_LEATHER[r] * leatherCost();
+    if ((e.rank || 0) < r && p.bought >= need - 1e-9 && p.used >= RANK_USED * need - 1e-9) {
+      e.rank = r; state.log.unshift({ at: Date.now(), by: "ForgeMaster", fm: true, kind: "hold-c", text: `${e.name} is promoted to ${profTitle(e)}: the forge has bought ${RANK_LEATHER[r]} Leather's worth of their materials and used ${Math.round(RANK_USED * 100)}% of it in sales. They now earn ${RANK_PCT[r]}% commission.` });
+      return; } }
+}
+// What's left before the next rank, in Leather's worth.
+function rankStatus(e) {
+  const pt = testR ? promoTest() : null, isT = pt && sameName(pt.ore, e.name);
+  const r = isT ? Math.max(pt.progress.rank, e.rank || 0) : RANK_PROFS.has(e.prof) ? e.rank || 0 : 0, lc = leatherCost();
+  const real = progressOf(e), p = isT ? { bought: real.bought + pt.progress.bought, used: real.used + pt.progress.used } : real;
+  const earned = round2((state.commissions || []).filter(c => sameName(c.who, e.name)).reduce((a, c) => a + c.amount, 0) + (isT ? pt.progress.earned : 0));
+  if (!RANK_PROFS.has(e.prof)) return { r, earned, none: true };
+  if (r >= 2) return { r, earned, top: true, bought: p.bought / lc, used: p.used / lc };
+  const need = RANK_LEATHER[r + 1];
+  return { r, earned, next: RANK_NAME[r + 1], need, bought: round2(p.bought / lc), used: round2(p.used / lc), buyLeft: round2(Math.max(0, need - p.bought / lc)), useLeft: round2(Math.max(0, RANK_USED * need - p.used / lc)) };
+}
+// Who wins between two qualifying employees. Same rank: the bigger material cost. Same job, different rank: the higher rank always.
+// Different jobs and ranks: the higher rank wins unless the other's materials cost more than the higher one's by over 20% (Advanced vs normal),
+// 30% (Expert vs normal) or 10% (Expert vs Advanced).
+function beats(a, b) {
+  if (a.rank === b.rank) return a.val >= b.val;
+  const hi = a.rank > b.rank ? a : b, lo = hi === a ? b : a;
+  const hiWins = hi.role === lo.role ? true : hi.val >= lo.val * (1 - (RANK_EDGE[hi.rank] - RANK_EDGE[lo.rank])) - 1e-9;
+  return hiWins ? hi === a : lo === a;
+}
+function planCommission(final, t, off) {
+  if (off) return { winners: [], deferred: [], off: true };
+  const empOk = n => { const e = state.employees.find(e => sameName(e.name, n)); return e && !isApprentice(e) ? e : null; };
+  const quals = t.shares.filter(x => x.share >= COMMISSION_SHARE - 1e-9 && empOk(x.who)).map(x => ({ ...x, rank: rankOf(x.who) }));
+  const rv = t.roleVal || {}, sumV = Object.values(rv).reduce((a, v) => a + v, 0), ru = t.rawUse || {};
+  const bank = state.commBank || [], claimLeft = b => Object.values(b.mats || {}).reduce((a, q) => a + q, 0);
+  const bi = bank.findIndex(b => sumV > 0 && (rv[b.role] || 0) > sumV / 2 && claimLeft(b) > 1e-9 && Object.keys(b.mats || {}).some(k => (ru[k] || 0) > 0) && empOk(b.who));
+  const holderHere = bi >= 0 && quals.some(q => sameName(q.who, bank[bi].who) && q.role === bank[bi].role);   // they'd qualify on their own: the claim waits
+  let winners = [], deferred = [];
+  if (bi >= 0 && !holderHere) { const b = bank[bi]; winners = [{ who: b.who, role: b.role, val: round2(rv[b.role] || 0), fromBank: b, rank: rankOf(b.who), pct: RANK_PCT[rankOf(b.who)] }]; deferred = quals; }
+  else if (quals.length) {
+    let top = quals[0]; for (const q of quals.slice(1)) if (!beats(top, q)) top = q;
+    const rest = quals.filter(q => q !== top);
+    // Equal ranks within 10% by material cost split it, 2.5% each, as before.
+    const next = rest.filter(q => q.rank === top.rank).sort((a, b) => b.val - a.val)[0];
+    if (next && top.val - next.val <= COMMISSION_CLOSE * top.val + 1e-9) { winners = [{ ...top, pct: COMMISSION_SPLIT_PCT, split: true }, { ...next, pct: COMMISSION_SPLIT_PCT, split: true }]; deferred = rest.filter(q => q !== next); }
+    else { winners = [{ ...top, pct: RANK_PCT[top.rank] }]; deferred = rest; }
+  }
+  deferred = deferred.filter(d => !winners.some(w => sameName(w.who, d.who)));
+  for (const w of winners) w.amount = round2(final * w.pct / 100);
+  return { winners: winners.filter(w => w.amount > 0), deferred, bankIdx: bi, ru, claimLeft };
+}
+const matsText = m => Object.entries(m || {}).map(([k, q]) => `${fmtQty(q)} ${k === "dwarven" ? "Dwarven Metal Ingot" : NAME[k] || k}`).join(", ") || "nothing";
+function applyCommission(o, plan) {
+  const at = Date.now(), roleName = r => (ROLE[r] || { name: "materials" }).name.toLowerCase();
+  if (plan.off) { state.log.unshift({ at, by: "ForgeMaster", fm: true, kind: "hold-c", text: `No commission on ${o.who}'s order (switched off for this order)` }); return; }
+  const bank = state.commBank || (state.commBank = []), lead = plan.winners[0];
+  for (const d of plan.deferred) {
+    bank.push({ id: uid(), who: d.who, role: d.role, mats: { ...d.mats }, at, orderId: o.id, customer: o.who });
+    state.log.unshift({ at, by: "ForgeMaster", fm: true, kind: "debt", text: `${d.who} also supplied ${Math.round(d.share * 100)}% of the ${roleName(d.role)} on ${o.who}'s order, but ${lead.fromBank ? `${lead.who} had an earlier deferred claim` : `${plan.winners.map(w => w.who).join(" and ")} supplied more by material cost`}. ${d.who}'s claim on ${matsText(d.mats)} is banked for their next order.` });
+  }
+  for (const w of plan.winners) {
+    const e = state.employees.find(e => sameName(e.name, w.who)); if (!e) continue;
+    if (w.fromBank) { const m = w.fromBank.mats || {}; for (const k of Object.keys(m)) { m[k] = round2(Math.max(0, m[k] - (plan.ru[k] || 0))); if (m[k] <= 1e-9) delete m[k]; }
+      state.commBank = bank.filter(b => plan.claimLeft(b) > 1e-9); }
+    const why = w.fromBank ? "from your earlier deferred claim" : `${Math.round(w.share * 100)}% of its ${roleName(w.role)} was yours${w.split ? ", split with " + plan.winners.find(x => x !== w).who : ""}`;
+    state.commissions = [{ id: uid(), orderId: o.id, at, customer: o.who, lines: orderLines(o).map(l => ({ qty: l.qty, name: l.item })), final: o.final, who: e.name, role: w.role,
+      units: w.units ?? null, total: w.total ?? null, share: w.fromBank ? null : round2(w.share * 100), fromBank: !!w.fromBank, pct: w.pct, split: !!w.split, rank: w.rank || 0, amount: w.amount }, ...(state.commissions || [])].slice(0, 1000);
+    state.debts.push({ id: uid(), who: e.name, item: "coins", qty: w.amount, note: `${w.pct}% commission on ${o.who}'s order (${why})`, city: false, orderId: o.id, at });
+    state.log.unshift({ at, by: "ForgeMaster", fm: true, kind: "debt", text: w.fromBank
+      ? `${e.name} earns a ${w.pct}% commission (${coins(w.amount)} coins) on ${o.who}'s order from their deferred claim (${plan.claimLeft(w.fromBank) > 1e-9 ? `${matsText(w.fromBank.mats)} of claim left` : "claim used up"}). The forge owes it to them.`
+      : `${e.name} earns a ${w.pct}% commission (${coins(w.amount)} coins) on ${o.who}'s order: ${Math.round(w.share * 100)}% of its ${roleName(w.role)} came from them${w.split ? ` (split with ${plan.winners.find(x => x !== w).who}: their materials were within 10% by cost)` : ""}. The forge owes it to them.` });
+  }
+}
+// What an order would pay in commission, worked out on a copy of the stockpile so nothing changes. testEnv: the "Test S" sample stockpile.
+function previewCommission(lines, final, off, test) {
+  const base = test ? testSaleEnv() : state, saved = state; rankOverride = test ? { ...testRanks } : null;
+  const cl = v => JSON.parse(JSON.stringify(v || []));
+  state = { ...base, stock: { ...base.stock }, ingots: { ...(base.ingots || {}) }, lots: cl(base.lots), ingotLots: cl(base.ingotLots), commBank: cl(base.commBank) };
+  try { const t = takeOrderStock(lines); return planCommission(final, t, off); } finally { state = saved; rankOverride = null; }
+}
+// "Test S": a pretend stockpile with materials bought from employees, for trying the commission rules on the sell form. Nothing is saved.
+let testS = false, testRanks = {};
+function testSaleEnv() {
+  const pick = (name, prof) => (state.employees.find(e => sameName(e.name, name)) || state.employees.find(e => e.prof === prof) || { name }).name;
+  const ore = pick("Orlog", "prospector"), wood = pick("Sylvester", "woodcutter"), wood2 = pick("Oswald", "woodcutter");
+  const s2 = { ...state, stock: { ...state.stock }, ingots: { ...(state.ingots || {}) }, commBank: [] };
+  s2.stock.iron = (s2.stock.iron || 0) + 300; s2.stock.silver = (s2.stock.silver || 0) + 100; s2.stock.leather = (s2.stock.leather || 0) + 50; s2.stock.leatherstrips = (s2.stock.leatherstrips || 0) + 100;
+  s2.ingots["iron-ingot"] = (s2.ingots["iron-ingot"] || 0) + 50; s2.ingots["steel-ingot"] = (s2.ingots["steel-ingot"] || 0) + 50;
+  const t0 = 1;
+  s2.lots = [{ id: "ts1", who: ore, key: "iron", qty: 300, at: t0 }];
+  s2.ingotLots = [
+    { id: "ts2", key: "iron-ingot", qty: 50, at: t0, comp: [{ who: ore, role: "ore", key: "iron", per: 6, vper: 6 * rawCost("iron") }, { who: wood2, role: "fuel", key: "poor", per: 6, vper: 6 * rawCost("poor") }] },
+    { id: "ts3", key: "steel-ingot", qty: 50, at: t0, comp: [{ who: ore, role: "ore", key: "iron", per: 3, vper: 3 * rawCost("iron") }, { who: ore, role: "ore", key: "corundum", per: 3, vper: 3 * rawCost("corundum") },
+      { who: wood, role: "fuel", key: "regular", per: 6, vper: 6 * rawCost("regular") }] }];
+  return s2;
+}
+function commPreviewHtml(lines, final, profit) {
+  if (apprView() || !unlocked || !lines.length) return "";
+  const p = previewCommission(lines.map(l => ({ itemId: l.itemId, qty: l.qty })), final, $("sellNoComm").checked, testS);
+  const total = round2(p.winners.reduce((a, w) => a + w.amount, 0)), after = round2(profit - total);
+  // Profit on the order: final price less the material cost; commissions come out of it.
+  const profitLn = `<div class="ln comm-profit"><span>Profit on this order${total > 0.004 ? " after commission" : ""}</span><span class="${after >= 0 ? "gain" : "loss"}">${total > 0.004 ? `<s>${signed(profit)}</s> ` : ""}${signed(after)}</span></div>`;
+  const rows = p.off ? `<div class="ln"><span>Commission</span><span>Off for this order</span></div>${profitLn}`
+    : p.winners.length ? p.winners.map(w => `<div class="ln comm-ln"><span>Commission to ${esc(w.who)}${w.rank ? ` (${RANK_NAME[w.rank]})` : ""} (${w.pct}%${w.fromBank ? ", deferred claim" : w.split ? ", split" : ""})</span><span>−${coins(w.amount)}</span></div>`).join("")
+      + `<div class="ln"><span>Forge keeps after commission</span><span>${coins(round2(final - total))}</span></div>${profitLn}`
+    : `<div class="ln"><span>Commission</span><span>None (no employee supplied 90% of a material)</span></div>${profitLn}`;
+  const def = !p.off && p.deferred.length ? `<div class="hint">${p.deferred.map(d => `${esc(d.who)}'s ${matsText(d.mats)} will be banked as a deferred claim.`).join(" ")}</div>` : "";
+  const rankChips = testS ? `<div class="test-ranks"><span class="hint">Test ranks (from the promotion test run):</span>${[...new Set([testSaleEnv().lots[0].who, testSaleEnv().ingotLots[0].comp[1].who, testSaleEnv().ingotLots[1].comp[2].who])].map(n => `<span class="tr-one"><b>${esc(n)}</b>${[0, 1, 2].map(r => `<button type="button" class="chip" data-trank="${esc(n)}" data-r="${r}" aria-pressed="${(testRanks[n] ?? rankOf(n)) === r}">${r ? RANK_NAME[r] : "Normal"}</button>`).join("")}</span>`).join("")}</div>` : "";
+  return `<div class="comm-box${testS ? " test" : ""}">${rankChips}${testS ? `<div class="hint"><b>Test S:</b> pretend stockpile, nothing is saved. Its Iron Ingots are ${esc(testSaleEnv().lots[0].who)}'s ore + ${esc(testSaleEnv().ingotLots[0].comp[1].who)}'s Poor Charcoal; its Steel Ingots are ${esc(testSaleEnv().lots[0].who)}'s ore + ${esc(testSaleEnv().ingotLots[1].comp[2].who)}'s Charcoal.</div>` : ""}${rows}${def}</div>`;
 }
 document.addEventListener("click", e => {
   const b = e.target.closest("button[data-oact]"); if (!b) return;
@@ -5476,6 +6175,17 @@ function normalize(d) {
     if (Array.isArray(d.edebts)) s.edebts = d.edebts.filter(x => x && DNAME[x.item] && x.qty > 0);
     if (Array.isArray(d.payments)) s.payments = d.payments.filter(x => x && x.id && x.debtId && x.units > 0);
     const okBuy = k => DNAME[k] || String(k).startsWith("cat:");
+    if (d.autoStockOff) s.autoStockOff = true;
+    if (d.empProgress && typeof d.empProgress === "object") s.empProgress = d.empProgress;
+    if (d.testStock) s.testStock = true;
+    if (Array.isArray(d.lots)) s.lots = d.lots.filter(l => l && l.who && NAME[l.key] && l.qty > 0);
+    if (Array.isArray(d.ingotLots)) s.ingotLots = d.ingotLots.filter(l => l && INGOT_NAME[l.key] && l.qty > 0 && Array.isArray(l.comp));
+    if (Array.isArray(d.commBank)) s.commBank = d.commBank.filter(b => b && b.id && b.who && b.mats && Object.keys(b.mats).length);
+    if (Array.isArray(d.commissions)) s.commissions = d.commissions.filter(c => c && c.id && c.who).slice(0, 1000);
+    if (d.statusManual && typeof d.statusManual === "object") s.statusManual = Object.fromEntries(Object.keys(d.statusManual).filter(k => NAME[k]).map(k => [k, true]));
+    else if (s.status) s.statusManual = Object.fromEntries(Object.keys(s.status).map(k => [k, true]));
+    if (d.ingotLevels && typeof d.ingotLevels === "object") s.ingotLevels = Object.fromEntries(Object.entries(d.ingotLevels).filter(([k, v]) => INGOT_NAME[k] && v && typeof v === "object").map(([k, v]) => [k, { low: Number.isFinite(v.low) ? v.low : null, high: Number.isFinite(v.high) ? v.high : null }]));
+    if (d.ingots && typeof d.ingots === "object") s.ingots = Object.fromEntries(Object.entries(d.ingots).filter(([k, q]) => INGOT_NAME[k] && Number(q) > 0).map(([k, q]) => [k, round2(Number(q))]));
     if (d.priceMap && typeof d.priceMap === "object") s.priceMap = d.priceMap;
     if (d.priceIgnore && typeof d.priceIgnore === "object") s.priceIgnore = d.priceIgnore;
     if (typeof d.priceSheetUrl === "string") s.priceSheetUrl = d.priceSheetUrl;
