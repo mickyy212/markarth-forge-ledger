@@ -410,7 +410,7 @@ table.bp-table td.bulk { color: var(--ok); font-weight: 700; }
 .fm-tabs .fm-acts { flex: none; display: flex; gap: 6px; align-items: center; }
 .fm-tabs #fmAsEmp { max-width: 11rem; }
 @media (min-width: 760px) { .fm-tabs .tabs { flex-wrap: wrap; overflow: visible; } .fm-tabs .tabs button { padding: 6px 8px; font-size: .92rem; } .fm-tabs #fmAsEmp { max-width: 8.5rem; } }
-@media (max-width: 759px) { .fm-tabs { flex-wrap: wrap; } .fm-tabs .tabs { flex: 1 1 100%; } .fm-tabs .fm-acts { flex: 1 1 100%; justify-content: flex-end; } }
+@media (max-width: 759px) { .fm-tabs { flex-wrap: wrap; } .fm-tabs .tabs { flex: 1 1 100%; } .fm-tabs .fm-acts { flex: 1 1 100%; justify-content: flex-end; flex-wrap: wrap; } .fm-tabs .pm-toggle { font-size: .8rem; padding: 5px 8px; } }
 @media (min-width: 1000px) { .fm-tabs .tabs { gap: 1px; } .fm-tabs .tabs button { padding: 6px 6px; font-size: .85rem; } .fm-tabs #fmAsEmp { max-width: 6.8rem; font-size: .85rem; } .fm-tabs .pm-toggle { padding: 5px 8px; font-size: .8rem; } .fm-tabs .fm-acts { gap: 4px; } }
 .seller-card { border-top: 1px solid var(--line); padding: 12px 0; display: grid; gap: 6px; }
 .seller-card:first-child { border-top: 0; padding-top: 0; }
@@ -544,6 +544,15 @@ ul.loan-list li .hint { grid-column: 2 / -1; font-size: .8rem; }
 .funds-box .hint { flex: 1 1 100%; margin: 0; }
 .pf-x { padding: 3px 8px; font-size: .78rem; }
 .pf-del { display: inline-flex; gap: 4px; } .pf-del button { padding: 3px 8px; font-size: .78rem; }
+.empty-stock { margin-right: auto; font-size: .85rem; display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.empty-stock #emptyStock { padding: 4px 10px; font-size: .82rem; border-color: var(--danger); color: var(--danger); }
+.pt-status { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 0 0 10px; font-size: .9rem; }
+.pt-status .ok { color: var(--gain, #5fd18a); } .pt-status .err { color: var(--danger); }
+.pt-up { color: #ff6b5e; font-weight: 700; } .pt-down { color: #5fd18a; font-weight: 700; }
+.pt-acts { display: inline-flex; gap: 4px; } .pt-acts button { padding: 3px 9px; font-size: .8rem; }
+.pt-src summary { cursor: pointer; font-weight: 700; color: var(--accent); }
+.pt-src-form { display: flex; gap: 6px; } .pt-src-form input { flex: 1; min-width: 0; }
+#priceSec > .panel { grid-template-columns: minmax(0, 1fr); min-width: 0; } #priceSec .cat-wrap { max-width: 100%; overflow-x: auto; }
 .mc-warn { margin: 4px 0 8px; color: #ff4d42; font-weight: 800; line-height: 1.35; }
 .watch-btn.sell-watch { padding: 8px 14px; font-size: .9rem; margin-right: auto; }
 .watch-btn.seen { animation: none; background: var(--surface); color: var(--ink); border-color: var(--accent); font-weight: 700; letter-spacing: .02em; }
@@ -827,12 +836,14 @@ table.val thead th { color: #cdb995; }
       <button type="button" role="tab" data-view="buysell">Buy / Sell</button>
       <button type="button" role="tab" data-view="profit">Profit</button>
       <button type="button" role="tab" data-view="trends">Trends</button>
+      <button type="button" role="tab" data-view="prices" hidden>Price tracking</button>
       <button type="button" role="tab" data-view="cust">Customer service</button>
       <button type="button" role="tab" data-view="roster">Employee roster</button>
       <button type="button" role="tab" data-view="debt">Forge debt</button>
     </div>
     <div class="fm-acts">
       <button type="button" class="pm-toggle" id="pmToggle" aria-pressed="true" title="Purchase mode shows only Buy / Sell, Stockpiles and Profit">Purchase mode</button>
+      <button type="button" class="pm-toggle" id="pcToggle" aria-pressed="false" title="Price changes shows only Price tracking">Price changes</button>
       <select id="fmAsEmp" aria-label="Sign in as an employee"></select>
       <button type="button" class="btn-ghost" id="fmLock">Lock</button>
     </div>
@@ -920,6 +931,7 @@ table.val thead th { color: #cdb995; }
   <section aria-labelledby="stockH" id="sec-ores" data-views="stock">
     <div class="sec-head">
       <h2 id="stockH">Main stockpile</h2>
+      <span class="empty-stock" id="emptyStockWrap" hidden><button type="button" class="btn-ghost" id="emptyStock">Empty stockpile</button><span id="emptyStockAsk" hidden>Set every item in all three stockpiles to 0? <button type="button" class="btn-danger" id="emptyStockYes">Yes, empty it</button> <button type="button" class="btn-ghost" id="emptyStockNo">Cancel</button></span></span>
       <span class="sync" id="sync">Loading…</span>
     </div>
     <p class="hint" id="stockHint">Only the ForgeMaster can add or remove stockpile items directly. Miners, wood cutters and hunters add theirs by logging it under Pending and depositing it.</p>
@@ -1016,7 +1028,6 @@ table.val thead th { color: #cdb995; }
             <label>Item<select id="holdOre"></select></label>
             <label>Qty<input id="holdQty" type="number" min="1" step="1" value="1" required></label>
             <button class="btn-add" type="submit">Add pending</button>
-            <p id="holdValue"></p>
           </form>
         </div>
         <datalist id="empNames"></datalist>
@@ -1315,6 +1326,26 @@ table.val thead th { color: #cdb995; }
       <div class="ms-tiles" id="pfBuyTiles"></div>
       <div id="pfBuyRows"></div>
     </div>
+  </section>
+
+  <section aria-labelledby="priceH" id="priceSec" data-views="prices" hidden>
+    <div class="sec-head">
+      <h2 id="priceH">Price tracking</h2>
+      <span class="hint">ForgeMaster only. Compares your price list with the Markarth Blacksmithing Ledger Google Sheet (armor, weapons, jewelry and crafted goods; not raw materials). The sheet's Total ÷ its blacksmith fee is the material cost. Nothing changes until you approve it.</span>
+    </div>
+    <div class="panel">
+      <div class="pt-status" id="ptStatus"></div>
+      <div id="ptChanges"></div>
+    </div>
+    <div class="panel" id="ptUnmatchedWrap" hidden>
+      <h3 class="sub-h">On the sheet but not matched to your price list</h3>
+      <p class="hint" style="margin:0 0 8px">Pick which of your items each one is, and it will be tracked from then on. Leave it on "Not tracked" to ignore it.</p>
+      <div id="ptUnmatched"></div>
+    </div>
+    <details class="panel pt-src"><summary>Sheet link</summary>
+      <p class="hint">The ledger reads the sheet directly. If checking fails, publish the sheet (File → Share → Publish to web → Comma-separated values) and paste that link here.</p>
+      <form id="ptSrcForm" class="pt-src-form"><input id="ptSrc" type="url" placeholder="Published CSV link (optional)" aria-label="Published CSV link"><button class="btn-ghost" type="submit">Save</button></form>
+    </details>
   </section>
 
   <section aria-labelledby="trendH" id="trendSec" data-views="trends" hidden>
@@ -2729,6 +2760,110 @@ function removePaidOrder(k) {
   }
   toast("Order removed. Profit updated.");
 }
+// ---- Price tracking: compare the price list with the Markarth Blacksmithing Ledger (Google Sheet) ----
+const PRICE_SHEET_ID = "198W8bmLwQ4EJ0t2IXFB1S2UpTN6Dvz0gVmSkxG81awk";
+const PT_CATS = ["Armor", "Weapons", "Jewelry", "Crafted materials"];
+let ptData = null, ptErr = "", ptBusy = false, ptAt = 0;
+function parseCSV(t) {
+  const rows = []; let row = [], cell = "", q = false;
+  for (let i = 0; i < t.length; i++) { const ch = t[i];
+    if (q) { if (ch === '"') { if (t[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += ch; }
+    else if (ch === '"') q = true; else if (ch === ",") { row.push(cell); cell = ""; }
+    else if (ch === "\n" || ch === "\r") { if (ch === "\r" && t[i + 1] === "\n") i++; row.push(cell); rows.push(row); row = []; cell = ""; }
+    else cell += ch; }
+  if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+const ptNum = v => { const n = Number(String(v || "").replace(/[$,\s]/g, "")); return Number.isFinite(n) ? n : NaN; };
+const ptNorm = v => String(v || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+// Every item row on the sheet: blocks headed "Item" with a "Total" (and "Blacksmith Fee") column to the right.
+function parseSheet(grid) {
+  const at = (r, c) => String((grid[r] || [])[c] || "").trim();
+  const heads = [];
+  grid.forEach((row, r) => row.forEach((v, c) => { if (/^item$/i.test(String(v).trim())) {
+    let tc = -1, fc = -1; for (let k = c + 1; k <= c + 10; k++) { const h = at(r, k); if (tc < 0 && /^total/i.test(h)) tc = k; if (fc < 0 && /fee/i.test(h)) fc = k; }
+    if (tc > 0) heads.push({ r, c, tc, fc }); } }));
+  const out = [], seen = new Map();
+  for (const h of heads) {
+    const nextR = Math.min(...heads.filter(x => x.c === h.c && x.r > h.r).map(x => x.r), grid.length);
+    let family = "", set = "";
+    for (let r = h.r + 1; r < nextR; r++) {
+      const sc = at(r, h.c - 1); if (sc) { set = sc; if (!/^(total|totals|extras?)$/i.test(sc)) family = sc; }
+      const item = at(r, h.c), total = ptNum(at(r, h.tc)); if (!item || !(total > 0)) continue;
+      const fee = h.fc > 0 ? ptNum(at(r, h.fc)) : NaN, base = round2(total / (fee > 0 ? fee : 1));
+      const id = `${h.c}|${family}|${set}|${item}`, n = (seen.get(id) || 0) + 1; seen.set(id, n);
+      out.push({ key: `${id}|${n}`, family, set, item, total, fee: fee > 0 ? fee : 1, base,
+        label: [family, set !== family && !/^(total|totals)$/i.test(set) ? set : "", item].filter(Boolean).join(" · ") });
+    }
+  }
+  return out;
+}
+function matchSheet(rows) {
+  const cat = catalog().filter(i => PT_CATS.includes(i.cat)), byNorm = new Map();
+  for (const i of cat) byNorm.set(ptNorm(i.name), i);
+  const map = state.priceMap || {}, claimed = new Map();
+  for (const r of rows) {
+    if (map[r.key] !== undefined) { r.manual = true; r.id = map[r.key] || ""; continue; }
+    const cands = [`${r.family} ${r.item}`, `${r.set} ${r.item}`, r.item];
+    const hit = cands.map(ptNorm).map(n => byNorm.get(n)).find(Boolean);
+    if (hit) { r.id = hit.id; claimed.set(hit.id, (claimed.get(hit.id) || 0) + 1); }
+  }
+  // Several sheet rows pointing at one item (e.g. three "Fur Set" rows) can't be told apart automatically.
+  for (const r of rows) if (!r.manual && r.id && claimed.get(r.id) > 1) { r.ambiguous = true; r.id = ""; }
+  return rows;
+}
+async function fetchPriceSheet() {
+  if (ptBusy) return; ptBusy = true; ptErr = ""; render();
+  const urls = [state.priceSheetUrl, `https://docs.google.com/spreadsheets/d/${PRICE_SHEET_ID}/export?format=csv&gid=0`,
+    `https://docs.google.com/spreadsheets/d/${PRICE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=0&headers=0`].filter(Boolean);
+  let rows = null;
+  for (const u of urls) {
+    try { const res = await fetch(u, { cache: "no-store" }); if (!res.ok) continue;
+      const parsed = parseSheet(parseCSV(await res.text())); if (parsed.length) { rows = parsed; break; } } catch (_) {}
+  }
+  ptBusy = false;
+  if (rows) { ptData = rows; ptAt = Date.now(); } else ptErr = "Couldn't read the sheet. Check it's shared as \"Anyone with the link\", or publish it to the web and paste the CSV link under Sheet link.";
+  render();
+}
+function setCatalogPrice(id, v) {
+  const cat = catalog().map(i => ({ ...i })), it = cat.find(i => i.id === id); if (!it) return null;
+  const was = it.base; it.base = round2(v); state.catalog = cat; return { name: it.name, was, now: it.base };
+}
+function priceChanges() {
+  if (!ptData) return [];
+  const cat = catalog(), ign = state.priceIgnore || {}, out = [];
+  for (const r of matchSheet(ptData.map(x => ({ ...x })))) {
+    if (!r.id) continue; const it = cat.find(i => i.id === r.id); if (!it || !PT_CATS.includes(it.cat)) continue;
+    if (Math.abs(it.base - r.base) > 0.004 && ign[r.id] !== r.base) out.push({ id: r.id, name: it.name, cat: it.cat, cur: it.base, next: r.base, row: r });
+  }
+  const seen = new Set(); return out.filter(x => !seen.has(x.id) && seen.add(x.id));
+}
+function renderPrices() {
+  $("priceSec").hidden = !unlocked; if (!unlocked) return;
+  if ($("ptSrc") !== document.activeElement) $("ptSrc").value = state.priceSheetUrl || "";
+  const ch = priceChanges(), rows = ptData ? matchSheet(ptData.map(x => ({ ...x }))) : [];
+  const matched = rows.filter(r => r.id).length;
+  $("ptStatus").innerHTML = ptBusy ? `<span>Checking the sheet…</span>`
+    : `${ptErr ? `<span class="err">${esc(ptErr)}</span>` : ptAt ? `<span class="ok">Checked ${new Date(ptAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}: ${rows.length} items on the sheet, ${matched} matched to your price list.</span>` : `<span>Not checked yet.</span>`}
+      <button type="button" class="btn-ghost" id="ptCheck">Check now</button>${ch.length > 1 ? `<button type="button" class="btn-return" id="ptApproveAll">Approve all (${ch.length})</button>` : ""}`;
+  $("ptChanges").innerHTML = !ptAt ? "" : ch.length ? `<div class="cat-wrap"><table class="val pie-table"><thead><tr><th scope="col">Item</th><th scope="col">Category</th><th scope="col">Current price</th><th scope="col">Sheet price</th><th scope="col">Change</th><th scope="col"><span class="vh">Approve</span></th></tr></thead><tbody>
+    ${ch.map(c => { const d = round2(c.next - c.cur); return `<tr><td>${esc(c.name)}</td><td>${esc(c.cat)}</td><td>${coins(c.cur)}</td><td><b>${coins(c.next)}</b></td><td class="${d > 0 ? "pt-up" : "pt-down"}">${d > 0 ? "+" : "−"}${coins(Math.abs(d))} (${d > 0 ? "+" : "−"}${Math.abs(Math.round(d / (c.cur || 1) * 1000) / 10)}%)</td>
+      <td><span class="pt-acts"><button type="button" class="btn-return" data-ptok="${c.id}" data-v="${c.next}">Approve</button><button type="button" class="btn-ghost" data-ptign="${c.id}" data-v="${c.next}">Ignore</button></span></td></tr>`; }).join("")}
+    </tbody></table></div>` : `<div class="empty">No price changes: your price list matches the sheet.</div>`;
+  const un = rows.filter(r => !r.id), opts = catalog().filter(i => PT_CATS.includes(i.cat)).sort((a, b) => a.name.localeCompare(b.name));
+  $("ptUnmatchedWrap").hidden = !un.length;
+  const sig = JSON.stringify(un.map(r => r.key)) + JSON.stringify(state.priceMap || {});
+  if ($("ptUnmatched").dataset.sig !== sig) { $("ptUnmatched").dataset.sig = sig;
+    $("ptUnmatched").innerHTML = un.length ? `<div class="cat-wrap"><table class="val pie-table"><thead><tr><th scope="col">On the sheet</th><th scope="col">Sheet price</th><th scope="col">Your item</th></tr></thead><tbody>
+      ${un.map(r => `<tr><td>${esc(r.label)}${r.ambiguous ? ` <span class="hint">(several rows look alike)</span>` : ""}</td><td>${coins(r.base)}</td><td><select data-ptmap="${esc(r.key)}" aria-label="Match ${esc(r.label)}"><option value="">Not tracked</option>${opts.map(o => `<option value="${o.id}">${esc(o.name)} (${coins(o.base)})</option>`).join("")}</select></td></tr>`).join("")}
+      </tbody></table></div>` : ""; }
+}
+let ptTimer = null;
+function syncPriceTimer() {
+  const on = unlocked && priceMode;
+  if (on && !ptTimer) { if (!ptAt || Date.now() - ptAt > 60000) fetchPriceSheet(); ptTimer = setInterval(() => { if (unlocked && priceMode && !document.hidden) fetchPriceSheet(); }, 10 * 60000); }
+  if (!on && ptTimer) { clearInterval(ptTimer); ptTimer = null; }
+}
 function renderProfit() {
   $("profitSec").hidden = !unlocked; if (!unlocked) return;
   renderFunds();
@@ -3263,7 +3398,7 @@ function renderOrders() {
           <button class="btn-return" data-pact="confirm" data-id="${p.id}">I received it</button> <button class="btn-ghost" data-pact="deny" data-id="${p.id}">Not received</button></div>`).join("")}</div>`; }).join("") : `<div class="empty">The forge doesn't owe you anything.</div>`;
     updateMdPreview();
   }
-  renderMySales(); renderFmMatSales(); renderProfit(); renderTrends(); renderApprentices(); renderBuyHistory();
+  renderMySales(); renderFmMatSales(); renderProfit(); renderTrends(); renderPrices(); syncPriceTimer(); renderApprentices(); renderBuyHistory();
   renderLoans(dEmp); renderPreqBox(); renderResolve(dEmp); renderSaleRemovals(); renderDebtSalesList();
   // Debts employees asked to add, waiting for the ForgeMaster
   const reqs = state.debtRequests || [];
@@ -3319,13 +3454,17 @@ const blank = () => ({ stock: Object.fromEntries(ALL.map(o => [o.key, 0])), pend
 let empFilter = "";
 let fmView = "all", bsMode = "sell", purchaseMode = true;   // Purchase mode: only Buy / Sell, Stockpiles and Profit tabs
 const PM_VIEWS = ["buysell", "stock", "profit"];
+let priceMode = false;   // Price changes: only the Price tracking tab
+try { priceMode = sessionStorage.getItem("fm-price-mode") === "1"; } catch (_) {}
 try { purchaseMode = sessionStorage.getItem("fm-purchase-mode") !== "0"; } catch (_) {}   // Buy / Sell tab: Sell shows the sell form, Buy shows everything about buying
 try { fmView = sessionStorage.getItem("fm-view") || "all"; } catch (_) {}
 // Apprentice blacksmiths get three tabs: Sell (picked automatically when they sign in), Buy and Stockpile.
 let apView = "sell", apFor = "", apStock = "forge";
 function applyView() {
   $("fmTabs").hidden = !unlocked;
-  if (unlocked && purchaseMode && !PM_VIEWS.includes(fmView)) { fmView = "buysell"; bsMode = "sell"; }
+  if (unlocked && priceMode) fmView = "prices";
+  else if (unlocked && fmView === "prices") fmView = "buysell";
+  if (unlocked && !priceMode && purchaseMode && !PM_VIEWS.includes(fmView)) { fmView = "buysell"; bsMode = "sell"; }
   const ap = typeof apprView === "function" && apprView(), apEmp = ap ? currentEmp() : null;
   $("apTabs").hidden = !ap;
   if (ap) {
@@ -3352,7 +3491,8 @@ function applyView() {
   $("bsToggle").hidden = v !== "buysell";
   document.querySelectorAll("[data-bs]").forEach(el => { if (el.tagName === "SECTION") el.classList.toggle("bs-off", v === "buysell" && el.dataset.bs !== bsMode); });
   $("bsToggle").querySelectorAll("[data-bs]").forEach(b => b.setAttribute("aria-selected", b.dataset.bs === bsMode));
-  $("fmTabs").querySelectorAll("[data-view]").forEach(b => { b.setAttribute("aria-selected", b.dataset.view === v); b.hidden = purchaseMode && !PM_VIEWS.includes(b.dataset.view); });
+  $("fmTabs").querySelectorAll("[data-view]").forEach(b => { b.setAttribute("aria-selected", b.dataset.view === v); b.hidden = priceMode ? b.dataset.view !== "prices" : b.dataset.view === "prices" || (purchaseMode && !PM_VIEWS.includes(b.dataset.view)); });
+  $("pcToggle").setAttribute("aria-pressed", priceMode);
   $("pmToggle").setAttribute("aria-pressed", purchaseMode);
 }
 // Stock level colours. Below "low" is red, from "low" up to "high" is yellow, "high" or more is green.
@@ -3690,6 +3830,7 @@ function render() {
   placeEmployeeView();
   document.querySelectorAll("#ores .adjust, #coal .adjust, #leather .adjust").forEach(el => el.hidden = !unlocked);   // forge stockpile: ForgeMaster only; apprentices keep Add/Remove on their personal stockpile
   $("stockHint").hidden = unlocked;
+  $("emptyStockWrap").hidden = !unlocked; if (!unlocked) { $("emptyStockAsk").hidden = true; $("emptyStock").hidden = false; }
   $("valueSec").hidden = !unlocked;
   if (unlocked) {
     let vs = 0, vh = 0;
@@ -3925,7 +4066,9 @@ function render() {
   renderOrders();
 
   // Tally
-  $("tally").innerHTML = GROUPS.map(g => `<li class="tgrp">${g.label}</li>` + g.items.map(o => { const h = heldBy(o.key);
+  // A signed-in prospector, wood cutter or hunter sees only their own trade's items; apprentices, the ForgeMaster and visitors see all.
+  const tEmp = !unlocked ? currentEmp() : null, tGroups = tEmp && !isApprentice(tEmp) ? allowedGroups(tEmp.name) : GROUPS;
+  $("tally").innerHTML = tGroups.map(g => `<li class="tgrp">${g.label}</li>` + g.items.map(o => { const h = heldBy(o.key);
     return `<li class="${h ? "" : "zero"}">${sw(o.key)}${o.name}<span class="n">${h.toLocaleString()}</span></li>`; }).join("")).join("");
   $("tallyTotal").textContent = visiblePending().reduce((a, p) => a + p.qty, 0).toLocaleString();
 
@@ -4114,7 +4257,8 @@ $("lockForm").addEventListener("submit", async e => {
   if (h === PW_HASH) {
     unlocked = true; $("lockPw").value = ""; $("lockErr").textContent = "";
     try { sessionStorage.setItem("forge-debt-unlocked", PW_HASH); } catch (_) {}
-    fmView = "buysell"; bsMode = "sell"; purchaseMode = true;   // signing in opens Buy / Sell, in Purchase mode
+    fmView = "buysell"; bsMode = "sell"; purchaseMode = true; priceMode = false;   // signing in opens Buy / Sell, in Purchase mode
+    try { sessionStorage.setItem("fm-price-mode", "0"); } catch (_) {}
     try { sessionStorage.setItem("fm-view", fmView); sessionStorage.setItem("fm-purchase-mode", "1"); } catch (_) {}
     render(); window.scrollTo({ top: 0 });
   } else { $("lockErr").textContent = "Wrong password. Try again."; $("lockPw").select(); }
@@ -4126,6 +4270,40 @@ $("fmTabs").addEventListener("click", e => {
   render(); window.scrollTo({ top: 0 });
 });
 $("fmLock").addEventListener("click", () => $("lockBtn").click());
+// ForgeMaster only: empty all three stockpiles (ores, charcoal & firewood, leather) in one go. Pending is left alone.
+$("emptyStock").addEventListener("click", () => { $("emptyStock").hidden = true; $("emptyStockAsk").hidden = false; });
+$("emptyStockNo").addEventListener("click", () => { $("emptyStockAsk").hidden = true; $("emptyStock").hidden = false; });
+$("emptyStockYes").addEventListener("click", () => {
+  $("emptyStockAsk").hidden = true; $("emptyStock").hidden = false;
+  if (readOnly || !unlocked) return;
+  const had = ALL.filter(o => (state.stock[o.key] || 0) > 0).map(o => `${(state.stock[o.key]).toLocaleString()} ${o.name}`);
+  for (const o of ALL) state.stock[o.key] = 0;
+  commit({ kind: "minus", fm: true, text: `ForgeMaster emptied the stockpile${had.length ? ` (was ${had.join(", ")})` : ""}` });
+  toast("Stockpile emptied");
+});
+$("pcToggle").addEventListener("click", () => {
+  priceMode = !priceMode; try { sessionStorage.setItem("fm-price-mode", priceMode ? "1" : "0"); } catch (_) {}
+  render(); window.scrollTo({ top: 0 }); toast(priceMode ? "Price changes on: Price tracking" : "Price changes off");
+});
+$("priceSec").addEventListener("click", e => {
+  if (readOnly || !unlocked) return;
+  if (e.target.closest("#ptCheck")) { fetchPriceSheet(); return; }
+  const one = e.target.closest("[data-ptok]"), ign = e.target.closest("[data-ptign]"), all = e.target.closest("#ptApproveAll");
+  if (one || all) {
+    const list = all ? priceChanges() : [{ id: one.dataset.ptok, next: Number(one.dataset.v) }], done = [];
+    for (const c of list) { const r = setCatalogPrice(c.id, c.next); if (r) done.push(`${r.name} ${coins(r.was)} → ${coins(r.now)}`); }
+    if (done.length) { commit({ kind: "hold-c", fm: true, text: `Price list updated from the Markarth ledger: ${done.join("; ")}` }); toast(done.length > 1 ? `${done.length} prices updated` : "Price updated"); }
+    return;
+  }
+  if (ign) { state.priceIgnore = { ...(state.priceIgnore || {}), [ign.dataset.ptign]: Number(ign.dataset.v) }; const it = catalog().find(i => i.id === ign.dataset.ptign);
+    commit({ kind: "hold-c", fm: true, text: `Price change ignored: ${it ? it.name : ign.dataset.ptign} stays at ${it ? coins(it.base) : "its price"} (sheet says ${coins(Number(ign.dataset.v))})` }); }
+});
+$("priceSec").addEventListener("change", e => {
+  const s = e.target.closest("select[data-ptmap]"); if (!s || readOnly || !unlocked) return;
+  state.priceMap = { ...(state.priceMap || {}), [s.dataset.ptmap]: s.value }; render(); persist();
+});
+$("ptSrcForm").addEventListener("submit", e => { e.preventDefault(); if (readOnly || !unlocked) return;
+  state.priceSheetUrl = $("ptSrc").value.trim(); persist(); toast("Sheet link saved"); fetchPriceSheet(); });
 $("pmToggle").addEventListener("click", () => {
   purchaseMode = !purchaseMode; try { sessionStorage.setItem("fm-purchase-mode", purchaseMode ? "1" : "0"); } catch (_) {}
   render(); toast(purchaseMode ? "Purchase mode on: Buy / Sell, Stockpiles and Profit" : "Purchase mode off: all tabs shown");
@@ -4949,7 +5127,7 @@ $("holdForm").addEventListener("input", updateHoldValue);
 $("holdForm").addEventListener("change", updateHoldValue);
 function updateHoldValue() {
   const k = $("holdOre").value, q = Math.max(0, Math.floor(Number($("holdQty").value)) || 0);
-  $("holdValue").textContent = k && q ? `${q.toLocaleString()} ${NAME[k]} is worth about ${coins(itemValue(k, q))} coins.` : "";
+  // (the "worth about … coins" line under Add pending was removed)
 }
 document.addEventListener("click", e => {
   const b = e.target.closest("button[data-pact]"); if (!b || readOnly) return;
@@ -5186,6 +5364,9 @@ function normalize(d) {
     if (Array.isArray(d.edebts)) s.edebts = d.edebts.filter(x => x && DNAME[x.item] && x.qty > 0);
     if (Array.isArray(d.payments)) s.payments = d.payments.filter(x => x && x.id && x.debtId && x.units > 0);
     const okBuy = k => DNAME[k] || String(k).startsWith("cat:");
+    if (d.priceMap && typeof d.priceMap === "object") s.priceMap = d.priceMap;
+    if (d.priceIgnore && typeof d.priceIgnore === "object") s.priceIgnore = d.priceIgnore;
+    if (typeof d.priceSheetUrl === "string") s.priceSheetUrl = d.priceSheetUrl;
     if (d.funds && Number.isFinite(Number(d.funds.base)) && Number(d.funds.at) > 0) s.funds = { base: round2(Number(d.funds.base)), at: Number(d.funds.at) };
     if (Array.isArray(d.buyHistory)) s.buyHistory = d.buyHistory.filter(x => x && x.who && okBuy(x.item) && x.qty > 0).slice(0, 500);
     if (Array.isArray(d.buys)) s.buys = d.buys.filter(x => x && okBuy(x.item) && x.qty > 0);
