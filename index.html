@@ -1191,6 +1191,7 @@ table.val thead th { color: #cdb995; }
   <section aria-labelledby="coalH" id="sec-coal" data-views="stock">
     <div class="sec-head">
       <h2 id="coalH">Charcoal stockpile</h2>
+      <button type="button" class="watch-btn sell-watch" id="stockVidBtnC" hidden>WATCH THIS!!</button>
       <span class="hint">Firewood, Poor Charcoal, Charcoal, Briquettes and Coke from the wood cutters</span>
     </div>
     <div class="ores" id="coal"></div>
@@ -1199,6 +1200,7 @@ table.val thead th { color: #cdb995; }
   <section aria-labelledby="leatherH" id="sec-leather" data-views="stock">
     <div class="sec-head">
       <h2 id="leatherH">Leather stockpile</h2>
+      <button type="button" class="watch-btn sell-watch" id="stockVidBtnL" hidden>WATCH THIS!!</button>
       <span class="hint">Leather and Leather Strips from the hunters</span>
     </div>
     <div class="ores" id="leather"></div>
@@ -4836,10 +4838,13 @@ function renderStockVidBtn() {
     if (!b3.hidden) { const sn = videoSeen("profit", e); b3.textContent = sn ? "Need help?" : "WATCH THIS!!"; b3.classList.toggle("seen", sn); } }
   { const e = !unlocked && currentEmp(), b2 = $("pstockVidBtn"); b2.hidden = !(e && isApprentice(e));
     if (!b2.hidden) { const sn = videoSeen("pstock", e); b2.textContent = sn ? "Need help?" : "WATCH THIS!!"; b2.classList.toggle("seen", sn); } }
-  const emp = !unlocked && currentEmp(), btn = $("stockVidBtn");
-  btn.hidden = !(unlocked || (emp && !isApprentice(emp))); if (btn.hidden) return;   // apprentices get it inside their personal stockpile video
+  // Wood cutters and hunters only see their own stockpile (charcoal / leather), so their button sits there instead of next to Main stockpile.
+  const emp = !unlocked && currentEmp(), btn = $("stockVidBtn"), own = emp && !isApprentice(emp);
+  const where = { woodcutter: "stockVidBtnC", hunter: "stockVidBtnL" }[emp && emp.prof];
   const seen = videoSeen("stock", emp || null);
-  btn.textContent = seen ? "Need help?" : "WATCH THIS!!"; btn.classList.toggle("seen", seen);
+  for (const id of ["stockVidBtn", "stockVidBtnC", "stockVidBtnL"]) { const b = $(id);
+    b.hidden = id === "stockVidBtn" ? !(unlocked || (own && !where)) : !(own && where === id);   // apprentices get it inside their personal stockpile video
+    b.textContent = seen ? "Need help?" : "WATCH THIS!!"; b.classList.toggle("seen", seen); }
 }
 function renderCommBtn() {
   renderStockVidBtn();
@@ -6055,7 +6060,7 @@ $("pstockVidBtn").addEventListener("click", () => { $("vidUnderstood").hidden = 
   const e = !unlocked && currentEmp(); if (e && isApprentice(e) && !e.openedPStock && !readOnly) { e.openedPStock = true; persist(); } renderIngHint(); });
 $("profitVidBtn").addEventListener("click", () => { $("vidUnderstood").hidden = true; openVideo("profit"); vidKeyOpen = "profit"; renderVidNote(); });
 $("promoVidBtn").addEventListener("click", () => { $("vidUnderstood").hidden = true; openVideo("promo"); vidKeyOpen = "promo"; renderVidNote(); });
-$("stockVidBtn").addEventListener("click", () => { $("vidUnderstood").hidden = true; openVideo("stock"); vidKeyOpen = "stock"; renderVidNote(); });
+for (const id of ["stockVidBtn", "stockVidBtnC", "stockVidBtnL"]) $(id).addEventListener("click", () => { $("vidUnderstood").hidden = true; openVideo("stock"); vidKeyOpen = "stock"; renderVidNote(); });
 $("commVidBtn").addEventListener("click", () => { $("vidUnderstood").hidden = true; openVideo("comm"); vidKeyOpen = "comm"; renderVidNote(); });
 $("helpVid").addEventListener("ended", () => {
   const emp = !unlocked && currentEmp(); if (!emp || !vidKeyOpen || videoSeen(vidKeyOpen, emp)) return;
