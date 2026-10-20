@@ -667,12 +667,18 @@ ul.loan-list li .hint { grid-column: 2 / -1; font-size: .8rem; }
 .pc-bell:hover { color: var(--ink); border-color: var(--accent); }
 .pc-count { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box; border-radius: 999px; background: #d42a1c; color: #fff; font-size: .68rem; font-weight: 800; line-height: 18px; text-align: center; box-shadow: 0 0 0 2px var(--bg); }
 .pc-count[hidden] { display: none; }
+.pers-grp.craft-glow { padding: 10px; border: 2px solid #ffd84a; border-radius: 12px; background: rgba(255,216,74,.06); animation: ingGlow 1.2s ease-in-out infinite alternate; }
+.craft-hint { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; padding: 8px 12px; border-radius: 8px; background: rgba(255,216,74,.18); color: #fff2b0; font-weight: 700; }
+.craft-hint span:first-child { font-size: 1.4rem; line-height: 1; }
+@media (prefers-reduced-motion: reduce) { .pers-grp.craft-glow { animation: none; } }
 .ing-hint { display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin: 0 0 8px; padding: 10px 14px; border: 2px solid #ffd84a; border-radius: 10px; background: rgba(255,216,74,.14); color: #fff2b0; font-weight: 700; animation: ingGlow 1.2s ease-in-out infinite alternate; }
 .ing-hint[hidden] { display: none; }
 .ing-hint .ih-arrow { font-size: 1.6rem; line-height: 1; animation: ingBob .8s ease-in-out infinite alternate; }
 @keyframes ingGlow { from { box-shadow: 0 0 6px rgba(255,216,74,.35); } to { box-shadow: 0 0 24px rgba(255,216,74,.95), 0 0 6px rgba(255,216,74,.8) inset; } }
 @keyframes ingBob { from { transform: translateY(-3px); } to { transform: translateY(4px); } }
 @media (prefers-reduced-motion: reduce) { .ing-hint, .ing-hint .ih-arrow { animation: none; } }
+.test-run { display:flex; gap:10px; align-items:flex-start; margin:0 0 12px; padding:10px 14px; border:2px solid #4aa3ff; border-radius:10px; background:rgba(74,163,255,.12); color:inherit; }
+.test-run b.t { font-variant-numeric:tabular-nums; font-size:1.1em; }
 #persBody.ing-pulse #persIngToggle { box-shadow: 0 0 0 3px #ffd84a, 0 0 18px rgba(255,216,74,.9); animation: ingGlow 1.2s ease-in-out infinite alternate; }
 .onb-banner { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; padding: 12px 16px; border: 2px solid #d42a1c; border-radius: 10px; background: linear-gradient(180deg, rgba(212,42,28,.28), rgba(120,20,12,.28)); color: #fff; box-shadow: 0 0 16px rgba(212,42,28,.3); }
 .onb-banner[hidden] { display: none; }
@@ -4715,6 +4721,7 @@ const HELP_VIDS = {
   sell: { src: "sell-how-to.mp4", title: "Sell orders: how to sell" },
   buy: { src: "buy-how-to.mp4", title: "Buy orders: buying materials" },
   comm: { src: "commission-how-to.mp4", title: "Commissions: sales from your materials" },
+  smelt: { src: "smelt-how-to.mp4", title: "Smelting ingots: the Crafted ingots menu" },
   pstock: { src: "personal-stock-how-to.mp4", title: "Your personal stockpile: how buy & sell orders change it" },
   stock: { src: "stock-how-to.mp4", title: "Reading the stockpile: what the forge needs most" },
 };
@@ -4736,7 +4743,7 @@ function onboardVids(emp) {
   if (HELP_VIDS[emp.prof]) v.push("job:" + emp.prof);
   if (COMM_PROFS.has(emp.prof)) v.push("comm");
   if (isApprentice(emp)) v.push("sell", "buy");
-  if (isApprentice(emp)) v.push("pstock");   // apprentices: how buy and sell orders change their personal stockpile
+  if (isApprentice(emp)) v.push("pstock", "smelt");   // apprentices: how buy and sell orders change their personal stockpile
   if (!isApprentice(emp)) v.push("stock");   // reading the stockpile (apprentices' personal stockpile video covers it)
   return v;
 }
@@ -5639,9 +5646,43 @@ function persLevelClass(p, k, n) {
   if (l.high != null && n >= l.high) return "lv-green";
   return "lv-yellow";
 }
+// ---- 10-minute test period: the first time an apprentice presses the smelting WATCH THIS button, 200 of every material is added so they can practise smelting.
+// When the time is up the leftover test materials and every ingot smelted during it are taken away again.
+const TRIAL_MIN = 10, TRIAL_QTY = 200;
+const fmtMMSS = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+function startTestRun(emp) {
+  if (readOnly || !emp || emp.testGiven) return;
+  emp.testGiven = true;
+  state.personal = state.personal || {};
+  const p = JSON.parse(JSON.stringify(persOf(emp)));
+  for (const o of ALL) p.stock[o.key] = round2((p.stock[o.key] || 0) + TRIAL_QTY);
+  state.personal[emp.id] = p;
+  emp.testRun = { ends: Date.now() + TRIAL_MIN * 60000, grant: TRIAL_QTY, used: {}, real: {}, ingots: {} };
+  persist(); toast(`Test materials added: ${TRIAL_QTY} of every ore, fuel and leather for ${TRIAL_MIN} minutes.`);
+}
+function endTestRun(emp) {
+  const t = emp && emp.testRun; if (!t) return;
+  state.personal = state.personal || {};
+  const p = JSON.parse(JSON.stringify(persOf(emp)));
+  for (const o of ALL) {   // take back what is left of the test grant; give back any of their own stock the test smelting used
+    const left = t.grant - (t.used[o.key] || 0), v = round2(Math.max(0, (p.stock[o.key] || 0) - left) + (t.real[o.key] || 0));
+    if (v > 0) p.stock[o.key] = v; else delete p.stock[o.key];
+  }
+  for (const k in t.ingots) { const v = round2(Math.max(0, (p.ingots[k] || 0) - t.ingots[k])); if (v > 0) p.ingots[k] = v; else delete p.ingots[k]; }
+  state.personal[emp.id] = p; delete emp.testRun;
+}
+function testRunTick() {
+  if (readOnly || !state.employees) return false;
+  const me = currentEmp(); let mine = false, any = false;
+  for (const e of state.employees) if (e.testRun && e.testRun.ends <= Date.now() && (unlocked || (me && me.id === e.id))) { endTestRun(e); any = true; if (me && me.id === e.id) mine = true; }
+  if (any) { persist(); render(); if (mine) toast("Your 10-minute test period is over. The test materials and the ingots you smelted with them were removed."); }
+  return any;
+}
+setInterval(() => { testRunTick(); const e = currentEmp(), el = $("testRunTime"); if (el && e && e.testRun) el.textContent = fmtMMSS(e.testRun.ends - Date.now()); }, 1000);
+const testBannerHtml = emp => emp.testRun ? `<div class="test-run" role="status"><span aria-hidden="true">⏱</span><span><b>Test period:</b> ${emp.testRun.grant} of every ore, fuel and leather were added to your personal stockpile so you can practise smelting. When the time runs out they, and every ingot you smelt during it, are removed. Time left: <b class="t" id="testRunTime">${fmtMMSS(emp.testRun.ends - Date.now())}</b></span></div>` : "";
 function renderPersonal(emp) {
   const p = persOf(emp), body = $("persBody");
-  const sig = emp.id + JSON.stringify(p) + "|" + persIngView + "|" + persCraft;
+  const sig = emp.id + JSON.stringify(p) + "|" + persIngView + "|" + persCraft + "|" + videoSeen("smelt", emp) + "|" + !!emp.sawCraftGlow + "|" + !!emp.testRun;
   const a = document.activeElement;
   if (body.dataset.sig === sig || (body.contains(a) && (a.tagName === "INPUT" || a.tagName === "SELECT") && !a.closest(".adjust"))) return;
   body.dataset.sig = sig;
@@ -5661,7 +5702,7 @@ function renderPersonal(emp) {
       </div></div>`;
   };
   const lv = persLevels(p);
-  const bar = `<div class="ingot-bar"><button type="button" class="btn-ghost" id="persIngToggle" aria-pressed="${persIngView}">${persIngView ? "Show full stockpile" : "Ingot view"}</button><span class="hint">${persIngView ? "Your ingots, and smelting more from your personal stockpile" : "Your ingots and smelting from your personal stockpile"}</span></div>`;
+  const bar = testBannerHtml(emp) + `<div class="ingot-bar"><button type="button" class="btn-ghost" id="persIngToggle" aria-pressed="${persIngView}">${persIngView ? "Show full stockpile" : "Ingot view"}</button><span class="hint">${persIngView ? "Your ingots, and smelting more from your personal stockpile" : "Your ingots and smelting from your personal stockpile"}</span></div>`;
   if (persIngView) { body.innerHTML = bar + persIngotHtml(p); return; }
   const hints = { ores: "Ores you keep for your own work", coal: "Firewood, Poor Charcoal, Charcoal, Briquettes and Coke", leather: "Leather and Leather Strips" };
   const head = (id, title, hint) => `<div class="sec-head"><h2 id="${id}">${title}</h2><span class="hint">${hint}</span></div>`;
@@ -5713,7 +5754,7 @@ function persIngotHtml(p) {
     + card("dwarven", "Dwarven Metal Ingot", dw, persLevelClass(p, "dwarven", dw), dl.high ?? null, false);
   const keys = [...new Set(INGOTS.flatMap(i => persSmeltNeeds(p, i.key, 1).map(n => n.key)))];
   return `<section class="pers-grp"><div class="sec-head"><h2 id="persIngH">Your ingots</h2><span class="hint">Only you see these. Kept apart from the forge's ingot stockpile.</span></div><div class="ores">${cards}</div></section>
-    <section class="pers-grp"><div class="sec-head"><h2 id="persCraftH">Crafted ingots</h2><span class="hint">Smelt ore and fuel from your personal stockpile into ingots. Nothing comes out of the forge's stockpile.</span></div>
+    <section class="pers-grp${(() => { const e = currentEmp(); return e && !e.sawCraftGlow ? " craft-glow" : ""; })()}">${(() => { const e = currentEmp(); return e && !e.sawCraftGlow ? `<div class="craft-hint" role="status"><span aria-hidden="true">🔥</span><span>New here? This is where you smelt your own ingots. Watch the video, then try making some.</span></div>` : ""; })()}<div class="sec-head"><h2 id="persCraftH">Crafted ingots</h2>${(() => { const e = currentEmp(); return e ? `<button type="button" class="watch-btn sell-watch${videoSeen("smelt", e) ? " seen" : ""}" id="smeltVidBtn">${videoSeen("smelt", e) ? "Need help?" : "WATCH THIS!!"}</button>` : ""; })()}<span class="hint">Smelt ore and fuel from your personal stockpile into ingots. Nothing comes out of the forge's stockpile.</span></div>
       <div class="panel"><form id="persCraftForm" class="craft-form"><label>Ingot<select id="persCraftWhich">${INGOTS.map(i => `<option value="${i.key}" ${i.key === persCraft ? "selected" : ""}>${i.name} (can make ${persCanSmelt(p, i.key).toLocaleString()})</option>`).join("")}</select></label>
         <label>How many<input id="persCraftQty" type="number" min="1" step="1" value="${esc(persCraftQty)}"></label>
         <button type="button" class="btn-ghost" id="persCraftMax">Most I can make</button><button type="submit" class="btn-return">Make ingots</button></form>
@@ -5731,7 +5772,9 @@ function persIngotHtml(p) {
 }
 $("persBody").addEventListener("click", e => {
   const emp = apprView() && currentEmp(); if (!emp) return;
-  if (e.target.closest("#persIngToggle")) { persIngView = !persIngView; if (persIngView && !emp.sawIngotView && !readOnly) { emp.sawIngotView = true; persist(); } renderIngHint(); renderPersonal(emp); return; }
+  const seenCraft = () => { if (!emp.sawCraftGlow && !readOnly) { emp.sawCraftGlow = true; persist(); } };   // the glow around the craft menu is for the first visit only
+  if (e.target.closest("#smeltVidBtn")) { seenCraft(); startTestRun(emp); $("vidUnderstood").hidden = true; openVideo("smelt"); vidKeyOpen = "smelt"; renderVidNote(); renderPersonal(emp); return; }
+  if (e.target.closest("#persIngToggle")) { persIngView = !persIngView; if (!persIngView) seenCraft(); if (persIngView && !emp.sawIngotView && !readOnly) { emp.sawIngotView = true; persist(); } renderIngHint(); renderPersonal(emp); return; }
   if (e.target.closest("#persCraftMax")) { persCraftQty = String(Math.max(1, persCanSmelt(persOf(emp), persCraft))); $("persCraftQty").value = persCraftQty; $("persCraftBatch").innerHTML = persBatchHtml(persOf(emp)); return; }
   const b = e.target.closest("[data-piact]"); if (!b) return;
   const k = b.dataset.pik, qi = $("persBody").querySelector(`[data-piq="${k}"]`), q = Math.floor(Number(qi && qi.value) || 0);
@@ -5750,10 +5793,15 @@ $("persBody").addEventListener("submit", e => {
   if (e.target.id !== "persCraftForm") return; e.preventDefault();
   const emp = apprView() && currentEmp(); if (!emp || readOnly) return;
   const q = Math.floor(Number($("persCraftQty").value || persCraftQty)); if (!(q >= 1)) { toast("Enter how many ingots to make."); return; }
+  testRunTick();
   const needs = persSmeltNeeds(persOf(emp), persCraft, q), short = needs.filter(n => n.need > n.have);
   if (short.length) { toast(`Not enough ${short.map(n => n.name).join(" and ")} in your personal stockpile for ${q} ${INGOT_NAME[persCraft]}.`); return; }
+  const tr = emp.testRun;   // during the test period, remember what came from the test grant so it can all be taken back
+  if (tr && Date.now() < tr.ends) { for (const n of needs) { const ft = Math.min(n.need, tr.grant - (tr.used[n.key] || 0)); tr.used[n.key] = round2((tr.used[n.key] || 0) + ft); tr.real[n.key] = round2((tr.real[n.key] || 0) + n.need - ft); }
+    tr.ingots[persCraft] = round2((tr.ingots[persCraft] || 0) + q); }
   persSave(emp, p => { for (const n of needs) { const v = round2((p.stock[n.key] || 0) - n.need); if (v > 0) p.stock[n.key] = v; else delete p.stock[n.key]; }
     p.ingots = p.ingots || {}; p.ingots[persCraft] = round2((p.ingots[persCraft] || 0) + q); });
+  if (!emp.sawCraftGlow) { emp.sawCraftGlow = true; persist(); }
   persCraftQty = "1"; $("persCraftQty").blur(); renderPersonal(emp);
   toast(`Made ${q} ${INGOT_NAME[persCraft]} from ${needs.map(n => `${n.need.toLocaleString()} ${n.name}`).join(" and ")} (personal stockpile)`);
 });
@@ -5967,14 +6015,14 @@ $("helpVid").addEventListener("ended", () => {
   const emp = !unlocked && currentEmp(); if (!emp || !vidKeyOpen || videoSeen(vidKeyOpen, emp)) return;
   if (vidKeyOpen.startsWith("job:") && "job:" + emp.prof !== vidKeyOpen) return;
   const n = countVideoEnd(vidKeyOpen, emp);
-  renderHelpBtn(); renderSellHelpBtn(); renderVidNote();
+  renderHelpBtn(); renderSellHelpBtn(); renderVidNote(); if (vidKeyOpen === "smelt" && apprView()) renderPersonal(emp);
   toast(n >= VID_WATCHES ? "Video complete. The button is now \"Need help?\" if you want to watch again." : `Watched ${n} of ${VID_WATCHES} times. Watch it once more all the way through.`);
 });
 $("vidResetAll").addEventListener("click", () => { if (!unlocked) return; $("vidResetAsk").hidden = false; $("vidResetAll").hidden = true; });
 $("vidResetNo").addEventListener("click", () => { $("vidResetAsk").hidden = true; $("vidResetAll").hidden = false; });
 $("vidResetYes").addEventListener("click", () => {
   if (readOnly || !unlocked) return;
-  for (const emp of state.employees) { delete emp.helpEnds; delete emp.helpViews; delete emp.sawHelpFor; delete emp.sawIngotView; delete emp.openedPStock; }
+  for (const emp of state.employees) { endTestRun(emp); delete emp.testGiven; delete emp.helpEnds; delete emp.helpViews; delete emp.sawHelpFor; delete emp.sawIngotView; delete emp.openedPStock; delete emp.sawCraftGlow; }
   $("vidResetAsk").hidden = true; $("vidResetAll").hidden = false;
   commit({ kind: "hold-c", fm: true, text: "ForgeMaster reset every employee's video buttons to WATCH THIS!!" }); toast("Every employee's video buttons are back to WATCH THIS!!");
 });
