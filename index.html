@@ -4814,9 +4814,9 @@ function renderCommBtn() {
   const seen = videoSeen("comm", emp);
   btn.textContent = seen ? "Need help?" : "WATCH THIS!!"; btn.classList.toggle("seen", seen);
 }
-// After an apprentice has watched the personal stockpile video all the way through, a glowing banner points them to Ingot view until they open it.
+// As soon as an apprentice opens the personal stockpile video (however far they get), a glowing banner points them to Ingot view until they open it.
 function renderIngHint() {
-  const e = !unlocked && currentEmp(), on = !!(e && isApprentice(e) && videoSeen("pstock", e) && !e.sawIngotView);
+  const e = !unlocked && currentEmp(), on = !!(e && isApprentice(e) && (e.openedPStock || videoSeen("pstock", e)) && !e.sawIngotView);
   const h = $("persIngHint"); h.hidden = !on; $("persBody").classList.toggle("ing-pulse", on);
 }
 function renderHelpBtn() {
@@ -5959,7 +5959,8 @@ $("testS").addEventListener("click", () => { testS = !testS;
   if (testS) { const pt = promoTest(); testRanks = { [pt.ore]: pt.progress.rank }; testStreaks = {}; testPend = false; } render(); updateSellQuote(); toast(testS ? "Test S on: pretend stockpile, nothing is saved" : "Test S off"); });
 $("testSale").addEventListener("click", () => { testSale = !testSale; $("testSale").setAttribute("aria-pressed", testSale); updateSellQuote(); toast(testSale ? `Test sale on: pretending ${fmtQty(TEST_SALE_QTY)} of every material, nothing is saved` : "Test sale off"); });
 $("sellNoComm").addEventListener("change", () => updateSellQuote());
-$("pstockVidBtn").addEventListener("click", () => { $("vidUnderstood").hidden = true; openVideo("pstock"); vidKeyOpen = "pstock"; renderVidNote(); });
+$("pstockVidBtn").addEventListener("click", () => { $("vidUnderstood").hidden = true; openVideo("pstock"); vidKeyOpen = "pstock"; renderVidNote();
+  const e = !unlocked && currentEmp(); if (e && isApprentice(e) && !e.openedPStock && !readOnly) { e.openedPStock = true; persist(); } renderIngHint(); });
 $("stockVidBtn").addEventListener("click", () => { $("vidUnderstood").hidden = true; openVideo("stock"); vidKeyOpen = "stock"; renderVidNote(); });
 $("commVidBtn").addEventListener("click", () => { $("vidUnderstood").hidden = true; openVideo("comm"); vidKeyOpen = "comm"; renderVidNote(); });
 $("helpVid").addEventListener("ended", () => {
@@ -5973,7 +5974,7 @@ $("vidResetAll").addEventListener("click", () => { if (!unlocked) return; $("vid
 $("vidResetNo").addEventListener("click", () => { $("vidResetAsk").hidden = true; $("vidResetAll").hidden = false; });
 $("vidResetYes").addEventListener("click", () => {
   if (readOnly || !unlocked) return;
-  for (const emp of state.employees) { delete emp.helpEnds; delete emp.helpViews; delete emp.sawHelpFor; delete emp.sawIngotView; }
+  for (const emp of state.employees) { delete emp.helpEnds; delete emp.helpViews; delete emp.sawHelpFor; delete emp.sawIngotView; delete emp.openedPStock; }
   $("vidResetAsk").hidden = true; $("vidResetAll").hidden = false;
   commit({ kind: "hold-c", fm: true, text: "ForgeMaster reset every employee's video buttons to WATCH THIS!!" }); toast("Every employee's video buttons are back to WATCH THIS!!");
 });
