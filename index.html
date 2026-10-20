@@ -122,6 +122,14 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .comm-box .comm-profit s { opacity: .6; font-weight: 400; margin-right: 4px; }
 #testS { margin-left: auto; }
 #testS + #testSale { margin-left: 8px; }
+#sellEqT:not([hidden]) { margin-left: auto; }
+#sellEqT + #sellGiftT { margin-left: 8px; }
+.gift-fee { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px 14px; padding: 10px 12px; border: 2px solid #5ab478; border-radius: 10px; background: rgba(90,180,120,.08); }
+.gift-fee label { display: flex; flex-direction: column; gap: 4px; font-weight: 700; }
+.gift-fee input { width: 9rem; }
+.gift-fee[hidden] { display: none; }
+.gift-mats { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 8px; }
+#sellDiscRow[hidden] { display: none; }
 #testSale:not([hidden]):first-of-type { margin-left: auto; }
 #testP { margin-left: auto; }
 .funds-box.test-p { border-color: #b07ad6 !important; }
@@ -428,6 +436,13 @@ table.cat-table td .row-acts { display: flex; gap: 6px; justify-content: flex-en
 .cart { grid-column: 1 / -1; display: grid; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); }
 .cart-line { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 10px; align-items: center; padding: 7px 10px; border-top: 1px dashed var(--line); font-size: .9rem; }
 .cart-line:first-child { border-top: 0; }
+.eq-tag { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: rgba(90,180,120,.18); border: 1px solid #5ab478; color: #9fe0b4; font-size: .78rem; font-weight: 700; }
+.mrow.eq-row { color: #9fe0b4; }
+.eq-form { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end; }
+.eq-form label { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; }
+.eq-form select { min-width: 16rem; max-width: 100%; }
+.eq-form input { width: 6rem; }
+tr.short td { color: var(--danger); }
 .buy-line .q { display: flex; gap: 6px; align-items: center; }
 .buy-line .q input { width: 80px; }
 .buy-line .debt-tick { grid-column: 1 / -1; font-size: .82rem; margin-top: -2px; }
@@ -766,6 +781,8 @@ ul.loan-list li .hint { grid-column: 2 / -1; font-size: .8rem; }
 .pf-x { padding: 3px 8px; font-size: .78rem; }
 .pf-del { display: inline-flex; gap: 4px; } .pf-del button { padding: 3px 8px; font-size: .78rem; }
 .empty-stock { margin-right: auto; font-size: .85rem; display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ing-own { font-size: .78rem; margin-top: 2px; min-height: 1em; color: #e8c766; }
+.empty-stock #emptyIng { padding: 4px 10px; font-size: .82rem; border-color: var(--danger); color: var(--danger); }
 .empty-stock #emptyStock { padding: 4px 10px; font-size: .82rem; border-color: var(--danger); color: var(--danger); }
 .pt-status { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 0 0 10px; font-size: .9rem; }
 .pt-status .ok { color: var(--gain, #5fd18a); } .pt-status .err { color: var(--danger); }
@@ -1077,6 +1094,7 @@ table.val thead th { color: #cdb995; }
       <button type="button" role="tab" data-view="stock">Stockpiles</button>
       <button type="button" role="tab" data-view="buysell">Buy / Sell</button>
       <button type="button" role="tab" data-view="profit">Profit</button>
+      <button type="button" role="tab" data-view="equip">Crafted equipment</button>
       <button type="button" role="tab" data-view="trends">Trends</button>
       <button type="button" role="tab" data-view="prices" hidden>Price tracking</button>
       <button type="button" role="tab" data-view="cust">Customer service</button>
@@ -1178,7 +1196,7 @@ table.val thead th { color: #cdb995; }
   </section>
   <div class="ingot-bar" id="ingotBar" data-views="stock" hidden><button type="button" class="btn-ghost" id="ingotToggle" aria-pressed="false">Ingot view</button><span class="hint">Ingots on hand and smelting more from the stockpile</span></div>
   <section aria-labelledby="ingotH" id="ingotSec" data-views="stock" hidden>
-    <div class="sec-head"><h2 id="ingotH">Ingot stockpile</h2><span class="hint">Confirmed sell orders take the ingots they need from here.</span></div>
+    <div class="sec-head"><h2 id="ingotH">Ingot stockpile</h2><span class="hint">Confirmed sell orders take the ingots they need from here.</span><span class="empty-stock"><button type="button" class="btn-ghost" id="emptyIng">Empty ingot stockpile</button><span id="emptyIngAsk" hidden>Set every ingot to 0? Employees keep their part-ownership of the ingots as claims. <button type="button" class="btn-danger" id="emptyIngYes">Yes, empty it</button> <button type="button" class="btn-ghost" id="emptyIngNo">Cancel</button></span></span></div>
     <div class="ing-quick"><span class="hint">Iron, Steel &amp; Corundum Ingots:</span><button type="button" class="btn-add" data-ingbulk="5">+5 of each</button><button type="button" class="btn-add" data-ingbulk="10">+10 of each</button><button type="button" class="pm-toggle" id="ingBulkCraft" aria-pressed="false" title="On: the buttons smelt the ingots from stockpile ore and fuel. Off: they just add ingots.">Count as crafted</button></div>
     <div id="ingots"></div>
   </section>
@@ -1442,6 +1460,8 @@ table.val thead th { color: #cdb995; }
     <div class="sec-head">
       <h2 id="sellH">Sell orders</h2>
       <button type="button" class="watch-btn sell-watch" id="sellHelpBtn" hidden>WATCH THIS!!</button>
+      <button type="button" class="pm-toggle" id="sellEqT" aria-pressed="false" hidden title="Items in this order that are already made (Crafted equipment tab) come from there: their materials aren't taken from the stockpiles again.">Crafted equipment</button>
+      <button type="button" class="pm-toggle" id="sellGiftT" aria-pressed="false" hidden title="The customer handed the blacksmith all the materials for this order: nothing is taken from the stockpiles and you charge a blacksmith fee instead of the price.">Gifted materials</button>
       <button type="button" class="pm-toggle" id="testS" aria-pressed="false" hidden title="Try the commission rules on a pretend stockpile. Nothing is saved, and orders can't be confirmed while it's on.">Test S</button>
       <button type="button" class="pm-toggle" id="testSale" aria-pressed="false" hidden title="Pretend you hold 1,000 of every smithing material, so you can try any order without missing-material blocks. Nothing is saved, and orders can't be confirmed while it's on.">Test sale</button>
       <span class="hint">Orders from customers. Base cost is materials only, from the Markarth ledger.</span>
@@ -1510,6 +1530,7 @@ table.val thead th { color: #cdb995; }
         </div>
         <p class="hint craft-note" id="sellCraftNote" hidden></p>
         <div class="card-banner" id="sellCard" hidden></div>
+        <div class="gift-fee wide4" id="sellGiftWrap" hidden><label>Blacksmith fee<input id="sellGiftFee" type="number" min="0" step="0.01" inputmode="decimal" placeholder="coins"></label><span class="hint">Replaces the order's price. The customer handed over every material, so nothing is taken from the stockpiles and no employee's materials are touched.</span></div>
         <div class="quote wide" id="sellQuote" aria-live="polite"></div>
         <div class="wide4" id="sellComm"></div>
         <div class="pie-wrap" id="sellPie"></div>
@@ -1907,6 +1928,11 @@ table.val thead th { color: #cdb995; }
       </form>
       <div id="drMine"></div>
     </div>
+  </section>
+
+  <section aria-labelledby="equipH" id="equipSec" data-views="equip" hidden>
+    <div class="sec-head"><h2 id="equipH">Crafted equipment</h2><span class="hint">Make armor, weapons and jewelry ahead of time. The materials come out of the stockpiles the moment you make it. Sell orders with "Crafted equipment" on use these instead of taking the materials again.</span></div>
+    <div class="panel" id="equipBody"></div>
   </section>
 
   <section aria-labelledby="aprH" id="aprSec" hidden>
@@ -2468,12 +2494,13 @@ function syncProfitGuard() {
   if (b) { b.disabled = low || miss.length > 0 || testSale; b.title = testSale ? "Test sale is on: turn it off to confirm a real order" : low ? "Fee / profit must be 20% or more" : miss.length ? "Missing material for this order" : ""; }
 }
 function updateSellQuote() {
+  $("sellDiscRow").hidden = !!(sellGift && unlocked);   // no discounts on gifted orders
   syncProfitGuard();
   renderCardBanner();
   const cat = catalog();
   const emp = sellEmployee(), prof = emp ? emp.prof || "" : "";
   const lines = sellLines.map(l => ({ ...l, it: cat.find(i => i.id === l.itemId) })).filter(l => l.it).map(l => ({ ...l, perk: emp ? perkFor(l.it.name, prof) : null }));
-  const cartKey = JSON.stringify(sellLines) + catSig + "|" + (emp ? emp.name + prof : "") + JSON.stringify(state.recipes || {});
+  const cartKey = JSON.stringify(sellLines) + catSig + "|" + (emp ? emp.name + prof : "") + JSON.stringify(state.recipes || {}) + "|" + (sellUseEq && unlocked ? JSON.stringify(equipOf().map(b => [b.itemId, b.qty])) : "");
   const empNote = $("sellEmp").checked
     ? (!emp ? "Pick the employee who is buying from the list." : !prof ? `${emp.name} has no job set, so no tool discounts apply.` : `Employee purchase for ${emp.name} (${PROF[prof].name.toLowerCase()}).`)
     : "";
@@ -2481,22 +2508,24 @@ function updateSellQuote() {
   if (cartKey !== updateSellQuote.key) { updateSellQuote.key = cartKey;
   $("sellCart").innerHTML = lines.length ? lines.map(l => `
     <div class="cart-line">
-      <span class="nm">${esc(l.it.name)}</span>
+      <span class="nm">${esc(l.it.name)}${sellUseEq && unlocked && equipHave(l.itemId) > 0 ? `<span class="eq-tag">${fmtQty(Math.min(l.qty, equipHave(l.itemId)))} from crafted equipment</span>` : ""}</span>
       <span class="q"><input type="number" min="1" step="1" value="${l.qty}" data-line-qty="${esc(l.itemId)}" aria-label="Quantity of ${esc(l.it.name)}"><span class="hint">× ${coins(l.it.base)}</span></span>
       <span class="amt">${l.perk ? `<s>${coins(l.qty * l.it.base)}</s> ${coins(l.qty * l.it.base * l.perk.factor)}<span class="perk-tag">${l.perk.text}</span>` : coins(l.qty * l.it.base)}</span>
       <button type="button" class="x" data-rmline="${esc(l.itemId)}" aria-label="Remove ${esc(l.it.name)}">Remove</button>
     </div>`).join("") : `<div class="cart-empty">No items yet. Pick an item and quantity, then press Add item. Add as many as the customer wants.</div>`;
   }
-  const om = orderMaterials(lines.map(l => ({ itemId: l.itemId, qty: l.qty, base: l.it.base })));
-  renderDebtPick(om);
+  const eqs = eqSplit(lines.map(l => ({ itemId: l.itemId, qty: l.qty, base: l.it.base })), sellUseEq && unlocked);   // items already made: their materials aren't shown or taken again
+  const om = orderMaterials(eqs.rest);
+  renderDebtPick(orderMaterials(lines.map(l => ({ itemId: l.itemId, qty: l.qty, base: l.it.base }))));
   $("sellMats").hidden = $("sellCost").hidden = !lines.length;
   if (lines.length) {
     const top = mergeByName(om.mats), sm = mergeByName(om.smelt);
-    $("sellMats").innerHTML = `<h3>Materials for this order</h3>
+    if (!(sellGift && unlocked)) { $("sellMats").dataset.gh = ""; $("sellMats").innerHTML = `<h3>Materials for this order</h3>
       ${top.length ? `<div class="mrow">${top.join(" · ")}</div>` : ""}
       ${sm.length ? `<div class="mrow"><span class="hint">Smelting the ingots takes</span> ${sm.join(" · ")}</div>` : ""}
-      ${stockUseHtml(lines.map(l => ({ itemId: l.itemId, qty: l.qty })))}
-      ${om.missing.length ? `<div class="mrow hint">No recipe for ${om.missing.map(l => esc(catalog().find(i => i.id === l.itemId).name)).join(", ")}, so its whole cost counts as the forge's.</div>` : ""}`;
+      ${eqs.from.length ? `<div class="mrow eq-row"><b>From crafted equipment:</b> ${eqs.from.map(l => `${fmtQty(l.qty)} ${esc(catalog().find(i => i.id === l.itemId).name)}`).join(", ")}. Already made, so no materials are taken for ${eqs.from.length === 1 && eqs.from[0].qty === 1 ? "it" : "them"}.</div>` : ""}
+      ${stockUseHtml(eqs.rest.map(l => ({ itemId: l.itemId, qty: l.qty })))}
+      ${om.missing.length ? `<div class="mrow hint">No recipe for ${om.missing.map(l => esc(catalog().find(i => i.id === l.itemId).name)).join(", ")}, so its whole cost counts as the forge's.</div>` : ""}`; }
     // Only the order's total material cost, not a line per item.
     $("sellCost").innerHTML = `<h3>Material cost</h3>${apprView() ? `<p class="mc-warn">!!! Never discuss material cost with the customer. Your price is your own, and 20% is the minimum an apprentice should ever charge !!!</p>` : ""}<table class="mc"><tfoot><tr><td>Total material cost</td><td></td><td>${coins(om.total)}</td></tr></tfoot></table>
       <div class="mc-split">${[["ore", "Ore"], ["fuel", "Charcoal & firewood"], ["leather", "Leather"], ["other", "Other (gems, no recipe)"]].filter(([k]) => om[k] > 0.004).map(([k, n]) => `<span><i class="sw-dot" style="background:${ROLE[k] ? ROLE[k].color : FORGE_COLOR}"></i>${n} ${coins(om[k])}</span>`).join("")}</div>`;
@@ -2515,6 +2544,23 @@ function updateSellQuote() {
     ${cr.off > 0.004 ? `<div class="ln perk"><span>Material reduced cost: ${esc(emp.name)}'s craft request materials (${esc(cr.text)})</span><span>−${coins(Math.min(cr.off, q.fin))}</span></div>` : ""}
     <div class="ln final"><span>Final price</span><span>${coins(fin)} coins</span></div>${debtedQuoteHtml(lines.map(l => ({ itemId: l.itemId, name: l.it.name, qty: l.qty, base: l.it.base, factor: l.perk ? l.perk.factor : 1, fixed: isFixed(l) })), q, d)}`;
   $("sellComm").innerHTML = commPreviewHtml(lines, fin, round2(fin - (q.sub - Math.min(cr.off, q.fin))), cr.off > 0 ? emp.name : "");
+  if (sellGift && unlocked && lines.length) {   // gifted materials: price = blacksmith fee + what the materials that weren't gifted cost (+ fee / profit on them)
+    const g = giftSplit(lines.map(l => ({ itemId: l.itemId, qty: l.qty }))), fee = round2(Number(sellGiftFee)), ok = sellGiftFee !== "" && fee >= 0;
+    const markup = round2(g.cost * sellProfit / 100), total = ok ? giftPrice(fee, g.cost) : null, short = g.paid.filter(u => u.qty > u.have + 1e-9);
+    const gh = `<h3>Materials for this order</h3><p class="hint" style="margin:0 0 6px">Tick what the customer handed over. Anything not ticked is charged at material cost and taken from the stockpiles.</p>
+      <div class="gift-mats">${g.use.map(u => `<label class="check"><input type="checkbox" data-giftmat="${useId(u)}" ${giftNot.has(useId(u)) ? "" : "checked"}> ${fmtQty(u.qty)} ${esc(u.name)} <span class="hint">${giftNot.has(useId(u)) ? `charged ${coins(useCost(u))} · have ${fmtQty(u.have)}` : "gifted"}</span></label>`).join("")}</div>
+      ${g.paid.length ? `<div class="mrow"><span class="hint">Taken from the stockpile when confirmed:</span> ${g.paid.map(u => `<span class="${u.qty > u.have + 1e-9 ? "short" : ""}">${fmtQty(u.qty)} ${esc(u.name)}</span>`).join(" · ")}</div>` : `<div class="mrow eq-row">Everything was gifted: nothing is taken from the stockpiles.</div>`}
+      ${short.length ? `<div class="mrow short"><b>Missing material.</b> Short on ${short.map(u => `${fmtQty(round2(u.qty - u.have))} ${esc(u.name)}`).join(", ")}. Tick it as gifted, or add the material first.</div>` : ""}`;
+    if ($("sellMats").dataset.gh !== gh) { $("sellMats").dataset.gh = gh; $("sellMats").innerHTML = gh; }
+    $("sellCost").hidden = true; $("sellPie").innerHTML = "";
+    $("sellQuote").innerHTML = `<div class="ln"><span>Blacksmith fee</span><span>${ok ? coins(fee) : "–"}</span></div>
+      <div class="ln"><span>Materials not gifted (material cost)</span><span>${g.cost > 0.004 ? coins(g.cost) : "–"}</span></div>
+      <div class="ln"><span>Fee / profit ${sellProfit ? `+${sellProfit}% on those materials` : "(none)"}</span><span>${sellProfit && g.cost > 0.004 ? "+" + coins(markup) : "–"}</span></div>
+      <div class="ln final"><span>Final price</span><span>${ok ? `${coins(total)} coins` : "Enter the blacksmith fee"}</span></div>`;
+    $("sellComm").innerHTML = `<div class="comm-box"><div class="ln"><span>Commission</span><span>None on a gifted materials order</span></div>${g.paid.length ? `<div class="hint">Employees whose stockpile materials are used get a deferred claim for them instead.</div>` : ""}<div class="ln comm-profit"><span>Profit on this order</span><span class="gain">${ok ? signed(round2(total - g.cost)) : "–"}</span></div></div>`;
+  }
+  if (sellGift && unlocked) $("sellCard").hidden = true;
+  $("sellGiftWrap").hidden = !(sellGift && unlocked); if ($("sellGiftFee").value !== sellGiftFee && document.activeElement !== $("sellGiftFee")) $("sellGiftFee").value = sellGiftFee;
 }
 // "Material reduced cost" on an employee purchase: the toggle shows when the employee has craft request materials; ticked, their value comes off.
 function craftQuote(lines, emp) {
@@ -3083,8 +3129,9 @@ function orderStockUse(lines) {
 // Sell orders can't be confirmed while any material is missing (the forge's stockpile for the ForgeMaster, the personal stockpile for an apprentice).
 // Test S is a sandbox, so it never blocks.
 function sellMissing() {
+  if (sellGift && unlocked) return giftSplit(sellLines.map(l => ({ itemId: l.itemId, qty: l.qty }))).paid.filter(u => u.qty > u.have + 1e-9).map(u => ({ ...u, miss: round2(u.qty - u.have) }));   // gifted: only what wasn't gifted comes from the stockpiles
   if ((testS && unlocked) || testSale) return [];
-  return orderStockUse(sellLines.map(l => ({ itemId: l.itemId, qty: l.qty }))).filter(u => u.qty > u.have + 1e-9).map(u => ({ ...u, miss: round2(u.qty - u.have) }));
+  return orderStockUse(eqSplit(sellLines.map(l => ({ itemId: l.itemId, qty: l.qty })), sellUseEq && unlocked).rest).filter(u => u.qty > u.have + 1e-9).map(u => ({ ...u, miss: round2(u.qty - u.have) }));
 }
 // ---- Where stockpile goods came from. Only goods bought from an employee on a buy order carry a hidden tag (not ForgeMaster additions,
 // pending or deposits). The tag follows them through smelting, ore and charcoal alike, so a sale where one employee supplied 90% or more of the
@@ -3114,7 +3161,7 @@ function syncClaims(silent) {
     const mine = il.filter(l => l.key === key).sort((a, b) => a.at - b.at);
     let excess = round2(mine.reduce((a, l) => a + l.qty, 0) - (ing[key] || 0));
     for (const l of mine) { if (excess <= 1e-9) break; const t = Math.min(excess, l.qty); l.qty = round2(l.qty - t); excess = round2(excess - t);
-      if (!silent) for (const c of l.comp || []) add(c.who, c.key, (c.per || 0) * t, l.at, !!c.craft); }
+      if (!silent && (l.comp || []).length) addIngClaim(key, t, l.at, l.comp); }   // employees keep part-ownership of the removed ingots
   }
   state.ingotLots = il.filter(l => l.qty > 1e-9);
   // new untagged stock re-tags to whoever lost some
@@ -3126,6 +3173,34 @@ function syncClaims(silent) {
       lotsOf().push({ id: uid(), who: g.who, key, qty: t, at: g.at, ...(g.craft ? { craft: true } : {}) }); g.qty = round2(g.qty - t); avail = round2(avail - t); }
   }
   state.ghosts = (state.ghosts || []).filter(g => g.qty > 1e-9);
+  // Ingot claims re-tag onto unowned ingots of the same kind (added by hand): highest rank among the owners first, then oldest.
+  const ig = state.ingGhosts || [];
+  for (const key of new Set(ig.map(g => g.key))) {
+    let avail = round2((ing[key] || 0) - ingLotsOf().filter(l => l.key === key).reduce((a, l) => a + l.qty, 0));
+    if (avail <= 1e-9) continue;
+    const order = ig.filter(g => g.key === key && g.qty > 1e-9).map(g => ({ g, r: Math.max(0, ...g.comp.map(c => rankOf(c.who))), x: Math.random() })).sort((a, b) => b.r - a.r || a.g.at - b.g.at || a.x - b.x);
+    for (const { g } of order) { if (avail <= 1e-9) break; const t = round2(Math.min(g.qty, avail)); if (!(t > 0)) continue;
+      ingLotsOf().push({ id: uid(), key, qty: t, at: g.at, comp: g.comp.map(c => ({ ...c })) }); g.qty = round2(g.qty - t); avail = round2(avail - t); }
+  }
+  state.ingGhosts = ig.filter(g => g.qty > 1e-9);
+}
+// ---- Part-ownership of ingots. Each ingot is owned by the employees whose ore and charcoal went into it, split by material cost
+// (e.g. an Iron Ingot of Orlog's iron and Oswald's Poor Charcoal is 50% each). Commission uses the ingot's parts as always.
+const ingotUnitCost = key => (SMELT[key] || []).reduce((a, [k, q]) => { const sk = STOCK_MAT[k]; return a + (sk ? q * rawCost(sk) : 0); }, 0);
+const compVal = c => c.vper != null ? c.vper : (c.per || 0) * rawCost(c.key);
+const ownPct = (key, comp) => { const tot = ingotUnitCost(key), by = {}; for (const c of comp || []) by[c.who] = (by[c.who] || 0) + compVal(c); return Object.entries(by).map(([w, v]) => [w, tot > 0 ? Math.round(100 * v / tot) : 0]); };
+const ownText = (key, comp) => { const p = ownPct(key, comp), forge = 100 - p.reduce((a, [, x]) => a + x, 0); return [...p.map(([w, x]) => `${w} ${x}%`), ...(forge > 0 ? [`forge ${forge}%`] : [])].join(", "); };
+function addIngClaim(key, qty, at, comp) {
+  qty = round2(qty); if (!(qty > 0) || !INGOT_NAME[key]) return;
+  const ig = state.ingGhosts || (state.ingGhosts = []), sig = c => (c || []).map(x => [x.who, x.key, round2(x.per), !!x.craft].join(":")).sort().join("|");
+  const g = ig.find(x => x.key === key && sig(x.comp) === sig(comp));
+  if (g) { g.qty = round2(g.qty + qty); g.at = Math.min(g.at, at); } else ig.push({ id: uid(), key, qty, at, comp: comp.map(c => ({ ...c })) });
+}
+// Who owns the ingots of one kind on the stockpile right now, by material cost.
+function ingotOwners(key) {
+  const tot = ingotUnitCost(key) * (ingotsOf()[key] || 0), by = {};
+  for (const l of ingLotsOf().filter(l => l.key === key)) for (const c of l.comp || []) by[c.who] = (by[c.who] || 0) + compVal(c) * l.qty;
+  return Object.entries(by).filter(([, v]) => v > 1e-9).map(([w, v]) => [w, tot > 0 ? Math.round(100 * v / tot) : 0]);
 }
 function addGhost(who, key, qty, at, craft) {
   qty = round2(qty); if (!(qty > 0) || !NAME[key]) return;
@@ -3185,7 +3260,7 @@ const ingotRoleUnits = id => { const r = {}; for (const [k, q] of SMELT[id] || [
 const ingotRoleVal = id => { const r = {}; for (const [k, q] of SMELT[id] || []) { const sk = STOCK_MAT[k], role = roleOfKey(sk); if (role) r[role] = (r[role] || 0) + q * rawCost(sk); } return r; };
 function takeOrderStock(lines, opt) {
   const craftFor = (opt && opt.craftFor) || "", ingTake = {};
-  const use = orderStockUse(lines), short = [], credit = [], total = {}, roleVal = {}, rawUse = {};
+  const use = (opt && opt.use) || orderStockUse(lines), short = [], credit = [], total = {}, roleVal = {}, rawUse = {};
   for (const u of use) {
     const take = Math.min(u.have, u.qty), left = round2(Math.max(0, u.have - u.qty));
     if (u.ingot) { ingTake[u.key] = (ingTake[u.key] || 0) + take; credit.push(...drawIngots(u.key, take, u.have, craftFor)); for (const [r, n] of Object.entries(ingotRoleUnits(u.key))) total[r] = (total[r] || 0) + n * u.qty;
@@ -3227,7 +3302,7 @@ function takeOrderStock(lines, opt) {
   // Each employee's share of the raw material of their kind in this order (craft request material never earns commission)
   const by = new Map(); for (const c of credit.filter(c => !c.craft && c.units > 1e-9)) { const k = c.who + "|" + c.role, x = by.get(k) || { units: 0, val: 0, mats: {} }; x.units += c.units; x.val += c.val || 0; if (c.key) x.mats[c.key] = round2((x.mats[c.key] || 0) + c.units); by.set(k, x); }
   const shares = [...by].map(([k, x]) => { const [who, role] = k.split("|"); return { who, role, units: round2(x.units), val: round2(x.val), mats: x.mats, total: round2(total[role] || 0), share: total[role] ? x.units / total[role] : 0 }; });
-  return { use, short, shares, roleVal, rawUse, craftOff, craftBy, craftCost, craftUnits };
+  return { use, short, shares, total, roleVal, rawUse, craftOff, craftBy, craftCost, craftUnits };
 }
 // Smelting, per ingot, from the ledger's Crafted Materials table (SMELT), in main-stockpile items.
 const smeltNeeds = (id, qty) => (SMELT[id] || []).map(([k, q]) => { const key = STOCK_MAT[k]; return { key, name: NAME[key], per: q, need: q * qty, have: state.stock[key] || 0 }; });
@@ -3250,6 +3325,7 @@ function renderIngots() {
         <div class="ore-top"><span class="ore-name">${esc(name)}</span></div>
         <div class="count" id="ic-${key}">0</div>
         <div class="lvl-txt" id="ilt-${key}"></div>
+        <div class="ing-own hint" id="iown-${key}"></div>
         ${adj ? `<div class="adjust"><input type="number" id="iq-${key}" data-ingqty="${key}" min="1" step="1" value="1" aria-label="${esc(name)} quantity">
           <button class="btn-add" data-ingadd="${key}" aria-label="Add ${esc(name)}">Add</button><button class="btn-sub" data-ingrm="${key}" aria-label="Remove ${esc(name)}">Remove</button></div>`
           : `<div class="held">Kept on the main stockpile as Dwarven</div>`}
@@ -3260,7 +3336,8 @@ function renderIngots() {
     const c = $("icard-" + key); c.classList.remove("lv-red", "lv-yellow", "lv-green"); if (lc) c.classList.add(lc);
     const lt = $("ilt-" + key); lt.className = "lvl-txt " + lc; lt.textContent = lc ? LEVEL_TEXT[lc] + (goal != null ? ` (goal: ${goal.toLocaleString()})` : "") : "";
   };
-  for (const i of INGOTS) { const n = ing[i.key] || 0, l = ingotLevel(i.key); paint(i.key, n, ingotLevelClass(i.key, n), l.high); }
+  for (const i of INGOTS) { const n = ing[i.key] || 0, l = ingotLevel(i.key); paint(i.key, n, ingotLevelClass(i.key, n), l.high);
+    const ow = n > 0 ? ingotOwners(i.key) : [], forge = 100 - ow.reduce((a, [, x]) => a + x, 0); $("iown-" + i.key).textContent = ow.length ? `Owned: ${ow.map(([w, x]) => `${w} ${x}%`).join(", ")}${forge > 0 ? `, forge ${forge}%` : ""}` : ""; }
   { const n = state.stock.dwarven || 0, l = levelFor("dwarven"); paint("dwarven", n, levelClass("dwarven", n), l ? l.high : null); }
   // Sufficiency goals (collapsible, bottom of Ingot view)
   const lb = $("ingotLvlBody");
@@ -3324,11 +3401,11 @@ const QUICK_PROFIT = 20;
 // One sale's profit. Materials an employee was paid for through a debted order aren't a cost: what they were paid is.
 function saleProfit(s) {
   const c = stockCost(s.lines), roles = new Set(s.contribs.map(x => x.role)), cost = zeroSplit();
-  for (const r in cost) cost[r] = roles.has(r) ? 0 : Math.max(0, c.by[r] - ((s.craftCost || {})[r] || 0));   // craft request materials cost the forge nothing
-  const mat = round2(cost.ore + cost.fuel + cost.leather + cost.other), paid = round2(s.contribs.reduce((a, x) => a + (Number(x.used) || 0), 0));
+  for (const r in cost) cost[r] = s.gifted || roles.has(r) ? 0 : Math.max(0, c.by[r] - ((s.craftCost || {})[r] || 0));   // craft request and gifted materials cost the forge nothing
+  const mat = s.gifted ? round2(s.giftMat || 0) : round2(cost.ore + cost.fuel + cost.leather + cost.other), paid = round2(s.contribs.reduce((a, x) => a + (Number(x.used) || 0), 0));
   return { gross: s.final, cost, mat, paid, profit: round2(s.final - mat - paid), raw: c.raw, unknown: c.unknown, roles };
 }
-const orderProfit = o => saleProfit({ final: o.final, lines: orderLines(o), contribs: debtedList(o), craftCost: o.craftCost });
+const orderProfit = o => saleProfit({ final: o.final, lines: orderLines(o), contribs: debtedList(o), craftCost: o.craftCost, gifted: !!o.gifted, giftMat: o.giftMat || 0 });
 // Every paid sale, from the customers' purchase records, matched to its debted-material record if it had one.
 function paidSales() {
   const out = [], sales = state.debtSales || [];
@@ -3337,7 +3414,7 @@ function paidSales() {
     if (!ls.length) { const it = catalog().find(x => x.name === p.item); if (it) ls = [{ itemId: it.id, item: it.name, qty: p.qty || 1 }]; }
     const ds = sales.find(x => p.orderId ? x.id === p.orderId : x.paidAt && sameName(x.customer, c.name) && Math.abs(x.paidAt - p.at) < 10000);
     out.push({ key: `${c.id}:${i}`, orderId: p.orderId || "", at: p.at, who: c.name, text: p.lines && p.lines.length ? linesText(p.lines) : `${p.qty > 1 ? p.qty + " × " : ""}${p.item}`,
-      final: Number(p.coin) || 0, lines: ls, contribs: ds ? ds.contribs : [], noItems: !ls.length, craftCost: p.craftCost });
+      final: Number(p.coin) || 0, lines: ls, contribs: ds ? ds.contribs : [], noItems: !ls.length, craftCost: p.craftCost, gifted: !!p.gifted, giftMat: p.giftMat || 0 });
   });
   return out.sort((a, b) => b.at - a.at);
 }
@@ -4407,7 +4484,7 @@ function renderOrders() {
 const blank = () => ({ stock: Object.fromEntries(ALL.map(o => [o.key, 0])), ingots: {}, pending: [], debts: [], edebts: [], levels: null, status: {}, loyalty: null, prices: {}, contribValue: {}, buyCfg: null, buys: [], buyHistory: [], payments: [], sells: [], customers: [], catalog: null, recipes: {}, debtSales: [], debtRequests: [], purchaseReqs: [], resolveReqs: [], saleRemovals: [], employees: [], contrib: {}, log: [] });
 let empFilter = "";
 let fmView = "all", bsMode = "sell", purchaseMode = true;   // Purchase mode: only Buy / Sell, Stockpiles and Profit tabs
-const PM_VIEWS = ["buysell", "stock", "profit"];
+const PM_VIEWS = ["buysell", "stock", "profit", "equip"];
 let priceMode = false;   // Price changes: only the Price tracking tab
 try { priceMode = sessionStorage.getItem("fm-price-mode") === "1"; } catch (_) {}
 try { purchaseMode = sessionStorage.getItem("fm-purchase-mode") !== "0"; } catch (_) {}   // Buy / Sell tab: Sell shows the sell form, Buy shows everything about buying
@@ -4451,6 +4528,7 @@ function applyView() {
   document.querySelectorAll("[data-bs]").forEach(el => { if (el.tagName === "SECTION") el.classList.toggle("bs-off", v === "buysell" && el.dataset.bs !== bsMode); });
   $("bsToggle").querySelectorAll("[data-bs]").forEach(b => b.setAttribute("aria-selected", b.dataset.bs === bsMode));
   $("fmTabs").querySelectorAll("[data-view]").forEach(b => { b.setAttribute("aria-selected", b.dataset.view === v); b.hidden = priceMode ? b.dataset.view !== "prices" : b.dataset.view === "prices" || b.dataset.view === "all" || (purchaseMode ? !PM_VIEWS.includes(b.dataset.view) : PM_VIEWS.includes(b.dataset.view)); });
+  $("equipSec").hidden = !(unlocked && v === "equip"); if (!$("equipSec").hidden) renderEquip();
   $("pcToggle").setAttribute("aria-pressed", priceMode);
   renderPcBell(); pcDailyCheck();
   $("pmToggle").setAttribute("aria-pressed", purchaseMode);
@@ -4902,8 +4980,9 @@ function syncBuyPendingBtn() {
   btn.textContent = left > 0 ? `Add all their pending (${left.toLocaleString()})` : "All their pending is in the order";
 }
 function renderSellHelpBtn() {
-  { const tsOk = unlocked || isApprentice(currentEmp()); if (!tsOk) testSale = false; $("testSale").hidden = !tsOk; $("testSale").setAttribute("aria-pressed", testSale); }
-  $("testS").hidden = !unlocked; $("testS").setAttribute("aria-pressed", testS && unlocked); $("sellNoCommWrap").hidden = !unlocked;
+  testSale = false; testS = false; $("testSale").hidden = $("testS").hidden = true;   // Test sale and Test S were removed from the sell form
+  $("sellEqT").hidden = !unlocked; $("sellEqT").setAttribute("aria-pressed", sellUseEq && unlocked);
+  if (!unlocked) sellGift = false; $("sellGiftT").hidden = !unlocked; $("sellGiftT").setAttribute("aria-pressed", sellGift); $("sellNoCommWrap").hidden = !unlocked;
   const emp = !unlocked && currentEmp(), show = unlocked || (emp && isApprentice(emp));
   for (const [id, key] of [["sellHelpBtn", "sell"], ["buyHelpBtn", "buy"]]) {
     const btn = $(id); btn.hidden = !show; if (!show) continue;
@@ -5024,14 +5103,18 @@ function renderCraftMats() {
     : `<p class="hint" style="margin:0">None right now. Tick <b>Crafting request</b> on a buy order from an employee to bring in their own materials at no cost.</p>`;
 }
 function renderGhosts() {
-  const g = (state.ghosts || []).filter(x => x.qty > 1e-9), sec = $("ghostSec");
+  const g = (state.ghosts || []).filter(x => x.qty > 1e-9), sec = $("ghostSec"), ig = (state.ingGhosts || []).filter(x => x.qty > 1e-9);
   sec.hidden = !unlocked; if (sec.hidden) return;
+  const ingHtml = ig.length ? `<h3 class="sub-h" style="margin-top:12px">Ingot claims (part-ownership)</h3><p class="hint" style="margin:0 0 8px">Employee-owned ingots that were removed by hand. They re-tag onto ingots of the same kind added by hand, with the same split of ownership.</p>
+    <div class="cat-wrap"><table class="val pie-table"><thead><tr><th scope="col">Ingot</th><th scope="col">Still claimed</th><th scope="col">Owned by (material cost)</th><th scope="col">Since</th></tr></thead><tbody>
+    ${[...ig].sort((a, b) => a.key.localeCompare(b.key) || a.at - b.at).map(x => `<tr><td>${esc(INGOT_NAME[x.key])}</td><td>${fmtQty(round2(x.qty))}</td><td>${esc(ownText(x.key, x.comp))}</td><td>${shortDate(x.at)}</td></tr>`).join("")}</tbody></table></div>` : "";
+  if (!g.length && ig.length) { $("ghostBody").innerHTML = ingHtml; return; }
   if (!g.length) { $("ghostBody").innerHTML = `<p class="hint" style="margin:0">Nothing right now. If you remove employee-owned material by hand (not through a sale or smelting), what each employee lost is listed here until new stock re-tags to them.</p>`; return; }
   const byKey = {}; for (const x of g) byKey[x.key] = (byKey[x.key] || 0) + x.qty;
   const order = [...g].sort((a, b) => a.key.localeCompare(b.key) || rankOf(b.who) - rankOf(a.who) || a.at - b.at);
   $("ghostBody").innerHTML = `<p class="hint" style="margin:0 0 8px">${Object.entries(byKey).map(([k, q]) => `${fmtQty(round2(q))} ${NAME[k]}`).join(" · ")} waiting to be re-tagged. Employees don't see this.</p>
     <div class="cat-wrap"><table class="val pie-table"><thead><tr><th scope="col">Employee</th><th scope="col">Material</th><th scope="col">Still claimed</th><th scope="col">Rank</th><th scope="col">Owned since</th></tr></thead><tbody>
-    ${order.map(x => `<tr><td>${esc(x.who)}</td><td>${esc(NAME[x.key])}${x.craft ? `<span class="craft-tag">craft request</span>` : ""}</td><td>${fmtQty(round2(x.qty))}</td><td>${rankOf(x.who) ? RANK_NAME[rankOf(x.who)] : "Normal"}</td><td>${x.at > 1e6 ? shortDate(x.at) : ""}</td></tr>`).join("")}</tbody></table></div>`;
+    ${order.map(x => `<tr><td>${esc(x.who)}</td><td>${esc(NAME[x.key])}${x.craft ? `<span class="craft-tag">craft request</span>` : ""}</td><td>${fmtQty(round2(x.qty))}</td><td>${rankOf(x.who) ? RANK_NAME[rankOf(x.who)] : "Normal"}</td><td>${x.at > 1e6 ? shortDate(x.at) : ""}</td></tr>`).join("")}</tbody></table></div>${ingHtml}`;
 }
 function renderMyRank() {
   const emp = !unlocked && currentEmp(), sec = $("myRankSec"), show = !!emp && !isApprentice(emp) && RANK_PROFS.has(emp.prof);
@@ -5581,7 +5664,8 @@ $("craftBody").addEventListener("submit", e => {
   if (short.length) { toast(`Not enough ${short.map(n => n.name).join(" and ")} for ${q} ${INGOT_NAME[craftIngot]}.`); return; }
   smeltNow(craftIngot, q); const ing = ingotsOf();
   craftQty = "1"; if (document.activeElement) document.activeElement.blur();
-  commit({ kind: "plus", fm: true, text: `ForgeMaster smelted ${q} ${INGOT_NAME[craftIngot]} from ${needs.map(n => `${n.need.toLocaleString()} ${n.name}`).join(" and ")} (now ${fmtQty(ing[craftIngot])} on the ingot stockpile)` });
+  const newLot = ingLotsOf().filter(l => l.key === craftIngot).sort((a, b) => b.at - a.at)[0], own = newLot && Date.now() - newLot.at < 5000 ? ownText(craftIngot, newLot.comp) : "";
+  commit({ kind: "plus", fm: true, text: `ForgeMaster smelted ${q} ${INGOT_NAME[craftIngot]} from ${needs.map(n => `${n.need.toLocaleString()} ${n.name}`).join(" and ")} (now ${fmtQty(ing[craftIngot])} on the ingot stockpile)${own ? `. Owned: ${own}` : ". Owned by the forge (no employee materials)"}` });
   toast(`Made ${q} ${INGOT_NAME[craftIngot]}`);
 });
 $("lockForm").addEventListener("submit", async e => {
@@ -5647,6 +5731,27 @@ $("bugForm").addEventListener("submit", e => {
   render(); persist(); toast("Bug report sent to the ForgeMaster. Thank you!");
 });
 // ForgeMaster only: empty all three stockpiles (ores, charcoal & firewood, leather) in one go. Pending is left alone.
+// Empty ingot stockpile: every ingot (and Dwarven Metal Ingot) goes to 0. Each employee keeps their part-ownership of the ingots as an
+// ingot claim, which re-tags onto unowned ingots of that kind added later.
+const ingotEmpShare = l => {
+  const tot = (SMELT[l.key] || []).reduce((a, [k, q]) => { const sk = STOCK_MAT[k]; return a + (sk ? q * rawCost(sk) : 0); }, 0);
+  const emp = (l.comp || []).reduce((a, c) => a + (c.vper != null ? c.vper : (c.per || 0) * rawCost(c.key)), 0);
+  return tot > 0 ? Math.min(1, emp / tot) : (l.self ? 1 : 0);
+};
+$("emptyIng").addEventListener("click", () => { $("emptyIng").hidden = true; $("emptyIngAsk").hidden = false; });
+$("emptyIngNo").addEventListener("click", () => { $("emptyIngAsk").hidden = true; $("emptyIng").hidden = false; });
+$("emptyIngYes").addEventListener("click", () => {
+  $("emptyIngAsk").hidden = true; $("emptyIng").hidden = false;
+  if (readOnly || !unlocked) return;
+  const ing = ingotsOf(), had = [...INGOTS.filter(i => (ing[i.key] || 0) > 0).map(i => `${fmtQty(ing[i.key])} ${i.name}`), ...((state.stock.dwarven || 0) > 0 ? [`${fmtQty(state.stock.dwarven)} Dwarven Metal Ingot`] : [])];
+  if (!had.length) { toast("The ingot stockpile is already empty."); return; }
+  const owned = ingLotsOf().filter(l => (l.comp || []).length && l.qty > 1e-9).map(l => `${fmtQty(l.qty)} ${INGOT_NAME[l.key]} (${ownText(l.key, l.comp)})`);
+  const dw = lotsOf().filter(l => l.key === "dwarven" && l.qty > 1e-9).map(l => `${l.who} ${fmtQty(l.qty)} Dwarven Metal Ingot`);
+  for (const i of INGOTS) ing[i.key] = 0; state.stock.dwarven = 0;
+  syncClaims();   // ingots with employee parts become ingot claims (part-ownership kept); Dwarven bought from employees becomes a normal stock claim
+  commit({ kind: "minus", fm: true, text: `ForgeMaster emptied the ingot stockpile (was ${had.join(", ")}).${owned.length || dw.length ? ` Employees keep part-ownership as claims: ${[...owned, ...dw].join("; ")}. They re-tag onto ingots added by hand later.` : " None of it was employee material, so no claims."}` });
+  toast(owned.length || dw.length ? "Ingot stockpile emptied. Employees keep their part-ownership as claims." : "Ingot stockpile emptied");
+});
 $("emptyStock").addEventListener("click", () => { $("emptyStock").hidden = true; $("emptyStockAsk").hidden = false; });
 $("emptyStockNo").addEventListener("click", () => { $("emptyStockAsk").hidden = true; $("emptyStock").hidden = false; });
 $("emptyStockYes").addEventListener("click", () => {
@@ -6150,6 +6255,23 @@ $("testR").addEventListener("click", () => { testR = !testR; $("testR").setAttri
 $("testS").addEventListener("click", () => { testS = !testS;
   // Test S starts from the promotion test run: Orlog is an Advanced prospector, everyone else normal. The rank buttons can change it.
   if (testS) { const pt = promoTest(); testRanks = { [pt.ore]: pt.progress.rank }; testStreaks = {}; testPend = false; } render(); updateSellQuote(); toast(testS ? "Test S on: pretend stockpile, nothing is saved" : "Test S off"); });
+$("sellEqT").addEventListener("click", () => { if (!unlocked) return; sellUseEq = !sellUseEq; if (sellUseEq) { sellGift = false; $("sellGiftT").setAttribute("aria-pressed", false); } $("sellEqT").setAttribute("aria-pressed", sellUseEq); updateSellQuote.key = ""; updateSellQuote(); toast(sellUseEq ? "Crafted equipment on: items already made come from storage" : "Crafted equipment off"); });
+$("sellGiftT").addEventListener("click", () => { if (!unlocked) return; sellGift = !sellGift; giftNot = new Set(); if (sellGift) { sellUseEq = false; $("sellEqT").setAttribute("aria-pressed", false); }
+  { const chip = $("sellForm").querySelector(`[data-profit="${sellGift ? 0 : 20}"]`); if (chip) chip.click(); }   // gifted orders start at no fee / profit
+  $("sellGiftT").setAttribute("aria-pressed", sellGift); updateSellQuote.key = ""; updateSellQuote(); if (sellGift) $("sellGiftFee").focus();
+  toast(sellGift ? "Gifted materials on: enter the blacksmith fee. Nothing is taken from the stockpiles." : "Gifted materials off"); });
+$("sellGiftFee").addEventListener("input", e => { sellGiftFee = e.target.value; updateSellQuote(); });
+$("sellMats").addEventListener("change", e => { const c = e.target.closest("[data-giftmat]"); if (!c) return; if (c.checked) giftNot.delete(c.dataset.giftmat); else giftNot.add(c.dataset.giftmat); updateSellQuote(); });
+$("equipBody").addEventListener("change", e => { if (e.target.id !== "eqItem") return; equipItem = e.target.value; e.target.blur(); renderEquip(); });
+$("equipBody").addEventListener("input", e => { if (e.target.id !== "eqQty") return; equipQty = e.target.value; renderEquip(); });
+$("equipBody").addEventListener("submit", e => { if (e.target.id !== "eqForm") return; e.preventDefault(); if (readOnly || !unlocked) return;
+  const q = Math.floor(Number(equipQty)); if (!(q >= 1)) { toast("Enter how many to make."); return; }
+  const err = craftEquipment(equipItem, q); if (err) { toast(err); return; }
+  equipQty = "1"; $("equipBody").dataset.sig = ""; renderEquip(); toast(`Made ${q} ${(catalog().find(i => i.id === equipItem) || {}).name}. The materials were taken from the stockpiles.`); });
+$("equipBody").addEventListener("click", e => { const b = e.target.closest("[data-eqrm]"); if (!b || readOnly || !unlocked) return;
+  const k = b.dataset.eqrm, bt = equipOf().filter(x => x.itemId === k && x.qty > 1e-9).sort((x, y) => y.at - x.at)[0]; if (!bt) return;
+  bt.qty = round2(bt.qty - 1); state.equipment = equipOf().filter(x => x.qty > 1e-9);
+  commit({ kind: "minus", fm: true, text: `ForgeMaster removed 1 ${bt.name} from crafted equipment without a sale` }); toast(`Removed 1 ${bt.name}`); });
 $("testSale").addEventListener("click", () => { testSale = !testSale; $("testSale").setAttribute("aria-pressed", testSale); updateSellQuote(); toast(testSale ? `Test sale on: pretending ${fmtQty(TEST_SALE_QTY)} of every material, nothing is saved` : "Test sale off"); });
 $("sellNoComm").addEventListener("change", () => updateSellQuote());
 $("aprFundsBox").addEventListener("change", e => { if (e.target.id !== "afManual") return; afManual = e.target.checked; afDraft = ""; $("aprFundsBox").dataset.html = ""; renderApprentices(); if (afManual) { const i = $("afNew"); if (i) i.focus(); } });
@@ -6207,9 +6329,14 @@ $("testStock").addEventListener("click", () => {
 });
 $("autoStockBtn").addEventListener("click", () => {
   if (readOnly || !unlocked) return;
-  if (autoStockOn()) { state.status = Object.fromEntries(Object.entries(allStatuses()).filter(([, v]) => v)); state.autoStockOff = true; }   // turning it off keeps what it was showing
+  // Turning it on or off clears every status set by hand, so everything goes back to automatic. (Items with no goal keep their status,
+  // since AutoStock Pile has nothing to work them out from.)
+  const handSet = Object.keys(state.statusManual || {}).filter(k => levelFor(k) && levelFor(k).high != null);
+  const st = { ...(state.status || {}) }; for (const k of handSet) delete st[k]; state.status = st;
+  state.statusManual = Object.fromEntries(Object.keys(state.statusManual || {}).filter(k => !handSet.includes(k)).map(k => [k, true]));
+  if (autoStockOn()) { state.status = { ...state.status, ...Object.fromEntries(Object.entries(allStatuses()).filter(([k, v]) => v && !isManualStatus(k))) }; state.autoStockOff = true; }   // turning it off keeps what it was showing
   else delete state.autoStockOff;
-  commit({ kind: "hold-c", fm: true, text: `ForgeMaster turned AutoStock Pile ${autoStockOn() ? "on" : "off"} for the main stockpile` });
+  commit({ kind: "hold-c", fm: true, text: `ForgeMaster turned AutoStock Pile ${autoStockOn() ? "on" : "off"} for the main stockpile${handSet.length ? `. Statuses set by hand went back to automatic: ${handSet.map(k => NAME[k]).join(", ")}` : ""}` });
   toast(autoStockOn() ? "AutoStock Pile on" : "AutoStock Pile off");
 });
 $("lvlBody").addEventListener("change", e => {
@@ -6539,10 +6666,14 @@ $("sellForm").addEventListener("submit", e => {
   const d = currentDiscount(), reach = $("sellReach").checked;
   const q = orderQuote(lines, sellProfit, d.pct);
   // Material reduced cost: the employee's own craft request materials come off the price.
-  const craftOn = !!(emp && unlocked && $("sellCraft").checked && !$("sellCraftWrap").hidden);
+  const gift = unlocked && sellGift, fee = round2(Number(sellGiftFee));
+  if (gift && (sellGiftFee === "" || !(fee >= 0))) { toast("Gifted materials is on: enter the blacksmith fee."); $("sellGiftFee").focus(); return; }
+  if (gift && $("sellDebt").checked) { toast("Debted material and Gifted materials can't be used together. Untick one."); return; }
+  const craftOn = !gift && !!(emp && unlocked && $("sellCraft").checked && !$("sellCraftWrap").hidden);
   if (craftOn && $("sellDebt").checked) { toast("Debted material and Material reduced cost can't be used together. Untick one."); return; }
   const cp = craftOn ? craftPreview(lines.map(l => ({ itemId: l.itemId, qty: l.qty })), emp.name) : null, craftOff = cp ? round2(Math.min(cp.off, q.fin)) : 0;
-  const finalPrice = round2(Math.max(0, q.fin - craftOff));
+  const gs = gift ? giftSplit(lines.map(l => ({ itemId: l.itemId, qty: l.qty }))) : null;
+  const finalPrice = gift ? giftPrice(fee, gs.cost) : round2(Math.max(0, q.fin - craftOff));
   const flines = lines.map(l => ({ itemId: l.itemId, name: l.item, qty: l.qty, base: l.listBase, factor: l.listBase ? l.base / l.listBase : 1, fixed: l.fixed }));
   const oid = uid(); let debted = null, newPays = [], sale = null, surplusDebt = null;
   if ($("sellDebt").checked) {
@@ -6564,16 +6695,16 @@ $("sellForm").addEventListener("submit", e => {
   }
   const existing = custByName(who); if (existing && !!existing.reach !== reach) existing.reach = reach;
   // Confirming a sell order means it's paid: it goes straight to the customer's record.
-  const order = { id: oid, by: unlocked ? "ForgeMaster" : (currentEmp() || {}).name || "", who, lines, profit: sellProfit, discount: d.pct, discountLabel: d.label, reach, emp: !!emp, final: finalPrice, note, debted, at: Date.now() , noComm: unlocked && $("sellNoComm").checked,
+  const order = { id: oid, by: unlocked ? "ForgeMaster" : (currentEmp() || {}).name || "", who, lines, profit: sellProfit, discount: gift ? 0 : d.pct, discountLabel: gift ? "" : d.label, reach, emp: !!emp, final: finalPrice, note, debted, at: Date.now() , noComm: unlocked && $("sellNoComm").checked, useEq: unlocked && sellUseEq && !gift, ...(gift ? { gifted: true, giftFee: fee, giftMat: gs.cost, giftPaid: gs.paid.map(u => ({ key: u.key, ingot: !!u.ingot, qty: u.qty, name: u.name })) } : {}),
     ...(craftOff > 0 ? { craftFor: emp.name, craftOff, craftBy: cp.by, craftCost: cp.cost, craftUnits: cp.units } : {}) };
   if (newPays.length) state.payments = [...(state.payments || []), ...newPays];
   if (sale) state.debtSales = [...(state.debtSales || []), sale].slice(-500);
   recordSellPaid(order);
   if (surplusDebt) state.debts.push(surplusDebt);
   $("sellEmp").checked = false; $("sellDebt").checked = false; $("sellNoComm").checked = false; $("sellCraft").checked = false;
-  commit({ kind: "plus", debt: !!debted, text: `Sell order confirmed: ${who} paid ${coins(finalPrice)} coins for ${linesText(lines)}${craftOff > 0 ? ` (material reduced cost: −${coins(craftOff)} for their craft request ${craftUnitsText(cp.units)})` : ""}${d.pct && (unlocked || d.reach) ? ` (−${d.pct}% ${d.label})` : ""}${debted ? `. Debted material: ${debted.map(c => `${coins(c.used)} coins to ${c.who} for their ${ROLE[c.role].short} (${coins(c.toDebt)} toward their debt, waiting for confirmation${c.surplus > 0.004 ? `, ${coins(c.surplus)} owed to them in coins` : ""})`).join(", ")}` : ""}` });
+  commit({ kind: "plus", debt: !!debted, text: `Sell order confirmed: ${who} paid ${coins(finalPrice)} coins for ${linesText(lines)}${gift ? ` (gifted materials: blacksmith fee ${coins(fee)}${gs.cost > 0.004 ? ` + ${coins(round2(finalPrice - fee))} for materials not gifted: ${gs.paid.map(u => `${fmtQty(u.qty)} ${u.name}`).join(", ")}` : ", nothing taken from the stockpiles"})` : ""}${craftOff > 0 ? ` (material reduced cost: −${coins(craftOff)} for their craft request ${craftUnitsText(cp.units)})` : ""}${!gift && d.pct && (unlocked || d.reach) ? ` (−${d.pct}% ${d.label})` : ""}${debted ? `. Debted material: ${debted.map(c => `${coins(c.used)} coins to ${c.who} for their ${ROLE[c.role].short} (${coins(c.toDebt)} toward their debt, waiting for confirmation${c.surplus > 0.004 ? `, ${coins(c.surplus)} owed to them in coins` : ""})`).join(", ")}` : ""}` });
   setDiscMode("card");
-  sellLines = []; $("sellQty").value = 1; updateSellQuote(); toast("Sell order confirmed and paid");
+  sellLines = []; sellGiftFee = ""; $("sellGiftFee").value = ""; giftNot = new Set(); $("sellQty").value = 1; updateSellQuote(); toast("Sell order confirmed and paid");
 });
 
 $("custForm").addEventListener("submit", e => {
@@ -6740,13 +6871,15 @@ function recordSellPaid(o) {
   let c = custByName(o.who);
   if (!c) { c = { id: uid(), name: o.who, reach: !!o.reach, purchases: [], at: Date.now() }; state.customers.push(c); }
   const ls = orderLines(o), single = ls.length === 1;
-  c.purchases.push({ at: Date.now(), item: single ? ls[0].item : linesText(ls), qty: single ? ls[0].qty : 1, coin: o.final, lines: ls, orderId: o.id, ...(o.craftOff ? { craftOff: o.craftOff, craftCost: o.craftCost, craftUnits: o.craftUnits } : {}) });
+  c.purchases.push({ at: Date.now(), item: single ? ls[0].item : linesText(ls), qty: single ? ls[0].qty : 1, coin: o.final, lines: ls, orderId: o.id, ...(o.craftOff ? { craftOff: o.craftOff, craftCost: o.craftCost, craftUnits: o.craftUnits } : {}) , ...(o.gifted ? { gifted: true, giftMat: o.giftMat || 0 } : {})});
   const ds = (state.debtSales || []).find(x => x.id === o.id); if (ds) { ds.status = "paid"; ds.paidAt = Date.now(); }
   // An apprentice's sale uses up their personal stockpile: the ingots, leather, strips and firewood the items need.
   if (o.by && o.by !== "ForgeMaster") { const ap = empByName(o.by);
     if (ap) { const pp = (state.personal || {})[ap.id]; if (pp) for (const u of orderStockUse(orderLines(o))) { const box = u.ingot ? (pp.ingots || (pp.ingots = {})) : (pp.stock || (pp.stock = {})), v = round2(Math.max(0, (box[u.key] || 0) - u.qty)); if (v > 0) box[u.key] = v; else delete box[u.key]; } } }
   // The forge's own sale uses up its stock: the ingots, leather, strips and firewood the items need.
-  if (!o.by || o.by === "ForgeMaster") { const t = takeOrderStock(orderLines(o), o.craftFor ? { craftFor: o.craftFor } : null);
+  if (o.gifted) giftTake(o);
+  if ((!o.by || o.by === "ForgeMaster") && !o.gifted) { const t = takeSaleStock(orderLines(o), o.craftFor ? { craftFor: o.craftFor } : null, !!o.useEq);
+    if (t.eqUsed.length) state.log.unshift({ at: Date.now(), by: "ForgeMaster", fm: true, kind: "hold-c", text: `Taken from crafted equipment for ${o.who}'s order: ${t.eqUsed.map(u => `${fmtQty(u.qty)} ${u.name}`).join(", ")} (their materials were already taken when they were made)` });
     if (t.use.length) state.log.unshift({ at: Date.now(), by: "ForgeMaster", fm: true, kind: "minus", text: `Taken from the stockpile for ${o.who}'s order: ${t.use.map(u => `${fmtQty(u.qty)} ${u.name}`).join(", ")}${t.short.length ? `. Not enough in stock: ${t.short.join(", ")} short, so those went to 0` : ""}` });
     applyCommission(o, planCommission(o.final, t, !!o.noComm));
     // Ranks: how much of each employee's bought material this sale used
@@ -6916,11 +7049,107 @@ function applyCommission(o, plan) {
     state.log.unshift({ at, by: "ForgeMaster", fm: true, kind: "hold-c", text: `${d.who}'s new deferred claim (${matsText(d.mats)}) was combined with their earlier one: one claim of ${matsText(c.mats)} now waits for the next order made mostly of their ${roleName(d.role)}.` }); }
 }
 // What an order would pay in commission, worked out on a copy of the stockpile so nothing changes. testEnv: the "Test S" sample stockpile.
-function previewCommission(lines, final, off, test, craftFor) {
+// ---- Crafted equipment (ForgeMaster, purchase mode). Items made ahead of time: their materials leave the stockpiles when made. Each batch keeps,
+// per item, whose materials went into it (shares, totals, values, raw use) so a sale of it later earns commission and promotion credit
+// exactly as if the materials were taken at the sale, without taking anything from the stockpiles again.
+var sellUseEq = false, equipItem = "", equipQty = "1", sellGift = false, sellGiftFee = "", giftNot = new Set();   // sellGift: "Gifted materials" on the sell form; giftNot: materials NOT gifted ("i:"/"s:" + key)
+// Gifted materials: the order's materials (ingots, leather, strips...) and which of them the customer handed over.
+const useId = u => (u.ingot ? "i:" : "s:") + u.key;
+const useCost = u => round2(u.qty * (u.ingot ? ingotMatCost(u.key) : (PRICE[u.key] != null ? PRICE[u.key] : rawCost(u.key))));
+function giftSplit(lines) {
+  const use = orderStockUse(lines), gifted = use.filter(u => !giftNot.has(useId(u))), paid = use.filter(u => giftNot.has(useId(u)));
+  return { use, gifted, paid, cost: round2(paid.reduce((a, u) => a + useCost(u), 0)) };
+}
+const giftPrice = (fee, cost) => round2(fee + cost * (1 + sellProfit / 100));
+const equipOf = () => state.equipment || (state.equipment = []);
+const equipHave = id => round2(equipOf().filter(b => b.itemId === id).reduce((a, b) => a + (b.qty || 0), 0));
+const scaleMap = (m, f) => Object.fromEntries(Object.entries(m || {}).map(([k, v]) => [k, v * f]));
+const addMap = (a, b) => { for (const [k, v] of Object.entries(b || {})) a[k] = round2((a[k] || 0) + v); return a; };
+const scaleT = (t, f) => ({ shares: (t.shares || []).map(x => ({ who: x.who, role: x.role, units: x.units * f, val: x.val * f, mats: scaleMap(x.mats, f) })), total: scaleMap(t.total, f), roleVal: scaleMap(t.roleVal, f), rawUse: scaleMap(t.rawUse, f) });
+// The order's lines split into what stored equipment covers and what still has to come from the stockpiles (no changes made).
+function eqSplit(lines, useEq) {
+  if (!useEq) return { rest: lines, from: [] };
+  const left = {}; for (const b of equipOf()) left[b.itemId] = (left[b.itemId] || 0) + (b.qty || 0);
+  const rest = [], from = [];
+  for (const l of lines) { const q = Number(l.qty) || 0, n = Math.min(q, left[l.itemId] || 0); left[l.itemId] = (left[l.itemId] || 0) - n;
+    if (n > 1e-9) from.push({ ...l, qty: round2(n) }); if (q - n > 1e-9) rest.push({ ...l, qty: round2(q - n) }); }
+  return { rest, from };
+}
+// A sale: stored equipment first (oldest first), the rest from the stockpiles, with everyone's materials counted together for commission.
+// A gifted-materials sale: only the materials that weren't gifted come out of the stockpiles. No commission; every employee whose
+// stock was used gets a deferred claim for it (and it counts toward their promotion, like any of their material used in a sale).
+function giftTake(o) {
+  const at = Date.now(), paid = o.giftPaid || [];
+  if (!paid.length) { state.log.unshift({ at, by: "ForgeMaster", fm: true, kind: "hold-c", text: `Gifted materials on ${o.who}'s order: everything was handed over, so nothing was taken from the stockpiles and no commission applies` }); return; }
+  const use = paid.map(u => ({ key: u.key, ingot: u.ingot, name: u.name, qty: u.qty, have: u.ingot ? (ingotsOf()[u.key] || 0) : (state.stock[u.key] || 0) }));
+  const t = takeOrderStock([], { use });
+  state.log.unshift({ at, by: "ForgeMaster", fm: true, kind: "minus", text: `Gifted materials on ${o.who}'s order: taken from the stockpile only for what wasn't gifted: ${paid.map(u => `${fmtQty(u.qty)} ${u.name}`).join(", ")}. No commission on this order.` });
+  const bank = state.commBank || (state.commBank = []);
+  for (const x of t.shares) { const e = empByName(x.who); if (!e || isApprentice(e) || !(x.units > 1e-9)) continue;
+    bank.push({ id: uid(), who: e.name, role: x.role, mats: { ...x.mats }, at, orderId: o.id, customer: o.who });
+    addProgress(e, "used", x.val); checkPromotion(e);
+    state.log.unshift({ at, by: "ForgeMaster", fm: true, kind: "debt", text: `${e.name}'s ${matsText(x.mats)} went into ${o.who}'s gifted materials order (no commission there), so it was added to their deferred claim.` }); }
+  state.commBank = mergeBank(bank);
+}
+function takeSaleStock(lines, opt, useEq) {
+  if (!useEq || (opt && opt.craftFor)) return { ...takeOrderStock(lines, opt), eqUsed: [] };
+  const rest = [], parts = [], eqUsed = [];
+  for (const l of lines) { let need = Number(l.qty) || 0;
+    for (const b of equipOf().filter(b => b.itemId === l.itemId && b.qty > 1e-9).sort((a, b) => a.at - b.at)) { if (need <= 1e-9) break;
+      const n = Math.min(need, b.qty); b.qty = round2(b.qty - n); need = round2(need - n); parts.push(scaleT(b.per || {}, n)); eqUsed.push({ name: b.name, qty: n }); }
+    if (need > 1e-9) rest.push({ ...l, qty: need }); }
+  state.equipment = equipOf().filter(b => b.qty > 1e-9);
+  const t = takeOrderStock(rest, opt), total = { ...(t.total || {}) }, roleVal = { ...t.roleVal }, rawUse = { ...t.rawUse }, by = new Map();
+  const addS = x => { const k = x.who + "|" + x.role, y = by.get(k) || { who: x.who, role: x.role, units: 0, val: 0, mats: {} }; y.units += x.units; y.val += x.val; addMap(y.mats, x.mats); by.set(k, y); };
+  t.shares.forEach(addS);
+  for (const pt of parts) { pt.shares.forEach(addS); addMap(total, pt.total); addMap(roleVal, pt.roleVal); addMap(rawUse, pt.rawUse); }
+  const shares = [...by.values()].map(x => ({ ...x, units: round2(x.units), val: round2(x.val), total: round2(total[x.role] || 0), share: total[x.role] ? x.units / total[x.role] : 0 }));
+  return { ...t, shares, total, roleVal, rawUse, eqUsed };
+}
+function craftEquipment(itemId, qty) {
+  const it = catalog().find(i => i.id === itemId); if (!it) return "Pick an item.";
+  if (!recipeFor(itemId)) return `${it.name} has no recipe, so there's nothing to make it from.`;
+  const short = orderStockUse([{ itemId, qty }]).filter(u => u.qty > u.have + 1e-9);
+  if (short.length) return `Not enough ${short.map(u => `${u.name} (short ${fmtQty(round2(u.qty - u.have))})`).join(", ")}.`;
+  const t = takeOrderStock([{ itemId, qty }]);
+  equipOf().push({ id: uid(), itemId, name: it.name, qty, made: qty, at: Date.now(), per: scaleT(t, 1 / qty) });
+  commit({ kind: "minus", fm: true, text: `ForgeMaster crafted ${qty} ${it.name} from ${t.use.map(u => `${fmtQty(u.qty)} ${u.name}`).join(", ")} (now ${fmtQty(equipHave(itemId))} in crafted equipment)` });
+  return "";
+}
+function renderEquip() {
+  const body = $("equipBody"), cat = catalog(), a = document.activeElement;
+  const makeable = i => ["Armor", "Weapons", "Jewelry"].includes(i.cat) && !!recipeFor(i.id);
+  if (!equipItem || !cat.some(i => i.id === equipItem && makeable(i))) { const f = cat.find(makeable); equipItem = f ? f.id : ""; }
+  const q = Math.floor(Number(equipQty)), ok = q >= 1, use = ok && equipItem ? orderStockUse([{ itemId: equipItem, qty: q }]) : [], short = use.some(u => u.qty > u.have + 1e-9);
+  const groups = new Map(); for (const b of equipOf()) { const g = groups.get(b.itemId) || { name: b.name, qty: 0, at: b.at, who: new Set() }; g.qty += b.qty; g.at = Math.min(g.at, b.at); for (const x of (b.per && b.per.shares) || []) g.who.add(x.who); groups.set(b.itemId, g); }
+  const sig = JSON.stringify([equipItem, equipQty, use, [...groups].map(([k, g]) => [k, g.qty, [...g.who]]), catSig]);
+  if (body.dataset.sig === sig) return;
+  if (body.contains(a) && a.id === "eqQty") { $("eqNeed").innerHTML = eqNeedHtml(use, q, short); $("eqMake").disabled = !ok || short; body.dataset.sig = ""; return; }
+  body.dataset.sig = sig;
+  body.innerHTML = `<form id="eqForm" class="eq-form"><label>Item<select id="eqItem">${catalogOptions(["Armor", "Weapons", "Jewelry"], makeable)}</select></label>
+      <label>How many<input id="eqQty" type="number" min="1" step="1" value="${esc(equipQty)}"></label>
+      <button type="submit" class="btn-return" id="eqMake" ${!ok || short ? "disabled" : ""}>Make it</button></form>
+    <div id="eqNeed">${eqNeedHtml(use, q, short)}</div>
+    <h3 class="sub-h" style="margin-top:16px">Made and waiting to be sold</h3>
+    ${groups.size ? `<div class="cat-wrap"><table class="val"><thead><tr><th scope="col">Item</th><th scope="col">In storage</th><th scope="col">Made since</th><th scope="col">Materials from</th><th scope="col"></th></tr></thead><tbody>
+      ${[...groups].sort((x, y) => x[1].name.localeCompare(y[1].name)).map(([k, g]) => `<tr><td>${esc(g.name)}</td><td><b>${fmtQty(round2(g.qty))}</b></td><td>${shortDate(g.at)}</td><td>${g.who.size ? esc([...g.who].join(", ")) : '<span class="hint">the forge</span>'}</td><td><button type="button" class="btn-ghost" data-eqrm="${esc(k)}">Remove 1</button></td></tr>`).join("")}</tbody></table></div>
+      <p class="hint">Sell them with "Crafted equipment" switched on in Sell orders. "Remove 1" takes one out without a sale (its materials don't come back).</p>`
+    : `<div class="empty">Nothing made yet. Pick an item above and press Make it.</div>`}`;
+  $("eqItem").value = equipItem;
+}
+function eqNeedHtml(use, q, short) {
+  if (!(q >= 1)) return `<p class="hint">Enter how many to make.</p>`;
+  if (!use.length) return `<p class="hint">This item has no recipe.</p>`;
+  return `<h3>Materials for ${q.toLocaleString()} ${esc((catalog().find(i => i.id === equipItem) || {}).name || "")}</h3>
+    <div class="cat-wrap"><table class="val"><thead><tr><th scope="col">Material</th><th scope="col">Needed</th><th scope="col">In stock</th><th scope="col">Left after</th></tr></thead><tbody>
+    ${use.map(u => `<tr class="${u.qty > u.have + 1e-9 ? "short" : ""}"><td>${esc(u.name)}</td><td><b>${fmtQty(u.qty)}</b></td><td>${fmtQty(u.have)}</td><td>${u.qty > u.have + 1e-9 ? `short ${fmtQty(round2(u.qty - u.have))}` : fmtQty(round2(u.have - u.qty))}</td></tr>`).join("")}</tbody></table></div>
+    ${short ? `<p class="mrow short"><b>Not enough material.</b> Ingots come from the ingot stockpile, so smelt the ones in red first (Stockpiles tab, Ingot view).</p>` : `<p class="hint">Making it takes these out of the stockpiles straight away.</p>`}`;
+}
+function previewCommission(lines, final, off, test, craftFor, useEq) {
   const base = test ? testSaleEnv() : state, saved = state; rankOverride = test ? { ...testRanks } : null; streakOverride = test ? { ...testStreaks } : null;
   const cl = v => JSON.parse(JSON.stringify(v || []));
-  state = { ...base, stock: { ...base.stock }, ingots: { ...(base.ingots || {}) }, lots: cl(base.lots), ingotLots: cl(base.ingotLots), commBank: cl(base.commBank), ghosts: cl(base.ghosts) };
-  try { const t = takeOrderStock(lines, craftFor ? { craftFor } : null); return planCommission(final, t, off); } finally { state = saved; rankOverride = null; streakOverride = null; }
+  state = { ...base, stock: { ...base.stock }, ingots: { ...(base.ingots || {}) }, lots: cl(base.lots), ingotLots: cl(base.ingotLots), commBank: cl(base.commBank), ghosts: cl(base.ghosts), equipment: cl(base.equipment) };
+  try { const t = takeSaleStock(lines, craftFor ? { craftFor } : null, !!useEq && !test); return planCommission(final, t, off); } finally { state = saved; rankOverride = null; streakOverride = null; }
 }
 // Heads-up when an order would have to use another employee's craft request materials (only happens when nothing else is left).
 function craftUseWarn(lines, craftFor) {
@@ -6956,7 +7185,7 @@ function testSaleEnv() {
 }
 function commPreviewHtml(lines, final, profit, craftFor) {
   if (apprView() || !unlocked || !lines.length) return "";
-  const p = previewCommission(lines.map(l => ({ itemId: l.itemId, qty: l.qty })), final, $("sellNoComm").checked, testS, testS ? "" : craftFor);
+  const p = previewCommission(lines.map(l => ({ itemId: l.itemId, qty: l.qty })), final, $("sellNoComm").checked, testS, testS ? "" : craftFor, sellUseEq && unlocked);
   const total = round2(p.winners.reduce((a, w) => a + w.amount, 0)), after = round2(profit - total);
   // Profit on the order: final price less the material cost; commissions come out of it.
   const profitLn = `<div class="ln comm-profit"><span>Profit on this order${total > 0.004 ? " after commission" : ""}</span><span class="${after >= 0 ? "gain" : "loss"}">${total > 0.004 ? `<s>${signed(profit)}</s> ` : ""}${signed(after)}</span></div>`;
@@ -7291,7 +7520,9 @@ function normalize(d) {
     if (d.commRates && Array.isArray(d.commRates.ranks)) { const n = x => Math.min(50, Math.max(0, Math.round((Number(x) || 0) * 100) / 100));
       s.commRates = { ranks: [0, 1, 2, 3].map(i => n(d.commRates.ranks[i] ?? DEFAULT_RATES.ranks[i])), split: n(d.commRates.split ?? DEFAULT_RATES.split) }; }
     if (Array.isArray(d.lots)) s.lots = d.lots.filter(l => l && l.who && NAME[l.key] && l.qty > 0);
+    if (Array.isArray(d.ingGhosts)) s.ingGhosts = d.ingGhosts.filter(g => g && g.id && INGOT_NAME[g.key] && g.qty > 0 && Array.isArray(g.comp) && g.comp.length);
     if (Array.isArray(d.ingotLots)) s.ingotLots = d.ingotLots.filter(l => l && INGOT_NAME[l.key] && l.qty > 0 && Array.isArray(l.comp));
+    if (Array.isArray(d.equipment)) s.equipment = d.equipment.filter(b => b && b.id && b.itemId && b.qty > 1e-9);
     if (Array.isArray(d.commBank)) s.commBank = mergeBank(d.commBank.filter(b => b && b.id && b.who && b.mats && Object.keys(b.mats).length));
     if (Array.isArray(d.commissions)) s.commissions = d.commissions.filter(c => c && c.id && c.who).slice(0, 1000);
     if (d.statusManual && typeof d.statusManual === "object") s.statusManual = Object.fromEntries(Object.keys(d.statusManual).filter(k => NAME[k]).map(k => [k, true]));
