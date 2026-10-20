@@ -688,6 +688,16 @@ ul.loan-list li .hint { grid-column: 2 / -1; font-size: .8rem; }
 #persBody.ing-pulse #persIngToggle { box-shadow: 0 0 0 3px #ffd84a, 0 0 18px rgba(255,216,74,.9); animation: ingGlow 1.2s ease-in-out infinite alternate; }
 .onb-banner { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; padding: 12px 16px; border: 2px solid #d42a1c; border-radius: 10px; background: linear-gradient(180deg, rgba(212,42,28,.28), rgba(120,20,12,.28)); color: #fff; box-shadow: 0 0 16px rgba(212,42,28,.3); }
 .onb-banner[hidden] { display: none; }
+.onb-done { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 9000; width: min(640px, calc(100vw - 24px)); display: flex; align-items: center; gap: 14px; padding: 14px 18px 18px; border: 3px solid #ff5a47; border-radius: 12px; overflow: hidden; background: linear-gradient(180deg, #b3261e, #7a1410); color: #fff; box-shadow: 0 0 30px rgba(212,42,28,.8), 0 10px 30px rgba(0,0,0,.6); animation: onbPop .5s cubic-bezier(.2,1.4,.4,1); }
+.onb-done[hidden] { display: none; }
+.onb-done .od-ic { font-size: 2.2rem; line-height: 1; }
+.onb-done .od-t { font-weight: 900; font-size: 1.25rem; letter-spacing: .03em; }
+.onb-done .od-d { font-size: .95rem; color: #ffd6cf; }
+.onb-done .od-x { white-space: nowrap; margin-left: auto; align-self: flex-start; background: rgba(0,0,0,.35); color: #fff; border: 1px solid rgba(255,255,255,.5); border-radius: 8px; padding: 4px 10px; font: inherit; font-weight: 700; cursor: pointer; }
+.onb-done .od-bar { position: absolute; left: 0; bottom: 0; height: 5px; width: 100%; background: #ffd84a; transform-origin: left; animation: onbBar 10s linear forwards; }
+@keyframes onbBar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@keyframes onbPop { from { transform: translateX(-50%) translateY(-30px) scale(.9); opacity: 0; } to { transform: translateX(-50%); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .onb-done { animation: none; } }
 .onb-banner .ob-ic { font-size: 1.6rem; line-height: 1; }
 .onb-banner .ob-t { font-weight: 800; font-size: 1.05rem; letter-spacing: .02em; }
 .onb-banner .ob-d { font-size: .92rem; color: #ffd6cf; }
@@ -1051,6 +1061,7 @@ table.val thead th { color: #cdb995; }
   </div>
   </div>
   <div class="onb-banner" id="onbBanner" role="status" hidden></div>
+  <div class="onb-done" id="onbDone" role="status" hidden></div>
   <nav class="fm-tabs ap-tabs" id="apTabs" hidden aria-label="Apprentice views">
     <div class="tabs" role="tablist">
       <button type="button" role="tab" data-ap="sell">Sell</button>
@@ -1764,6 +1775,7 @@ table.val thead th { color: #cdb995; }
       <div class="pin-reset"><button type="button" class="btn-ghost" id="pinResetAll">Reset every PIN to 1234</button><span id="pinResetAsk" hidden>Reset all <b id="pinResetN"></b> employees to PIN 1234? <button type="button" class="btn-danger" id="pinResetYes">Yes, reset</button> <button type="button" class="btn-ghost" id="pinResetNo">Cancel</button></span>
         <button type="button" class="btn-ghost" id="vidResetAll">Reset every "Need help?" to WATCH THIS!!</button><span id="vidResetAsk" hidden>Set every employee's video buttons back to WATCH THIS!!? <button type="button" class="btn-danger" id="vidResetYes">Yes, reset</button> <button type="button" class="btn-ghost" id="vidResetNo">Cancel</button></span></div>
     </div>
+    <p class="hint" id="onbBankNote" style="margin:8px 0 0"></p>
   </section>
 
   <section aria-labelledby="acctH" id="acctSec" data-views="roster" hidden>
@@ -4757,7 +4769,48 @@ const COMM_PROFS = new Set(["prospector", "woodcutter", "hunter"]);
 // Employees: a video's button stays "WATCH THIS!!" until they've watched it all the way through once (counted on their record, so it
 // follows them to any device). The ForgeMaster's buttons are always "Need help?".
 const VID_WATCHES = 1;
-const videoEnds = (key, emp) => Number(((emp && emp.helpEnds) || {})[key]) || 0;
+// ---- Onboarding bank ----
+// Onboarding progress (which videos each employee has watched all the way through, and whether they've been congratulated) is kept in its own
+// database row, apart from the main ledger, so a stale page, an update or a restore of the ledger can't wipe it. Only the roster's reset
+// buttons remove an employee's banked progress. Until the bank can be reached the employee records are used, as before.
+var onbBank = null, bankWrite = Promise.resolve();   // null = bank not reachable (yet)
+const ONB_ROW = "onboarding";
+const normBank = d => { const b = { migrated: !!(d && d.migrated), emps: {} };
+  for (const [id, v] of Object.entries((d && d.emps) || {})) { if (!v || typeof v !== "object") continue;
+    const ends = {}; for (const [k, n] of Object.entries(v.ends || {})) if (Number(n) > 0) ends[k] = Number(n);
+    b.emps[id] = { name: String(v.name || ""), ends, done: !!v.done, at: Number(v.at) || 0 }; }
+  return b; };
+const bankEntry = emp => (onbBank && emp ? onbBank.emps[emp.id] : null) || null;
+const blankEntry = emp => ({ name: emp.name, ends: {}, done: false, at: 0 });
+function bankSave(fn) {   // read the bank row, change it, write it back (only ever touches the one employee, so other pages' progress isn't lost)
+  if (!db || readOnly || !onbBank) return;
+  bankWrite = bankWrite.then(async () => { try {
+    const { data, error } = await db.from("ledger").select("data").eq("id", ONB_ROW).maybeSingle(); if (error) throw error;
+    const cur = normBank(data && data.data); fn(cur); cur.migrated = true;
+    const { error: e2 } = await db.from("ledger").upsert({ id: ONB_ROW, data: cur, updated_at: new Date().toISOString() }); if (e2) throw e2;
+    onbBank = cur; } catch (_) {} });
+}
+function bankSet(emp, fn) {
+  const touch = b => { const x = b.emps[emp.id] || (b.emps[emp.id] = blankEntry(emp)); x.name = emp.name; fn(x); x.at = Date.now(); };
+  if (onbBank) touch(onbBank); bankSave(touch);
+}
+function bankDrop(emp) { const drop = b => { delete b.emps[emp.id]; }; if (onbBank) drop(onbBank); bankSave(drop); }
+async function bankPull() {
+  if (!db) return;
+  try {
+    const { data, error } = await db.from("ledger").select("data").eq("id", ONB_ROW).maybeSingle(); if (error) throw error;
+    if (data) onbBank = normBank(data.data);
+    else if (!readOnly && state.employees) {   // first time: bring over everything the employee records already hold
+      const b = normBank(null);
+      for (const e of state.employees) { const ends = {}; for (const [k, n] of Object.entries(e.helpEnds || {})) if (Number(n) > 0) ends[k] = Number(n);
+        if (Object.keys(ends).length || e.onbDone) b.emps[e.id] = { name: e.name, ends, done: !!e.onbDone, at: Date.now() }; }
+      b.migrated = true;
+      const { error: e2 } = await db.from("ledger").insert({ id: ONB_ROW, data: b, updated_at: new Date().toISOString() }); if (e2) throw e2;
+      onbBank = b; }
+  } catch (_) { /* bank not reachable: the employee records keep working */ }
+  render();
+}
+const videoEnds = (key, emp) => { if (onbBank && emp) { const x = onbBank.emps[emp.id]; return x ? Number(x.ends[key]) || 0 : 0; } return Number(((emp && emp.helpEnds) || {})[key]) || 0; };
 function videoSeen(key, emp) {
   if (!emp) return true;
   return videoEnds(key, emp) >= VID_WATCHES;
@@ -4775,7 +4828,34 @@ function onboardVids(emp) {
   return v;
 }
 function onboarding(emp) { const v = onboardVids(emp), done = v.filter(k => videoSeen(k, emp)).length; return { total: v.length, done, ok: done >= v.length }; }
+// Congratulations banner: shows for 10 seconds (with a Close button) the moment an employee finishes their last onboarding video.
+// If the video window is still open it waits until they close it. Shown once per employee; the roster's onboarding reset re-arms it.
+var onbDoneTimer = 0, onbDonePending = false;
+function hideOnbDone() { clearTimeout(onbDoneTimer); $("onbDone").hidden = true; }
+function showOnbDone() {
+  onbDonePending = false; const b = $("onbDone"); clearTimeout(onbDoneTimer);
+  b.innerHTML = `<span class="od-ic" aria-hidden="true">🎉</span><span><div class="od-t">Congratulations! Onboarding complete</div><div class="od-d">You've watched every video. Welcome to the forge. Use "Need help?" any time to watch one again.</div></span><button type="button" class="od-x" id="onbDoneX" aria-label="Close">Close ✕</button><span class="od-bar" aria-hidden="true"></span>`;
+  b.hidden = false; onbDoneTimer = setTimeout(hideOnbDone, 10000);
+}
+document.addEventListener("click", e => { if (e.target.closest("#onbDoneX")) hideOnbDone(); });
+// TEMPORARY test button: plays the congratulations banner for anyone, and removes itself at the time below (2:44 PM Eastern, Oct 20 2026).
+const TEST_ONB_UNTIL = 1792521870000;
+(function testOnbBtn() {
+  if (Date.now() >= TEST_ONB_UNTIL) return;
+  const b = document.createElement("button"); b.type = "button"; b.id = "testOnbBtn"; b.textContent = "Test onboarding 🎉";
+  b.style.cssText = "position:fixed;right:14px;bottom:14px;z-index:8000;padding:10px 14px;border-radius:10px;border:2px solid #fff;background:#b3261e;color:#fff;font:800 .95rem system-ui;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.5)";
+  b.addEventListener("click", () => { if (Date.now() >= TEST_ONB_UNTIL) { b.remove(); return; } showOnbDone(); });
+  document.body.appendChild(b);
+  setTimeout(() => b.remove(), Math.max(0, TEST_ONB_UNTIL - Date.now()));
+})();
+function checkOnbDone(emp) {
+  if (!emp || readOnly || (onbBank ? (bankEntry(emp) || {}).done : emp.onbDone) || !onboarding(emp).ok) return;
+  emp.onbDone = true; persist(); bankSet(emp, x => { x.done = true; });
+  if ($("vidDlg").open) onbDonePending = true; else showOnbDone();
+}
+$("vidDlg").addEventListener("close", () => { if (onbDonePending) showOnbDone(); });
 function renderOnboard() {
+  { const n = $("onbBankNote"); if (n) n.textContent = onbBank ? `Onboarding bank: progress for ${Object.keys(onbBank.emps).length} employee${Object.keys(onbBank.emps).length === 1 ? " is" : "s is"} saved separately from the ledger. Only the reset buttons clear it.` : "Onboarding bank: not connected, so progress is kept on the employee records for now."; }
   const emp = !unlocked && currentEmp(), b = $("onbBanner"), o = emp ? onboarding(emp) : null;
   b.hidden = !o || !o.total || o.ok; if (b.hidden) return;
   b.innerHTML = `<span class="ob-ic" aria-hidden="true">⚠</span><span><div class="ob-t">Complete onboarding: watch all the videos labeled "WATCH THIS!!"</div>
@@ -4793,7 +4873,7 @@ function renderVidNote() {
 function countVideoEnd(key, emp) {
   if (!emp || readOnly) return 0;
   const n = videoEnds(key, emp) + 1;
-  emp.helpEnds = { ...(emp.helpEnds || {}), [key]: n }; persist();
+  emp.helpEnds = { ...(emp.helpEnds || {}), [key]: n }; persist(); bankSet(emp, x => { x.ends[key] = Math.max(x.ends[key] || 0, n); });
   return n;
 }
 function openVideo(key) {
@@ -6065,14 +6145,14 @@ $("commVidBtn").addEventListener("click", () => { $("vidUnderstood").hidden = tr
 $("helpVid").addEventListener("ended", () => {
   const emp = !unlocked && currentEmp(); if (!emp || !vidKeyOpen || videoSeen(vidKeyOpen, emp)) return;
   if (vidKeyOpen.startsWith("job:") && "job:" + emp.prof !== vidKeyOpen) return;
-  const n = countVideoEnd(vidKeyOpen, emp);
+  const n = countVideoEnd(vidKeyOpen, emp); checkOnbDone(emp);
   renderHelpBtn(); renderSellHelpBtn(); renderVidNote(); renderMyRank(); if (vidKeyOpen === "smelt" && apprView()) renderPersonal(emp);
   toast(n >= VID_WATCHES ? "Video complete. The button is now \"Need help?\" if you want to watch again." : `Watched ${n} of ${VID_WATCHES} times. Watch it once more all the way through.`);
 });
 $("vidResetAll").addEventListener("click", () => { if (!unlocked) return; $("vidResetAsk").hidden = false; $("vidResetAll").hidden = true; });
 $("vidResetNo").addEventListener("click", () => { $("vidResetAsk").hidden = true; $("vidResetAll").hidden = false; });
 // Puts one employee back to a brand-new start: every video button back to WATCH THIS!!, and the first-visit guides (scroll cue, craft glow, ingot banner, 10-minute test period) show again.
-function resetOnboarding(emp) { endTestRun(emp); for (const k of ["testGiven", "helpEnds", "helpViews", "sawHelpFor", "sawIngotView", "openedPStock", "sawCraftGlow"]) delete emp[k]; }
+function resetOnboarding(emp) { bankDrop(emp); endTestRun(emp); for (const k of ["onbDone", "testGiven", "helpEnds", "helpViews", "sawHelpFor", "sawIngotView", "openedPStock", "sawCraftGlow"]) delete emp[k]; }
 $("vidResetYes").addEventListener("click", () => {
   if (readOnly || !unlocked) return;
   for (const emp of state.employees) resetOnboarding(emp);
@@ -7226,7 +7306,7 @@ readOnly = true; $("sync").textContent = "Connecting…"; render();
     render(); return;
   }
   db = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
-  try { await pull(); }
+  try { await pull(); await bankPull(); }
   catch (_) {
     $("sync").textContent = "Not connected";
     noticeText = "Couldn't reach the shared ledger. Check your internet connection and reload. If this keeps happening, the database setup may not be finished.";
@@ -7235,8 +7315,9 @@ readOnly = true; $("sync").textContent = "Connecting…"; render();
   db.channel("ledger-main")
     .on("postgres_changes", { event: "*", schema: "public", table: "ledger", filter: "id=eq.main" }, p => applyRemote(p.new && p.new.data))
     .subscribe();
-  setInterval(() => { if (!document.hidden) pull().catch(() => {}); }, 20000);
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) pull().catch(() => {}); });
+  db.channel("onboarding-bank").on("postgres_changes", { event: "*", schema: "public", table: "ledger", filter: "id=eq." + ONB_ROW }, () => bankPull()).subscribe();
+  setInterval(() => { if (!document.hidden) { pull().catch(() => {}); bankPull(); } }, 20000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) { pull().catch(() => {}); bankPull(); } });
 })();
 // Drifting forge embers behind the page. Calm and sparse; still frame when reduced motion is preferred.
 (function embers() {
