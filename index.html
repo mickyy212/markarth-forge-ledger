@@ -1207,6 +1207,10 @@ table.val thead th { color: #cdb995; }
   <section aria-label="Ingot sufficiency goals" id="ingotLvlSec" data-views="stock" hidden>
     <details class="ingot-lvl" id="ingotLvlDet"><summary>Ingot sufficiency goals</summary><div class="panel" id="ingotLvlBody"></div></details>
   </section>
+  <section aria-labelledby="ingClaimH" id="ingClaimSec" data-views="stock" hidden>
+    <div class="sec-head"><h2 id="ingClaimH">Removed employee ingots</h2><span class="hint">Employee-owned ingots taken out by hand (emptied or removed, not sold). They re-tag onto ingots of the same kind added by hand, with the same split of ownership. Employees don't see this.</span></div>
+    <div class="panel" id="ingClaimBody"></div>
+  </section>
   <section aria-labelledby="stockH" id="sec-ores" data-views="stock">
     <div class="sec-head">
       <h2 id="stockH">Main stockpile</h2>
@@ -4493,7 +4497,7 @@ try { fmView = sessionStorage.getItem("fm-view") || "all"; } catch (_) {}
 let apView = "sell", apFor = "", apStock = "forge";
 function applyView() {
   $("fmTabs").hidden = !unlocked;
-  $("ingotBar").hidden = $("ingotSec").hidden = $("craftSec").hidden = $("ingotLvlSec").hidden = true;
+  $("ingotBar").hidden = $("ingotSec").hidden = $("craftSec").hidden = $("ingotLvlSec").hidden = $("ingClaimSec").hidden = true;
   if (unlocked && priceMode) fmView = "prices";
   else if (unlocked && fmView === "prices") fmView = "buysell";
   if (unlocked && !priceMode && purchaseMode && !PM_VIEWS.includes(fmView)) { fmView = "buysell"; bsMode = "sell"; }
@@ -4523,8 +4527,8 @@ function applyView() {
   document.querySelectorAll("[data-views]").forEach(el => el.classList.toggle("view-off", v !== "all" && !el.dataset.views.split(" ").includes(v)));
   $("bsToggle").hidden = v !== "buysell";
   // Ingot view (ForgeMaster, Stockpiles tab): only the ingot stockpile and Crafted ingots show.
-  if (unlocked && v === "stock") { $("ingotBar").hidden = false; $("ingotSec").hidden = $("craftSec").hidden = $("ingotLvlSec").hidden = !ingotView;
-    if (ingotView) document.querySelectorAll("[data-views]").forEach(el => { if (!["ingotBar", "ingotSec", "craftSec", "ingotLvlSec"].includes(el.id) && el.dataset.views.split(" ").includes("stock")) el.classList.add("view-off"); }); }
+  if (unlocked && v === "stock") { $("ingotBar").hidden = false; $("ingotSec").hidden = $("craftSec").hidden = $("ingotLvlSec").hidden = $("ingClaimSec").hidden = !ingotView;
+    if (ingotView) document.querySelectorAll("[data-views]").forEach(el => { if (!["ingotBar", "ingotSec", "craftSec", "ingotLvlSec", "ingClaimSec"].includes(el.id) && el.dataset.views.split(" ").includes("stock")) el.classList.add("view-off"); }); }
   document.querySelectorAll("[data-bs]").forEach(el => { if (el.tagName === "SECTION") el.classList.toggle("bs-off", v === "buysell" && el.dataset.bs !== bsMode); });
   $("bsToggle").querySelectorAll("[data-bs]").forEach(b => b.setAttribute("aria-selected", b.dataset.bs === bsMode));
   $("fmTabs").querySelectorAll("[data-view]").forEach(b => { b.setAttribute("aria-selected", b.dataset.view === v); b.hidden = priceMode ? b.dataset.view !== "prices" : b.dataset.view === "prices" || b.dataset.view === "all" || (purchaseMode ? !PM_VIEWS.includes(b.dataset.view) : PM_VIEWS.includes(b.dataset.view)); });
@@ -5103,18 +5107,20 @@ function renderCraftMats() {
     : `<p class="hint" style="margin:0">None right now. Tick <b>Crafting request</b> on a buy order from an employee to bring in their own materials at no cost.</p>`;
 }
 function renderGhosts() {
-  const g = (state.ghosts || []).filter(x => x.qty > 1e-9), sec = $("ghostSec"), ig = (state.ingGhosts || []).filter(x => x.qty > 1e-9);
+  const g = (state.ghosts || []).filter(x => x.qty > 1e-9 && x.key !== "dwarven"), sec = $("ghostSec"), ig = (state.ingGhosts || []).filter(x => x.qty > 1e-9), dw = (state.ghosts || []).filter(x => x.qty > 1e-9 && x.key === "dwarven");
   sec.hidden = !unlocked; if (sec.hidden) return;
-  const ingHtml = ig.length ? `<h3 class="sub-h" style="margin-top:12px">Ingot claims (part-ownership)</h3><p class="hint" style="margin:0 0 8px">Employee-owned ingots that were removed by hand. They re-tag onto ingots of the same kind added by hand, with the same split of ownership.</p>
-    <div class="cat-wrap"><table class="val pie-table"><thead><tr><th scope="col">Ingot</th><th scope="col">Still claimed</th><th scope="col">Owned by (material cost)</th><th scope="col">Since</th></tr></thead><tbody>
-    ${[...ig].sort((a, b) => a.key.localeCompare(b.key) || a.at - b.at).map(x => `<tr><td>${esc(INGOT_NAME[x.key])}</td><td>${fmtQty(round2(x.qty))}</td><td>${esc(ownText(x.key, x.comp))}</td><td>${shortDate(x.at)}</td></tr>`).join("")}</tbody></table></div>` : "";
-  if (!g.length && ig.length) { $("ghostBody").innerHTML = ingHtml; return; }
+  // Ingot view, at the bottom: removed employee ingots (part-ownership claims) and Dwarven Metal Ingots
+  $("ingClaimBody").innerHTML = ig.length || dw.length ? `${ig.length ? `<div class="cat-wrap"><table class="val pie-table"><thead><tr><th scope="col">Ingot</th><th scope="col">Still claimed</th><th scope="col">Owned by (material cost)</th><th scope="col">Since</th></tr></thead><tbody>
+    ${[...ig].sort((a, b) => a.key.localeCompare(b.key) || a.at - b.at).map(x => `<tr><td>${esc(INGOT_NAME[x.key])}</td><td>${fmtQty(round2(x.qty))}</td><td>${esc(ownText(x.key, x.comp))}</td><td>${shortDate(x.at)}</td></tr>`).join("")}</tbody></table></div>` : ""}
+    ${dw.length ? `<h3 class="sub-h" style="margin-top:12px">Dwarven Metal Ingots</h3><div class="cat-wrap"><table class="val pie-table"><thead><tr><th scope="col">Employee</th><th scope="col">Still claimed</th><th scope="col">Rank</th><th scope="col">Since</th></tr></thead><tbody>
+      ${dw.map(x => `<tr><td>${esc(x.who)}</td><td>${fmtQty(round2(x.qty))}</td><td>${rankOf(x.who) ? RANK_NAME[rankOf(x.who)] : "Normal"}</td><td>${x.at > 1e6 ? shortDate(x.at) : ""}</td></tr>`).join("")}</tbody></table></div><p class="hint">Dwarven Metal Ingots re-tag onto unowned Dwarven Metal Ingots added later.</p>` : ""}`
+    : `<p class="hint" style="margin:0">Nothing right now. If employee-owned ingots are emptied or removed by hand, each employee's share is listed here until ingots added by hand re-tag to them.</p>`;
   if (!g.length) { $("ghostBody").innerHTML = `<p class="hint" style="margin:0">Nothing right now. If you remove employee-owned material by hand (not through a sale or smelting), what each employee lost is listed here until new stock re-tags to them.</p>`; return; }
   const byKey = {}; for (const x of g) byKey[x.key] = (byKey[x.key] || 0) + x.qty;
   const order = [...g].sort((a, b) => a.key.localeCompare(b.key) || rankOf(b.who) - rankOf(a.who) || a.at - b.at);
   $("ghostBody").innerHTML = `<p class="hint" style="margin:0 0 8px">${Object.entries(byKey).map(([k, q]) => `${fmtQty(round2(q))} ${NAME[k]}`).join(" · ")} waiting to be re-tagged. Employees don't see this.</p>
     <div class="cat-wrap"><table class="val pie-table"><thead><tr><th scope="col">Employee</th><th scope="col">Material</th><th scope="col">Still claimed</th><th scope="col">Rank</th><th scope="col">Owned since</th></tr></thead><tbody>
-    ${order.map(x => `<tr><td>${esc(x.who)}</td><td>${esc(NAME[x.key])}${x.craft ? `<span class="craft-tag">craft request</span>` : ""}</td><td>${fmtQty(round2(x.qty))}</td><td>${rankOf(x.who) ? RANK_NAME[rankOf(x.who)] : "Normal"}</td><td>${x.at > 1e6 ? shortDate(x.at) : ""}</td></tr>`).join("")}</tbody></table></div>${ingHtml}`;
+    ${order.map(x => `<tr><td>${esc(x.who)}</td><td>${esc(NAME[x.key])}${x.craft ? `<span class="craft-tag">craft request</span>` : ""}</td><td>${fmtQty(round2(x.qty))}</td><td>${rankOf(x.who) ? RANK_NAME[rankOf(x.who)] : "Normal"}</td><td>${x.at > 1e6 ? shortDate(x.at) : ""}</td></tr>`).join("")}</tbody></table></div>`;
 }
 function renderMyRank() {
   const emp = !unlocked && currentEmp(), sec = $("myRankSec"), show = !!emp && !isApprentice(emp) && RANK_PROFS.has(emp.prof);
