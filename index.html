@@ -667,6 +667,13 @@ ul.loan-list li .hint { grid-column: 2 / -1; font-size: .8rem; }
 .pc-bell:hover { color: var(--ink); border-color: var(--accent); }
 .pc-count { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 4px; box-sizing: border-box; border-radius: 999px; background: #d42a1c; color: #fff; font-size: .68rem; font-weight: 800; line-height: 18px; text-align: center; box-shadow: 0 0 0 2px var(--bg); }
 .pc-count[hidden] { display: none; }
+.ing-hint { display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin: 0 0 8px; padding: 10px 14px; border: 2px solid #ffd84a; border-radius: 10px; background: rgba(255,216,74,.14); color: #fff2b0; font-weight: 700; animation: ingGlow 1.2s ease-in-out infinite alternate; }
+.ing-hint[hidden] { display: none; }
+.ing-hint .ih-arrow { font-size: 1.6rem; line-height: 1; animation: ingBob .8s ease-in-out infinite alternate; }
+@keyframes ingGlow { from { box-shadow: 0 0 6px rgba(255,216,74,.35); } to { box-shadow: 0 0 24px rgba(255,216,74,.95), 0 0 6px rgba(255,216,74,.8) inset; } }
+@keyframes ingBob { from { transform: translateY(-3px); } to { transform: translateY(4px); } }
+@media (prefers-reduced-motion: reduce) { .ing-hint, .ing-hint .ih-arrow { animation: none; } }
+#persBody.ing-pulse #persIngToggle { box-shadow: 0 0 0 3px #ffd84a, 0 0 18px rgba(255,216,74,.9); animation: ingGlow 1.2s ease-in-out infinite alternate; }
 .onb-banner { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; padding: 12px 16px; border: 2px solid #d42a1c; border-radius: 10px; background: linear-gradient(180deg, rgba(212,42,28,.28), rgba(120,20,12,.28)); color: #fff; box-shadow: 0 0 16px rgba(212,42,28,.3); }
 .onb-banner[hidden] { display: none; }
 .onb-banner .ob-ic { font-size: 1.6rem; line-height: 1; }
@@ -1138,6 +1145,7 @@ table.val thead th { color: #cdb995; }
       <button type="button" class="watch-btn sell-watch" id="pstockVidBtn" hidden>WATCH THIS!!</button>
       <span class="hint">Only you see this. Add, remove and set levels any time; none of it touches the forge's stockpile.</span>
     </div>
+    <div class="ing-hint" id="persIngHint" role="status" hidden><span class="ih-arrow" aria-hidden="true">👇</span><span class="ih-t">New: click <b>Ingot view</b> to see and manage your personal ingots</span></div>
     <div id="persBody"></div>
   </section>
   <div class="ingot-bar" id="ingotBar" data-views="stock" hidden><button type="button" class="btn-ghost" id="ingotToggle" aria-pressed="false">Ingot view</button><span class="hint">Ingots on hand and smelting more from the stockpile</span></div>
@@ -4806,8 +4814,13 @@ function renderCommBtn() {
   const seen = videoSeen("comm", emp);
   btn.textContent = seen ? "Need help?" : "WATCH THIS!!"; btn.classList.toggle("seen", seen);
 }
+// After an apprentice has watched the personal stockpile video all the way through, a glowing banner points them to Ingot view until they open it.
+function renderIngHint() {
+  const e = !unlocked && currentEmp(), on = !!(e && isApprentice(e) && videoSeen("pstock", e) && !e.sawIngotView);
+  const h = $("persIngHint"); h.hidden = !on; $("persBody").classList.toggle("ing-pulse", on);
+}
 function renderHelpBtn() {
-  renderCommBtn(); renderOnboard();
+  renderCommBtn(); renderOnboard(); renderIngHint();
   const emp = !unlocked && currentEmp(), btn = $("helpVidBtn");
   btn.hidden = !(emp && HELP_VIDS[emp.prof]);
   if (btn.hidden) return;
@@ -5718,7 +5731,7 @@ function persIngotHtml(p) {
 }
 $("persBody").addEventListener("click", e => {
   const emp = apprView() && currentEmp(); if (!emp) return;
-  if (e.target.closest("#persIngToggle")) { persIngView = !persIngView; renderPersonal(emp); return; }
+  if (e.target.closest("#persIngToggle")) { persIngView = !persIngView; if (persIngView && !emp.sawIngotView && !readOnly) { emp.sawIngotView = true; persist(); } renderIngHint(); renderPersonal(emp); return; }
   if (e.target.closest("#persCraftMax")) { persCraftQty = String(Math.max(1, persCanSmelt(persOf(emp), persCraft))); $("persCraftQty").value = persCraftQty; $("persCraftBatch").innerHTML = persBatchHtml(persOf(emp)); return; }
   const b = e.target.closest("[data-piact]"); if (!b) return;
   const k = b.dataset.pik, qi = $("persBody").querySelector(`[data-piq="${k}"]`), q = Math.floor(Number(qi && qi.value) || 0);
@@ -5960,7 +5973,7 @@ $("vidResetAll").addEventListener("click", () => { if (!unlocked) return; $("vid
 $("vidResetNo").addEventListener("click", () => { $("vidResetAsk").hidden = true; $("vidResetAll").hidden = false; });
 $("vidResetYes").addEventListener("click", () => {
   if (readOnly || !unlocked) return;
-  for (const emp of state.employees) { delete emp.helpEnds; delete emp.helpViews; delete emp.sawHelpFor; }
+  for (const emp of state.employees) { delete emp.helpEnds; delete emp.helpViews; delete emp.sawHelpFor; delete emp.sawIngotView; }
   $("vidResetAsk").hidden = true; $("vidResetAll").hidden = false;
   commit({ kind: "hold-c", fm: true, text: "ForgeMaster reset every employee's video buttons to WATCH THIS!!" }); toast("Every employee's video buttons are back to WATCH THIS!!");
 });
