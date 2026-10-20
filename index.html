@@ -2431,7 +2431,8 @@ function perkFor(itemName, prof) {
   if (prof === "prospector" && /pickaxe/.test(n)) return { factor: 0, text: "free for prospectors" };
   if (prof === "woodcutter" && /wood ?axe/.test(n)) return { factor: 0, text: "free for wood cutters" };
   if (prof === "hunter" && /arrow/.test(n) && !/glass/.test(n)) return { factor: 0, text: "free for hunters" };
-  if (prof === "hunter" && (/\bbows?\b/.test(n) || /arrow/.test(n))) return { factor: 0.5, text: "half off for hunters" };
+  if (prof === "hunter" && /bows?\b/.test(n)) return { factor: 0, text: "free for hunters" };   // every bow (crossbows too)
+  if (prof === "hunter" && /arrow/.test(n)) return { factor: 0.5, text: "half off for hunters" };   // glass arrows
   return null;
 }
 
