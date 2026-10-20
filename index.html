@@ -5033,7 +5033,7 @@ function renderGhosts() {
 }
 function renderMyRank() {
   const emp = !unlocked && currentEmp(), sec = $("myRankSec"), show = !!emp && !isApprentice(emp) && RANK_PROFS.has(emp.prof);
-  sec.hidden = !show; const canTest = fmAs || (!!emp && sameName(emp.name, "Orlog"));   // for now Orlog can use the promotion tests himself
+  sec.hidden = !show; const canTest = fmAs || (!!emp && sameName(emp.name, "Oswald"));   // the promotion tests are for the ForgeMaster viewing as an employee, and for Oswald
   $("testPromo").hidden = $("promoCelebBtn").hidden = !(show && canTest); if (!show) { $("ppBanner").hidden = true; return; }
   { const pb = $("promoVidBtn"), sn = videoSeen("promo", emp); pb.hidden = false; pb.textContent = sn ? "Need help?" : "WATCH THIS!!"; pb.classList.toggle("seen", sn); }
   if (!canTest) testPromo = false;
