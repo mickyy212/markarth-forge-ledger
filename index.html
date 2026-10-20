@@ -1824,6 +1824,7 @@ table.val thead th { color: #cdb995; }
   <section aria-labelledby="myRankH" id="myRankSec" hidden>
     <div class="sec-head">
       <h2 id="myRankH">Promotion Progress</h2>
+      <button type="button" class="watch-btn sell-watch" id="promoVidBtn" hidden>WATCH THIS!!</button>
       <button type="button" class="pm-toggle" id="testPromo" aria-pressed="false" hidden title="Shows this employee 80% of the way to their next rank. Nothing is saved.">Test Promotion</button>
       <button type="button" class="btn-ghost" id="promoCelebBtn" hidden title="Plays the promotion celebration (test only; nothing is saved)">Promotion celebration 🎉</button>
       <span class="hint">How close you are to your next rank and a bigger commission.</span>
@@ -4746,6 +4747,7 @@ const HELP_VIDS = {
   smelt: { src: "smelt-how-to.mp4", title: "Smelting ingots: the Crafted ingots menu" },
   pstock: { src: "personal-stock-how-to.mp4", title: "Your personal stockpile: how buy & sell orders change it" },
   profit: { src: "profit-how-to.mp4", title: "Your profit and forge funds: how they work" },
+  promo: { src: "promotions-how-to.mp4", title: "Promotions: how to rank up and earn more commission" },
   stock: { src: "stock-how-to.mp4", title: "Reading the stockpile: what the forge needs most" },
 };
 const COMM_PROFS = new Set(["prospector", "woodcutter", "hunter"]);
@@ -4764,7 +4766,7 @@ function onboardVids(emp) {
   if (!emp) return [];
   const v = [];
   if (HELP_VIDS[emp.prof]) v.push("job:" + emp.prof);
-  if (COMM_PROFS.has(emp.prof)) v.push("comm");
+  if (COMM_PROFS.has(emp.prof)) v.push("comm", "promo");
   if (isApprentice(emp)) v.push("sell", "buy");
   if (isApprentice(emp)) v.push("pstock", "smelt", "profit");   // apprentices: how buy and sell orders change their personal stockpile
   if (!isApprentice(emp)) v.push("stock");   // reading the stockpile (apprentices' personal stockpile video covers it)
@@ -4948,6 +4950,7 @@ function renderMyRank() {
   const emp = !unlocked && currentEmp(), sec = $("myRankSec"), show = !!emp && !isApprentice(emp) && RANK_PROFS.has(emp.prof);
   sec.hidden = !show; const canTest = fmAs || (!!emp && sameName(emp.name, "Orlog"));   // for now Orlog can use the promotion tests himself
   $("testPromo").hidden = $("promoCelebBtn").hidden = !(show && canTest); if (!show) { $("ppBanner").hidden = true; return; }
+  { const pb = $("promoVidBtn"), sn = videoSeen("promo", emp); pb.hidden = false; pb.textContent = sn ? "Need help?" : "WATCH THIS!!"; pb.classList.toggle("seen", sn); }
   if (!canTest) testPromo = false;
   $("testPromo").setAttribute("aria-pressed", testPromo);
   const vemp = testPromo && testBump ? { ...emp, rank: Math.min(TOP_RANK, (emp.rank || 0) + testBump) } : emp;   // test promotions already won
@@ -6051,13 +6054,14 @@ $("aprFundsBox").addEventListener("submit", e => { if (e.target.id !== "afForm")
 $("pstockVidBtn").addEventListener("click", () => { $("vidUnderstood").hidden = true; openVideo("pstock"); vidKeyOpen = "pstock"; renderVidNote();
   const e = !unlocked && currentEmp(); if (e && isApprentice(e) && !e.openedPStock && !readOnly) { e.openedPStock = true; persist(); } renderIngHint(); });
 $("profitVidBtn").addEventListener("click", () => { $("vidUnderstood").hidden = true; openVideo("profit"); vidKeyOpen = "profit"; renderVidNote(); });
+$("promoVidBtn").addEventListener("click", () => { $("vidUnderstood").hidden = true; openVideo("promo"); vidKeyOpen = "promo"; renderVidNote(); });
 $("stockVidBtn").addEventListener("click", () => { $("vidUnderstood").hidden = true; openVideo("stock"); vidKeyOpen = "stock"; renderVidNote(); });
 $("commVidBtn").addEventListener("click", () => { $("vidUnderstood").hidden = true; openVideo("comm"); vidKeyOpen = "comm"; renderVidNote(); });
 $("helpVid").addEventListener("ended", () => {
   const emp = !unlocked && currentEmp(); if (!emp || !vidKeyOpen || videoSeen(vidKeyOpen, emp)) return;
   if (vidKeyOpen.startsWith("job:") && "job:" + emp.prof !== vidKeyOpen) return;
   const n = countVideoEnd(vidKeyOpen, emp);
-  renderHelpBtn(); renderSellHelpBtn(); renderVidNote(); if (vidKeyOpen === "smelt" && apprView()) renderPersonal(emp);
+  renderHelpBtn(); renderSellHelpBtn(); renderVidNote(); renderMyRank(); if (vidKeyOpen === "smelt" && apprView()) renderPersonal(emp);
   toast(n >= VID_WATCHES ? "Video complete. The button is now \"Need help?\" if you want to watch again." : `Watched ${n} of ${VID_WATCHES} times. Watch it once more all the way through.`);
 });
 $("vidResetAll").addEventListener("click", () => { if (!unlocked) return; $("vidResetAsk").hidden = false; $("vidResetAll").hidden = true; });
