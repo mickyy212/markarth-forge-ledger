@@ -677,6 +677,12 @@ ul.loan-list li .hint { grid-column: 2 / -1; font-size: .8rem; }
 @keyframes ingGlow { from { box-shadow: 0 0 6px rgba(255,216,74,.35); } to { box-shadow: 0 0 24px rgba(255,216,74,.95), 0 0 6px rgba(255,216,74,.8) inset; } }
 @keyframes ingBob { from { transform: translateY(-3px); } to { transform: translateY(4px); } }
 @media (prefers-reduced-motion: reduce) { .ing-hint, .ing-hint .ih-arrow { animation: none; } }
+.scroll-cue { position:sticky; top:8px; z-index:5; display:flex; align-items:center; gap:10px; width:100%; margin:0 0 14px; padding:10px 14px; border:2px solid #ffd84a; border-radius:10px; background:#2b2108; color:#ffe9a0; font:inherit; font-weight:700; text-align:left; cursor:pointer; box-shadow:0 0 16px rgba(255,216,74,.7); animation:ingGlow 1.2s ease-in-out infinite alternate; }
+.scroll-cue .arr { display:inline-block; font-size:1.4em; animation:cueBob .9s ease-in-out infinite; }
+#persCraftH { scroll-margin-top:110px; }
+.scroll-cue[hidden] { display:none; }
+@keyframes cueBob { 0%,100% { transform:translateY(-3px); } 50% { transform:translateY(4px); } }
+@media (prefers-reduced-motion:reduce) { .scroll-cue, .scroll-cue .arr { animation:none; } }
 .test-run { display:flex; gap:10px; align-items:flex-start; margin:0 0 12px; padding:10px 14px; border:2px solid #4aa3ff; border-radius:10px; background:rgba(74,163,255,.12); color:inherit; }
 .test-run b.t { font-variant-numeric:tabular-nums; font-size:1.1em; }
 #persBody.ing-pulse #persIngToggle { box-shadow: 0 0 0 3px #ffd84a, 0 0 18px rgba(255,216,74,.9); animation: ingGlow 1.2s ease-in-out infinite alternate; }
@@ -717,6 +723,10 @@ ul.loan-list li .hint { grid-column: 2 / -1; font-size: .8rem; }
 .pm-toggle[aria-pressed="true"]::before { background: #2f9e5b radial-gradient(circle at 19px 7px, #fff 0 5px, transparent 5.5px); box-shadow: none; }
 .pm-toggle[aria-pressed="false"]::before { background: #4a3f36 radial-gradient(circle at 7px 7px, #cdb995 0 5px, transparent 5.5px); }
 .funds-box { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; padding: 12px 14px; margin: 0 0 12px; border: 2px solid #c9a227; border-radius: 10px; background: rgba(201,162,39,.08); }
+.af-edit { flex:1 1 100%; display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; }
+.af-form { display:flex; gap:8px; align-items:center; }
+.af-form input { width:150px; }
+.af-form [hidden] { display:none; }
 .funds-box .fl { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: #e8c766; font-weight: 800; }
 .funds-box .fv { font-family: var(--mono); font-size: 1.7rem; font-weight: 800; color: #f2d982; }
 .funds-box .fv.neg { color: var(--danger); }
@@ -1885,7 +1895,7 @@ table.val thead th { color: #cdb995; }
 
   <section aria-labelledby="aprH" id="aprSec" hidden>
     <div class="sec-head">
-      <h2 id="aprH">Your orders and profit</h2>
+      <h2 id="aprH">Your orders and profit</h2><button type="button" class="watch-btn sell-watch" id="profitVidBtn" hidden>WATCH THIS!!</button>
       <span class="hint">Only your own sell and buy orders and what you earned on them. They don't count toward the forge's profit.</span>
     </div>
     <div class="panel">
@@ -2939,12 +2949,23 @@ function fmOwnData() {
   for (const [id, ls] of groups) open.push({ id, kind: "buy", open: true, at: ls[0].at, who: ls[0].who, text: ls.map(x => `${x.qty} × ${buyName(x.item)}`).join(", "), paidOut: round2(ls.reduce((a, x) => a + x.qty * x.price, 0)), value: null, gain: null });
   return { done, all: [...open, ...done].sort((a, b) => (b.doneAt || b.at) - (a.doneAt || a.at)).slice(0, 150) };
 }
+// Apprentice's Forge funds box on the Profit tab: the figure updates by itself, and "Change Funds Manually" lets them type a new total.
+var afManual = false, afDraft = "";
+function renderAprFundsBox(me) {
+  const f = apprFunds(me), box = $("aprFundsBox");
+  if (box.contains(document.activeElement) && document.activeElement.id === "afNew") return;   // don't wipe what they're typing
+  const parts = [f.inc ? `+${coins(f.inc)} from your sell orders` : "", f.out ? `−${coins(f.out)} on your buy orders` : "", f.adj ? `${f.adj > 0 ? "+" : "−"}${coins(Math.abs(f.adj))} set by hand` : ""].filter(Boolean);
+  const typed = round2(Number(afDraft)), canSave = afDraft !== "" && Number.isFinite(typed) && typed >= 0 && typed !== f.now;
+  const html = `<div><div class="fl">Forge funds</div><div class="fv${f.now < 0 ? " neg" : ""}">${coins(f.now)} coins</div></div>
+      <p class="hint" style="flex:1 1 260px;margin:0">${parts.join(", ")}${parts.length ? ". " : ""}Updates by itself with every sell and buy order you make. If it's ever out of date, change it by hand below.</p>
+      <div class="af-edit"><label class="check"><input type="checkbox" id="afManual" ${afManual ? "checked" : ""}> Change Funds Manually</label>
+        ${afManual ? `<form id="afForm" class="af-form"><input type="number" id="afNew" min="0" step="0.01" inputmode="decimal" placeholder="New total" value="${esc(afDraft)}" aria-label="New forge funds total"><button type="submit" class="btn-return" id="afSave" ${canSave ? "" : "hidden"}>Save</button></form>` : ""}</div>`;
+  if (box.dataset.html !== html) { box.innerHTML = html; box.dataset.html = html; }
+}
 function renderApprentices() {
   const me = !unlocked ? currentEmp() : null;
   $("aprSec").hidden = !isApprentice(me);
-  if (isApprentice(me)) { const f = apprFunds(me);
-    $("aprFundsBox").innerHTML = `<div><div class="fl">Forge funds</div><div class="fv${f.now < 0 ? " neg" : ""}">${coins(f.now)} coins</div></div>
-      <p class="hint" style="flex:1 1 260px;margin:0">${[f.inc ? `+${coins(f.inc)} from your sell orders` : "", f.out ? `−${coins(f.out)} on your buy orders` : ""].filter(Boolean).join(", ")}${f.inc || f.out ? ". " : ""}Updates by itself with every sell and buy order you make.</p>`; }
+  if (isApprentice(me)) renderAprFundsBox(me);
   if (isApprentice(me)) renderAppr(me.name, { tiles: "aprTiles", pie: "aprPie", rows: "aprRows", pid: "apme" }, true);
   $("fmOwnSec").hidden = true;   // the Profit tab already covers the ForgeMaster's figures
   $("fmAprSec").hidden = true; return;   // apprentice profits are only shown to the apprentices themselves
@@ -3413,7 +3434,8 @@ const FUNDS_FLOOR = 200, FUNDS_CRIT = 100, APPR_FUNDS_BASE = 300;
 function apprFunds(emp) {
   const w = (state.apprWork || []).filter(x => sameName(x.by, emp.name));
   const inc = round2(w.filter(x => x.kind === "sell").reduce((a, x) => a + (Number(x.final) || 0), 0)), out = round2(w.filter(x => x.kind === "buy").reduce((a, x) => a + (Number(x.paidOut) || 0), 0));
-  return { base: APPR_FUNDS_BASE, inc, out, now: round2(APPR_FUNDS_BASE + inc - out) };
+  const adj = round2(Number(emp.fundsAdj) || 0);   // set by the apprentice with "Change Funds Manually"; later orders keep adding to and taking from it
+  return { base: APPR_FUNDS_BASE, inc, out, adj, now: round2(APPR_FUNDS_BASE + inc - out + adj) };
 }
 function renderApFunds() {
   const emp = apprView() && currentEmp(), box = $("apFunds"); box.hidden = !emp; if (!emp) return;
@@ -4723,6 +4745,7 @@ const HELP_VIDS = {
   comm: { src: "commission-how-to.mp4", title: "Commissions: sales from your materials" },
   smelt: { src: "smelt-how-to.mp4", title: "Smelting ingots: the Crafted ingots menu" },
   pstock: { src: "personal-stock-how-to.mp4", title: "Your personal stockpile: how buy & sell orders change it" },
+  profit: { src: "profit-how-to.mp4", title: "Your profit and forge funds: how they work" },
   stock: { src: "stock-how-to.mp4", title: "Reading the stockpile: what the forge needs most" },
 };
 const COMM_PROFS = new Set(["prospector", "woodcutter", "hunter"]);
@@ -4743,7 +4766,7 @@ function onboardVids(emp) {
   if (HELP_VIDS[emp.prof]) v.push("job:" + emp.prof);
   if (COMM_PROFS.has(emp.prof)) v.push("comm");
   if (isApprentice(emp)) v.push("sell", "buy");
-  if (isApprentice(emp)) v.push("pstock", "smelt");   // apprentices: how buy and sell orders change their personal stockpile
+  if (isApprentice(emp)) v.push("pstock", "smelt", "profit");   // apprentices: how buy and sell orders change their personal stockpile
   if (!isApprentice(emp)) v.push("stock");   // reading the stockpile (apprentices' personal stockpile video covers it)
   return v;
 }
@@ -4807,6 +4830,8 @@ const helpSeen = emp => videoSeen("job:" + emp.prof, emp);
 // Commission video: prospectors, wood cutters and hunters. "WATCH THIS!!" until watched to the end once, then "Need help?".
 // Stockpile video: every signed-in employee ("WATCH THIS!!" until watched) and the ForgeMaster ("Need help?").
 function renderStockVidBtn() {
+  { const e = !unlocked && currentEmp(), b3 = $("profitVidBtn"); b3.hidden = !(e && isApprentice(e));
+    if (!b3.hidden) { const sn = videoSeen("profit", e); b3.textContent = sn ? "Need help?" : "WATCH THIS!!"; b3.classList.toggle("seen", sn); } }
   { const e = !unlocked && currentEmp(), b2 = $("pstockVidBtn"); b2.hidden = !(e && isApprentice(e));
     if (!b2.hidden) { const sn = videoSeen("pstock", e); b2.textContent = sn ? "Need help?" : "WATCH THIS!!"; b2.classList.toggle("seen", sn); } }
   const emp = !unlocked && currentEmp(), btn = $("stockVidBtn");
@@ -5097,6 +5122,7 @@ function render() {
         <select data-prof-for="${e.id}" aria-label="Profession of ${esc(e.name)}">${PROFESSIONS.map(p => `<option value="${p.key}" ${p.key === (e.prof || "") ? "selected" : ""}>${p.name}</option>`).join("")}</select>
         <input id="rp-${e.id}" type="text" class="pin" inputmode="numeric" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" maxlength="12" placeholder="New PIN" aria-label="New PIN for ${esc(e.name)}" data-pin-for="${e.id}">
         <button class="btn-ghost" data-act="setPin" data-id="${e.id}">Change PIN</button>
+        <button class="btn-ghost" data-act="resetOnb" data-id="${e.id}" title="Back to WATCH THIS!! on every video, and first-visit guides show again">Reset onboarding</button>
         ${e.prof === "apprentice" ? `<button class="btn-return" data-act="promote" data-id="${e.id}">Promote</button>` : ""}
         ${confirmRemove === e.id
           ? `<button class="btn-danger" data-act="rmEmpYes" data-id="${e.id}">Confirm remove</button><button class="btn-ghost" data-act="rmEmpNo">Cancel</button>`
@@ -5702,8 +5728,11 @@ function renderPersonal(emp) {
       </div></div>`;
   };
   const lv = persLevels(p);
-  const bar = testBannerHtml(emp) + `<div class="ingot-bar"><button type="button" class="btn-ghost" id="persIngToggle" aria-pressed="${persIngView}">${persIngView ? "Show full stockpile" : "Ingot view"}</button><span class="hint">${persIngView ? "Your ingots, and smelting more from your personal stockpile" : "Your ingots and smelting from your personal stockpile"}</span></div>`;
-  if (persIngView) { body.innerHTML = bar + persIngotHtml(p); return; }
+  const bar = `<div class="ingot-bar"><button type="button" class="btn-ghost" id="persIngToggle" aria-pressed="${persIngView}">${persIngView ? "Show full stockpile" : "Ingot view"}</button><span class="hint">${persIngView ? "Your ingots, and smelting more from your personal stockpile" : "Your ingots and smelting from your personal stockpile"}</span></div>`;
+  if (persIngView) { body.innerHTML = bar + persIngotHtml(p);
+    const cue = $("scrollCraft"), tgt = $("persCraftH");   // hide the cue once the craft menu is on screen
+    if (cue && tgt && "IntersectionObserver" in window) { if (window.cueIO) window.cueIO.disconnect(); window.cueIO = new IntersectionObserver(es => { cue.hidden = es[0].isIntersecting; }); window.cueIO.observe(tgt); }
+    return; }
   const hints = { ores: "Ores you keep for your own work", coal: "Firewood, Poor Charcoal, Charcoal, Briquettes and Coke", leather: "Leather and Leather Strips" };
   const head = (id, title, hint) => `<div class="sec-head"><h2 id="${id}">${title}</h2><span class="hint">${hint}</span></div>`;
   body.innerHTML = bar + GROUPS.map(g => `<section class="pers-grp">${head("pers-" + g.id + "H", titles[g.id], hints[g.id])}<div class="ores">${g.items.map(card).join("")}</div></section>`).join("") +
@@ -5753,8 +5782,9 @@ function persIngotHtml(p) {
   const cards = INGOTS.map(i => { const n = p.ingots[i.key] || 0, l = persIngLevel(p, i.key); return card(i.key, i.name, n, persIngClass(p, i.key, n), l.high, INGOT_GREY.has(i.key)); }).join("")
     + card("dwarven", "Dwarven Metal Ingot", dw, persLevelClass(p, "dwarven", dw), dl.high ?? null, false);
   const keys = [...new Set(INGOTS.flatMap(i => persSmeltNeeds(p, i.key, 1).map(n => n.key)))];
-  return `<section class="pers-grp"><div class="sec-head"><h2 id="persIngH">Your ingots</h2><span class="hint">Only you see these. Kept apart from the forge's ingot stockpile.</span></div><div class="ores">${cards}</div></section>
-    <section class="pers-grp${(() => { const e = currentEmp(); return e && !e.sawCraftGlow ? " craft-glow" : ""; })()}">${(() => { const e = currentEmp(); return e && !e.sawCraftGlow ? `<div class="craft-hint" role="status"><span aria-hidden="true">🔥</span><span>New here? This is where you smelt your own ingots. Watch the video, then try making some.</span></div>` : ""; })()}<div class="sec-head"><h2 id="persCraftH">Crafted ingots</h2>${(() => { const e = currentEmp(); return e ? `<button type="button" class="watch-btn sell-watch${videoSeen("smelt", e) ? " seen" : ""}" id="smeltVidBtn">${videoSeen("smelt", e) ? "Need help?" : "WATCH THIS!!"}</button>` : ""; })()}<span class="hint">Smelt ore and fuel from your personal stockpile into ingots. Nothing comes out of the forge's stockpile.</span></div>
+  const cue = (() => { const e = currentEmp(); return e && !e.sawCraftGlow ? `<button type="button" class="scroll-cue" id="scrollCraft"><span class="arr" aria-hidden="true">⬇</span><span>Scroll down to the Crafted ingots menu to smelt your own ingots. Tap here to jump there.</span></button>` : ""; })();
+  return cue + `<section class="pers-grp"><div class="sec-head"><h2 id="persIngH">Your ingots</h2><span class="hint">Only you see these. Kept apart from the forge's ingot stockpile.</span></div><div class="ores">${cards}</div></section>
+    <section class="pers-grp${(() => { const e = currentEmp(); return e && !e.sawCraftGlow ? " craft-glow" : ""; })()}">${(() => { const e = currentEmp(); return e && !e.sawCraftGlow ? `<div class="craft-hint" role="status"><span aria-hidden="true">🔥</span><span>New here? This is where you smelt your own ingots. Watch the video, then try making some.</span></div>` : ""; })()}${(() => { const e = currentEmp(); return e ? testBannerHtml(e) : ""; })()}<div class="sec-head"><h2 id="persCraftH">Crafted ingots</h2>${(() => { const e = currentEmp(); return e ? `<button type="button" class="watch-btn sell-watch${videoSeen("smelt", e) ? " seen" : ""}" id="smeltVidBtn">${videoSeen("smelt", e) ? "Need help?" : "WATCH THIS!!"}</button>` : ""; })()}<span class="hint">Smelt ore and fuel from your personal stockpile into ingots. Nothing comes out of the forge's stockpile.</span></div>
       <div class="panel"><form id="persCraftForm" class="craft-form"><label>Ingot<select id="persCraftWhich">${INGOTS.map(i => `<option value="${i.key}" ${i.key === persCraft ? "selected" : ""}>${i.name} (can make ${persCanSmelt(p, i.key).toLocaleString()})</option>`).join("")}</select></label>
         <label>How many<input id="persCraftQty" type="number" min="1" step="1" value="${esc(persCraftQty)}"></label>
         <button type="button" class="btn-ghost" id="persCraftMax">Most I can make</button><button type="submit" class="btn-return">Make ingots</button></form>
@@ -5773,6 +5803,7 @@ function persIngotHtml(p) {
 $("persBody").addEventListener("click", e => {
   const emp = apprView() && currentEmp(); if (!emp) return;
   const seenCraft = () => { if (!emp.sawCraftGlow && !readOnly) { emp.sawCraftGlow = true; persist(); } };   // the glow around the craft menu is for the first visit only
+  if (e.target.closest("#scrollCraft")) { $("persCraftH").scrollIntoView({ behavior: "smooth", block: "start" }); return; }
   if (e.target.closest("#smeltVidBtn")) { seenCraft(); startTestRun(emp); $("vidUnderstood").hidden = true; openVideo("smelt"); vidKeyOpen = "smelt"; renderVidNote(); renderPersonal(emp); return; }
   if (e.target.closest("#persIngToggle")) { persIngView = !persIngView; if (!persIngView) seenCraft(); if (persIngView && !emp.sawIngotView && !readOnly) { emp.sawIngotView = true; persist(); } renderIngHint(); renderPersonal(emp); return; }
   if (e.target.closest("#persCraftMax")) { persCraftQty = String(Math.max(1, persCanSmelt(persOf(emp), persCraft))); $("persCraftQty").value = persCraftQty; $("persCraftBatch").innerHTML = persBatchHtml(persOf(emp)); return; }
@@ -6007,8 +6038,19 @@ $("testS").addEventListener("click", () => { testS = !testS;
   if (testS) { const pt = promoTest(); testRanks = { [pt.ore]: pt.progress.rank }; testStreaks = {}; testPend = false; } render(); updateSellQuote(); toast(testS ? "Test S on: pretend stockpile, nothing is saved" : "Test S off"); });
 $("testSale").addEventListener("click", () => { testSale = !testSale; $("testSale").setAttribute("aria-pressed", testSale); updateSellQuote(); toast(testSale ? `Test sale on: pretending ${fmtQty(TEST_SALE_QTY)} of every material, nothing is saved` : "Test sale off"); });
 $("sellNoComm").addEventListener("change", () => updateSellQuote());
+$("aprFundsBox").addEventListener("change", e => { if (e.target.id !== "afManual") return; afManual = e.target.checked; afDraft = ""; $("aprFundsBox").dataset.html = ""; renderApprentices(); if (afManual) { const i = $("afNew"); if (i) i.focus(); } });
+$("aprFundsBox").addEventListener("input", e => { if (e.target.id !== "afNew") return; afDraft = e.target.value;
+  const emp = !unlocked && currentEmp(), t = round2(Number(afDraft)), ok = emp && afDraft !== "" && Number.isFinite(t) && t >= 0 && t !== apprFunds(emp).now; $("afSave").hidden = !ok; });
+$("aprFundsBox").addEventListener("submit", e => { if (e.target.id !== "afForm") return; e.preventDefault();
+  const emp = !unlocked && currentEmp(); if (!emp || !isApprentice(emp) || readOnly) return;
+  const t = round2(Number(afDraft)); if (afDraft === "" || !Number.isFinite(t) || t < 0) { toast("Enter a number, 0 or more."); return; }
+  const f = apprFunds(emp); if (t === f.now) return;
+  emp.fundsAdj = round2((Number(emp.fundsAdj) || 0) + t - f.now);
+  afManual = false; afDraft = ""; $("aprFundsBox").dataset.html = "";
+  commit({ kind: "hold-c", text: `${emp.name} set their forge funds to ${coins(t)} by hand (was ${coins(f.now)})` }); toast(`Forge funds saved: ${coins(t)} coins`); });
 $("pstockVidBtn").addEventListener("click", () => { $("vidUnderstood").hidden = true; openVideo("pstock"); vidKeyOpen = "pstock"; renderVidNote();
   const e = !unlocked && currentEmp(); if (e && isApprentice(e) && !e.openedPStock && !readOnly) { e.openedPStock = true; persist(); } renderIngHint(); });
+$("profitVidBtn").addEventListener("click", () => { $("vidUnderstood").hidden = true; openVideo("profit"); vidKeyOpen = "profit"; renderVidNote(); });
 $("stockVidBtn").addEventListener("click", () => { $("vidUnderstood").hidden = true; openVideo("stock"); vidKeyOpen = "stock"; renderVidNote(); });
 $("commVidBtn").addEventListener("click", () => { $("vidUnderstood").hidden = true; openVideo("comm"); vidKeyOpen = "comm"; renderVidNote(); });
 $("helpVid").addEventListener("ended", () => {
@@ -6020,9 +6062,11 @@ $("helpVid").addEventListener("ended", () => {
 });
 $("vidResetAll").addEventListener("click", () => { if (!unlocked) return; $("vidResetAsk").hidden = false; $("vidResetAll").hidden = true; });
 $("vidResetNo").addEventListener("click", () => { $("vidResetAsk").hidden = true; $("vidResetAll").hidden = false; });
+// Puts one employee back to a brand-new start: every video button back to WATCH THIS!!, and the first-visit guides (scroll cue, craft glow, ingot banner, 10-minute test period) show again.
+function resetOnboarding(emp) { endTestRun(emp); for (const k of ["testGiven", "helpEnds", "helpViews", "sawHelpFor", "sawIngotView", "openedPStock", "sawCraftGlow"]) delete emp[k]; }
 $("vidResetYes").addEventListener("click", () => {
   if (readOnly || !unlocked) return;
-  for (const emp of state.employees) { endTestRun(emp); delete emp.testGiven; delete emp.helpEnds; delete emp.helpViews; delete emp.sawHelpFor; delete emp.sawIngotView; delete emp.openedPStock; delete emp.sawCraftGlow; }
+  for (const emp of state.employees) resetOnboarding(emp);
   $("vidResetAsk").hidden = true; $("vidResetAll").hidden = false;
   commit({ kind: "hold-c", fm: true, text: "ForgeMaster reset every employee's video buttons to WATCH THIS!!" }); toast("Every employee's video buttons are back to WATCH THIS!!");
 });
@@ -6102,6 +6146,8 @@ $("rosterForm").addEventListener("submit", async e => {
 document.addEventListener("click", async e => {
   const b = e.target.closest("button[data-act]"); if (!b || readOnly || !unlocked) return;
   const act = b.dataset.act;
+  if (act === "resetOnb") { const emp = state.employees.find(x => x.id === b.dataset.id); if (!emp) return;
+    resetOnboarding(emp); commit({ kind: "hold-c", fm: true, text: `ForgeMaster reset ${emp.name}'s onboarding` }); toast(`${emp.name}'s onboarding was reset`); return; }
   if (act === "rmEmp") { confirmRemove = b.dataset.id; render(); }
   if (act === "promote") { const emp = state.employees.find(x => x.id === b.dataset.id); if (!emp || emp.prof !== "apprentice") return;
     emp.prof = "expert"; commit({ kind: "plus", fm: true, text: `ForgeMaster promoted ${emp.name} to expert blacksmith` }); toast(`${emp.name} is now an expert blacksmith`); }
