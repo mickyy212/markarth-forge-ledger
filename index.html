@@ -134,6 +134,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .rank-bar { position: relative; height: 10px; margin: 6px 0 4px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
 .rank-bar > span { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: linear-gradient(90deg, #c9761e, #f0a640); }
 .rank-bar.r1 > span { background: linear-gradient(90deg, #2f6cb8, #5aa0f0); } .rank-bar.r2 > span { background: linear-gradient(90deg, #a87420, #e3b04a); } .rank-bar.r3 > span { background: linear-gradient(90deg, #8a2fc4, #ff5a9d); }
+.pp-test { margin: -2px 0 10px; color: #e8c766; font-weight: 600; }
 .pp-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-weight: 700; color: var(--ink); }
 .pp-head .pp-big { font: 700 1.3rem var(--mono); }
 .pp-main { height: 14px; margin: 6px 0 14px; }
@@ -3839,9 +3840,9 @@ function renderPfComm(comms, commCost) {
   const waiting = who => bank.some(b => !sameName(b.who, who));
   const streakHtml = streaks.length ? `<h3 class="sub-h" style="margin-top:12px">Win streaks</h3><p class="hint" style="margin:0 0 8px">Commission conflicts won in a row. After ${STREAK_LIMIT} in a row, an employee's next commission waits until every other deferred claim is paid. Losing a conflict resets it.</p>
     <div class="ms-tiles">${streaks.map(([n, k]) => `<div class="ms-tile"><span>${esc(n)}</span><b>${k} in a row</b>${k >= STREAK_LIMIT ? `<span class="hint" style="text-transform:none;letter-spacing:0">${waiting(n) ? "Held until deferred claims are paid" : "Next win is held if a claim is waiting"}</span>` : ""}</div>`).join("")}</div>` : "";
-  $("pfBank").innerHTML = streakHtml + (bank.length ? `<h3 class="sub-h" style="margin-top:12px">Deferred claims waiting</h3><p class="hint" style="margin:0 0 8px">Employees who lost a commission to a bigger claim. Oldest first: each takes the next order made mostly of their kind of material. Employees don't see this list.</p>
+  $("pfBank").innerHTML = streakHtml + (bank.length ? `<h3 class="sub-h" style="margin-top:12px">Deferred claims waiting</h3><p class="hint" style="margin:0 0 8px">Employees who lost a commission to a bigger claim. Oldest first: each takes the next order made mostly of their kind of material. An employee's claims for the same kind of material are combined into one. Employees don't see this list.</p>
     <div class="cat-wrap"><table class="val pie-table"><thead><tr><th scope="col">Since</th><th scope="col">Employee</th><th scope="col">Kind</th><th scope="col">Claim left</th><th scope="col">From</th></tr></thead><tbody>
-    ${bank.map(b => `<tr><td>${shortDate(b.at)}</td><td>${esc(b.who)}</td><td>${(ROLE[b.role] || { name: "materials" }).name}</td><td>${esc(matsText(b.mats))}</td><td>${esc(b.customer || "")}'s order</td></tr>`).join("")}</tbody></table></div>` : "");
+    ${bank.map(b => `<tr><td>${shortDate(b.at)}</td><td>${esc(b.who)}</td><td>${(ROLE[b.role] || { name: "materials" }).name}</td><td>${esc(matsText(b.mats))}</td><td>${esc([...new Set(claimFrom(b).map(f => f.customer || ""))].join(", "))}'s order${claimFrom(b).length > 1 ? `s (${claimFrom(b).length} combined)` : ""}</td></tr>`).join("")}</tbody></table></div>` : "");
 }
 document.addEventListener("click", e => { if (e.target.closest("#testC")) { testC = !testC; render(); } if (e.target.closest("#testP")) { testP = !testP; testPCache = null; render(); } });
 // What bought goods are worth: stockpile goods at Stockpile value, other price-list items at their listed cost.
@@ -4957,7 +4958,7 @@ function placeEmployeeView() {
 }
 // ---- Promotion celebration. Plays (looping, up to 5 minutes) the first time a promoted employee is signed in, the tab is visible and the
 // Promotion Progress section is on screen. Then e.promoSeen = their rank, so it doesn't play again. "Sign in as" (the ForgeMaster) never marks it seen.
-let testPromo = false, testPct = 80, testBump = 0, testTick = 0, celebReal = false, celebOn = false, celebTimer = 0, celebRaf = 0, promoObs = null;
+let testPromo = false, testBump = 0, testTick = 0, celebReal = false, celebOn = false, celebTimer = 0, celebRaf = 0, promoObs = null;
 const CELEB_MS = 5 * 60 * 1000;
 function celebrate(emp, rank) {
   const fx = $("promoFx"), cv = $("promoCanvas"), col = rank >= 3 ? "#e070ff" : rank >= 2 ? "#ffcf5a" : "#6fb4ff";
@@ -5040,8 +5041,7 @@ function renderMyRank() {
   $("testPromo").setAttribute("aria-pressed", testPromo);
   const vemp = testPromo && testBump ? { ...emp, rank: Math.min(TOP_RANK, (emp.rank || 0) + testBump) } : emp;   // test promotions already won
   let x = rankStatus(vemp);
-  if (testPromo && !x.top) { const need = x.need, tot = testPct / 100 * (1 + RANK_USED) * need, bought = Math.min(need, tot), used = tot - bought;   // starts at 80% and climbs 1% every second
-    x = { ...x, bought: round2(bought), used: round2(used), buyLeft: round2(need - bought), useLeft: round2(RANK_USED * need - used) }; }
+  if (testPromo && !x.top && testSim) x = { ...x, bought: round2(testSim.b), used: round2(testSim.u), buyLeft: round2(Math.max(0, x.need - testSim.b)), useLeft: round2(Math.max(0, RANK_USED * x.need - testSim.u)) };   // test: pretend orders
   const fresh = (emp.rank || 0) > (emp.promoSeen || 0);
   $("ppBanner").hidden = !fresh && !celebOn;
   if (fresh || celebOn) $("ppBanner").innerHTML = `🎉 ${celebOn && !fresh && !celebReal ? "Promotion celebration (test)" : `You've been promoted to ${esc(profTitle(emp))}!`} <button type="button" id="ppReplay">Celebrate again</button>`;
@@ -5061,10 +5061,10 @@ function renderMyRank() {
     return `<div class="pp-row${left < 0.005 ? " done" : ""}"><div class="pp-top"><span>${label}</span><b>${cn(have)} / ${cn(goal)}</b></div>
       <div class="rank-bar r${x.r + 1}"><span style="width:${p}%"></span></div>
       <div class="pp-sub">${left < 0.005 ? "Done ✓" : `${cn(left)} coins to go (${eq(left)})`}</div></div>`; };
-  $("myRankBody").innerHTML = tiles + `<div class="pp-head"><span>Progress to ${x.next}${testPromo ? ` <span class="hint">(test)</span>` : ""}</span><span class="pp-big">${pct}%</span></div>
+  $("myRankBody").innerHTML = tiles + `<div class="pp-head"><span>Progress to ${x.next}${testPromo ? ` <span class="hint">(test)</span>` : ""}</span><span class="pp-big">${pct}%</span></div>${testPromo && testSim && testSim.last ? `<div class="pp-test hint" role="status">${esc(testSim.last)}</div>` : ""}
     <div class="rank-bar r${x.r + 1} pp-main" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></div>
     <div class="pp-rows">${row("Materials sold to the forge", b, need)}${row("Your materials used in sales", u, RANK_USED * need)}</div>
-    <div class="pp-note">Both must be done to be promoted. Counted in coins at the forge's material cost; ${mName} is a rough guide, all ${mKind} you sell the forge count.</div>`;
+    <div class="pp-note">Both must be done to be promoted, in any order: each one goes up on its own, as the forge buys from you and as your materials are used in sales. Counted in coins at the forge's material cost; ${mName} is a rough guide, all ${mKind} you sell the forge count.</div>`;
 }
 function render() {
   applyRates();
@@ -6001,12 +6001,37 @@ $("rateForm").addEventListener("submit", e => { e.preventDefault();
   saveRates({ ranks: v.slice(0, 4), split: v[4] }); });
 $("rateReset").addEventListener("click", () => saveRates({ ranks: [...DEFAULT_RATES.ranks], split: DEFAULT_RATES.split }));
 function stopTestTick() { clearInterval(testTick); testTick = 0; }
-$("testPromo").addEventListener("click", () => { testPromo = !testPromo; stopTestTick();
-  if (testPromo) { testPct = 80; testBump = 0; testTick = setInterval(() => { if (!testPromo) { stopTestTick(); return; } testPct++;
-    if (testPct >= 100) { const c = currentEmp(), r = c ? Math.min(TOP_RANK, (c.rank || 0) + testBump) : TOP_RANK;
-      if (c && r < TOP_RANK) { celebReal = false; celebrate(c, r + 1); testBump++; testPct = 0; } else stopTestTick(); }   // promoted: celebrate, then the next rank starts filling from 0
-    renderMyRank(); }, 1000); }
-  renderMyRank(); toast(testPromo ? "Test Promotion on: starts at 80% and climbs 1% every second (nothing saved)" : "Test Promotion off"); });
+// Test Promotion: every second a pretend buy order (the forge buys this employee's material) or sell order (a sale uses some of it).
+// Each moves only its own bar, just like real orders; a sale can't use more than the forge has bought. Nothing is saved.
+var testSim = null;
+function testSimStart(rankNow) {
+  const c = currentEmp(); if (!c) return;
+  const x = rankStatus({ ...c, rank: rankNow }); if (x.top) { testSim = null; return; }
+  const first = !testBump;   // the first rank starts most of the way there; the next ones start from nothing
+  testSim = { b: first ? round2(0.7 * x.need) : 0, u: first ? round2(0.55 * RANK_USED * x.need) : 0, n: 0, last: "" };
+}
+function testPromoStep() {
+  if (!testPromo) { stopTestTick(); return; }
+  const c = currentEmp(); if (!c) return;
+  const rankNow = Math.min(TOP_RANK, (c.rank || 0) + testBump), x = rankStatus({ ...c, rank: rankNow });
+  if (x.top) { stopTestTick(); renderMyRank(); return; }
+  if (!testSim) testSimStart(rankNow);
+  const need = x.need, uNeed = RANK_USED * need, lc = leatherCost(), [mk, mName] = RANK_MAT[c.prof], mc = rawCost(mk) || 1, t = testSim;
+  const step = (testBump ? 0.08 : 0.04) + Math.random() * 0.07, room = t.b - t.u;
+  const doBuy = t.b < need && (t.u >= uNeed || room * lc < mc || Math.random() < 0.5);
+  t.n++;
+  if (doBuy) { const qty = Math.max(1, Math.round(step * need * lc / mc)), coin = round2(qty * mc); t.b = round2(t.b + coin / lc);
+    t.last = `Test buy order #${t.n}: the forge bought ${qty.toLocaleString()} ${mName} from you (+${coins(coin)} coins sold to the forge)`; }
+  else { const qty = Math.max(1, Math.min(Math.round(step * uNeed * lc / mc), Math.floor(room * lc / mc))), coin = round2(qty * mc); t.u = round2(t.u + coin / lc);
+    t.last = `Test sell order #${t.n}: a sale used ${qty.toLocaleString()} of your ${mName} (+${coins(coin)} coins used in sales)`; }
+  if (t.b >= need - 1e-9 && t.u >= uNeed - 1e-9) {   // both bars full: promoted, then the next rank starts
+    if (rankNow < TOP_RANK) { celebReal = false; celebrate(c, rankNow + 1); testBump++; testSim = null; testSimStart(Math.min(TOP_RANK, (c.rank || 0) + testBump)); if (testSim) testSim.last = `Promoted on test order #${t.n}. Next rank starts from nothing.`; }
+  }
+  renderMyRank();
+}
+$("testPromo").addEventListener("click", () => { testPromo = !testPromo; stopTestTick(); testSim = null;
+  if (testPromo) { testBump = 0; const c = currentEmp(); testSimStart(c ? c.rank || 0 : 0); testTick = setInterval(testPromoStep, 1000); }
+  renderMyRank(); toast(testPromo ? "Test Promotion on: a pretend buy or sell order every second (nothing saved)" : "Test Promotion off"); });
 $("promoCelebBtn").addEventListener("click", () => { const c = currentEmp(); if (!c) return; celebReal = false; celebrate(c, Math.min(TOP_RANK, (c.rank || 0) + 1)); });
 $("pfxClose").addEventListener("click", stopCelebrate);
 document.addEventListener("keydown", e => { if (e.key === "Escape" && celebOn) stopCelebrate(); });
@@ -6693,7 +6718,7 @@ function receiveBuy(ls, id) {
     else if (o.craft && emp && String(o.item).startsWith("ing:")) { const ik = o.item.slice(4); if (INGOT_NAME[ik]) addCraftIngots(emp.name, ik, o.qty); }
     else if (Object.prototype.hasOwnProperty.call(state.stock, o.item)) { state.stock[o.item] += o.qty; flash(o.item);
       if (emp && !isApprentice(emp)) { if (o.craft) lotsOf().push({ id: uid(), who: emp.name, key: o.item, qty: o.qty, at: Date.now(), craft: true });
-        else { addLot(emp.name, o.item, o.qty); addProgress(emp, "bought", o.qty * rawCost(o.item)); } } }
+        else { addLot(emp.name, o.item, o.qty); addProgress(emp, "bought", o.qty * rawCost(o.item)); checkPromotion(emp); } } }   // either bar can be the last to fill
     // Buying from an employee takes the goods out of what they're holding as pending, so they aren't counted twice.
     if (emp && NAME[o.item]) { let left = o.qty;
       for (const p of state.pending.filter(p => sameName(p.who, emp.name) && p.ore === o.item).sort((a, b) => a.at - b.at)) {
@@ -6771,7 +6796,7 @@ function rankLine(e) {
   const x = rankStatus(e), lv = n => `${fmtQty(round2(n))} Leather`;
   if (x.none) return `<div class="rank-line">Earned ${coins(x.earned)} in commission · no ranks for this job</div>`;
   const pt = promoTest(), isT = testR && sameName(pt.ore, e.name), title = isT && x.r > (e.rank || 0) ? `${RANK_NAME[x.r]} ${PROF[e.prof].name.toLowerCase()}` : profTitle(e);
-  // Progress bar: buying and using both count; full once both thresholds are met (then the promotion happens on the next sale).
+  // Progress bar: buying and using both count; each counts on its own, and the promotion happens as soon as both are met (on a buy order or a sale).
   const pct = x.top ? 100 : Math.floor(100 * (Math.min(x.bought, x.need) + Math.min(x.used, RANK_USED * x.need)) / ((1 + RANK_USED) * x.need));
   const bar = `<div class="rank-bar r${x.top ? TOP_RANK : x.r + 1}" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><span style="width:${pct}%"></span></div>`;
   return `<div class="rank-line${testR ? "" : " real"}">${isT ? `<b>Includes the promotion test run.</b> ` : ""}${title} · earns ${RANK_PCT[x.r]}% · commission earned <b>${coins(x.earned)}</b>
@@ -6811,8 +6836,12 @@ function planCommission(final, t, off) {
   const empOk = n => { const e = state.employees.find(e => sameName(e.name, n)); return e && !isApprentice(e) ? e : null; };
   const quals = t.shares.filter(x => x.share >= COMMISSION_SHARE - 1e-9 && empOk(x.who)).map(x => ({ ...x, rank: rankOf(x.who) }));
   const rv = t.roleVal || {}, sumV = Object.values(rv).reduce((a, v) => a + v, 0), ru = t.rawUse || {};
-  const bank = state.commBank || [], claimLeft = b => Object.values(b.mats || {}).reduce((a, q) => a + q, 0);
-  const bi = bank.findIndex(b => sumV > 0 && (rv[b.role] || 0) > sumV / 2 && claimLeft(b) > 1e-9 && Object.keys(b.mats || {}).some(k => (ru[k] || 0) > 0) && empOk(b.who));
+  const bank = [...(state.commBank || [])].sort((a, b) => (a.at || 0) - (b.at || 0)), claimLeft = b => Object.values(b.mats || {}).reduce((a, q) => a + q, 0);   // oldest claims first
+  // "Mostly" their kind of material: more than half the order's material cost. Poor Charcoal claims only need their kind to be the biggest
+  // (a tie counts), since Iron and Corundum Ingots are always half ore, half Poor Charcoal and those claims could otherwise wait forever.
+  const mostly = b => { const v = rv[b.role] || 0, poor = (b.mats && b.mats.poor > 1e-9) && (ru.poor || 0) > 0;
+    return poor ? v > 0 && Object.entries(rv).every(([r, x]) => r === b.role || v >= x - 1e-9) : v > sumV / 2; };
+  const bi = bank.findIndex(b => sumV > 0 && mostly(b) && claimLeft(b) > 1e-9 && Object.keys(b.mats || {}).some(k => (ru[k] || 0) > 0) && empOk(b.who));
   const holderHere = bi >= 0 && quals.some(q => sameName(q.who, bank[bi].who) && q.role === bank[bi].role);   // they'd qualify on their own: the claim waits
   // Win streak rule: whoever has won the last two commission conflicts in a row can't win another commission while anyone else still has a
   // deferred claim waiting. Their claim is banked instead (behind the ones already there), and their streak stays until they lose one.
@@ -6823,7 +6852,11 @@ function planCommission(final, t, off) {
   else if (quals.length) {
     held = quals.filter(q => streakOf(q.who) >= STREAK_LIMIT && pending.some(b => !sameName(b.who, q.who)));
     const pool = quals.filter(q => !held.includes(q));
-    if (pool.length) {
+    // Someone is held back by the streak rule: waiting claims are paid oldest first (newest last). The oldest one this order uses any of wins.
+    const hand = held.length ? bank.find(b => claimLeft(b) > 1e-9 && empOk(b.who) && !held.some(h => sameName(h.who, b.who)) && Object.keys(b.mats || {}).some(k => (ru[k] || 0) > 0)) : null;
+    if (hand) { winners = [{ who: hand.who, role: hand.role, val: round2(rv[hand.role] || 0), fromBank: hand, handover: held.map(h => h.who), rank: rankOf(hand.who), pct: RANK_PCT[rankOf(hand.who)] }];
+      deferred = pool.filter(q => !sameName(q.who, hand.who)); }
+    else if (pool.length) {
     let top = pool[0]; for (const q of pool.slice(1)) if (!beats(top, q)) top = q;
     const rest = pool.filter(q => q !== top);
     // Equal ranks within 10% by material cost split it, 3% each.
@@ -6837,13 +6870,28 @@ function planCommission(final, t, off) {
   for (const w of winners) w.amount = round2(final * w.pct / 100);
   return { winners: winners.filter(w => w.amount > 0), deferred, bankIdx: bi, ru, claimLeft, nQual: quals.length, held: held.map(q => q.who) };
 }
+// Deferred claims of the same kind of material for the same employee are combined into one claim (e.g. 20 Charcoal deferred on one order and
+// 30 on another become one 50 Charcoal claim). It keeps the oldest one's place in the queue and is used as one claim from then on.
+const claimFrom = b => b.from || [{ orderId: b.orderId, customer: b.customer, at: b.at, mats: { ...(b.mats || {}) } }];
+function mergeBank(bank) {
+  const out = [];
+  for (const b of bank || []) {
+    const m = out.find(x => sameName(x.who, b.who) && x.role === b.role);
+    if (!m) { out.push({ ...b, mats: { ...(b.mats || {}) }, from: claimFrom(b) }); continue; }
+    for (const [k, q] of Object.entries(b.mats || {})) m.mats[k] = round2((m.mats[k] || 0) + q);
+    m.from = [...m.from, ...claimFrom(b)]; m.at = Math.min(m.at || Infinity, b.at || Infinity);
+  }
+  return out.sort((a, b) => (a.at || 0) - (b.at || 0));   // the queue is always oldest first
+}
 const matsText = m => Object.entries(m || {}).map(([k, q]) => `${fmtQty(q)} ${k === "dwarven" ? "Dwarven Metal Ingot" : NAME[k] || k}`).join(", ") || "nothing";
 function applyCommission(o, plan) {
   const at = Date.now(), roleName = r => (ROLE[r] || { name: "materials" }).name.toLowerCase();
   if (plan.off) { state.log.unshift({ at, by: "ForgeMaster", fm: true, kind: "hold-c", text: `No commission on ${o.who}'s order (switched off for this order)` }); return; }
   const bank = state.commBank || (state.commBank = []), lead = plan.winners[0];
   state.commStreak = state.commStreak || {};
+  const combined = [];
   for (const d of plan.deferred) {
+    if (bank.some(b => sameName(b.who, d.who) && b.role === d.role && Object.values(b.mats || {}).some(q => q > 1e-9))) combined.push(d);
     if (!(plan.held || []).includes(d.who)) { const de = state.employees.find(e => sameName(e.name, d.who)); if (de) state.commStreak[de.name] = 0; }   // a lost conflict ends the streak
     bank.push({ id: uid(), who: d.who, role: d.role, mats: { ...d.mats }, at, orderId: o.id, customer: o.who });
     state.log.unshift({ at, by: "ForgeMaster", fm: true, kind: "debt", text: `${d.who} also supplied ${Math.round(d.share * 100)}% of the ${roleName(d.role)} on ${o.who}'s order, but ${(plan.held || []).includes(d.who) ? `they have won the last ${STREAK_LIMIT} commission conflicts in a row, so their next win waits until every deferred claim is paid` : lead && lead.fromBank ? `${lead.who} had an earlier deferred claim` : `${plan.winners.map(w => w.who).join(" and ")} supplied more by material cost`}. ${d.who}'s claim on ${matsText(d.mats)} is banked for their next order.` });
@@ -6859,9 +6907,12 @@ function applyCommission(o, plan) {
       if (n === STREAK_LIMIT) state.log.unshift({ at, by: "ForgeMaster", fm: true, kind: "hold-c", text: `${e.name} has won ${n} commission conflicts in a row. Their next commission waits until every deferred claim in the bank is paid.` }); }
     state.debts.push({ id: uid(), who: e.name, item: "coins", qty: w.amount, note: `${w.pct}% commission on ${o.who}'s order (${why})`, city: false, orderId: o.id, at });
     state.log.unshift({ at, by: "ForgeMaster", fm: true, kind: "debt", text: w.fromBank
-      ? `${e.name} earns a ${w.pct}% commission (${coins(w.amount)} coins) on ${o.who}'s order from their deferred claim (${plan.claimLeft(w.fromBank) > 1e-9 ? `${matsText(w.fromBank.mats)} of claim left` : "claim used up"}). The forge owes it to them.`
+      ? `${e.name} earns a ${w.pct}% commission (${coins(w.amount)} coins) on ${o.who}'s order from their deferred claim${w.handover ? ` (${w.handover.join(" and ")} won the last ${STREAK_LIMIT} conflicts in a row, so the waiting claim went first)` : ""} (${plan.claimLeft(w.fromBank) > 1e-9 ? `${matsText(w.fromBank.mats)} of claim left` : "claim used up"}). The forge owes it to them.`
       : `${e.name} earns a ${w.pct}% commission (${coins(w.amount)} coins) on ${o.who}'s order: ${Math.round(w.share * 100)}% of its ${roleName(w.role)} came from them${w.split ? ` (split with ${plan.winners.find(x => x !== w).who}: their materials were within 10% by cost)` : ""}. The forge owes it to them.` });
   }
+  state.commBank = mergeBank(state.commBank || []);
+  for (const d of combined) { const c = state.commBank.find(b => sameName(b.who, d.who) && b.role === d.role); if (!c) continue;
+    state.log.unshift({ at, by: "ForgeMaster", fm: true, kind: "hold-c", text: `${d.who}'s new deferred claim (${matsText(d.mats)}) was combined with their earlier one: one claim of ${matsText(c.mats)} now waits for the next order made mostly of their ${roleName(d.role)}.` }); }
 }
 // What an order would pay in commission, worked out on a copy of the stockpile so nothing changes. testEnv: the "Test S" sample stockpile.
 function previewCommission(lines, final, off, test, craftFor) {
@@ -7240,7 +7291,7 @@ function normalize(d) {
       s.commRates = { ranks: [0, 1, 2, 3].map(i => n(d.commRates.ranks[i] ?? DEFAULT_RATES.ranks[i])), split: n(d.commRates.split ?? DEFAULT_RATES.split) }; }
     if (Array.isArray(d.lots)) s.lots = d.lots.filter(l => l && l.who && NAME[l.key] && l.qty > 0);
     if (Array.isArray(d.ingotLots)) s.ingotLots = d.ingotLots.filter(l => l && INGOT_NAME[l.key] && l.qty > 0 && Array.isArray(l.comp));
-    if (Array.isArray(d.commBank)) s.commBank = d.commBank.filter(b => b && b.id && b.who && b.mats && Object.keys(b.mats).length);
+    if (Array.isArray(d.commBank)) s.commBank = mergeBank(d.commBank.filter(b => b && b.id && b.who && b.mats && Object.keys(b.mats).length));
     if (Array.isArray(d.commissions)) s.commissions = d.commissions.filter(c => c && c.id && c.who).slice(0, 1000);
     if (d.statusManual && typeof d.statusManual === "object") s.statusManual = Object.fromEntries(Object.keys(d.statusManual).filter(k => NAME[k]).map(k => [k, true]));
     else if (s.status) s.statusManual = Object.fromEntries(Object.keys(s.status).map(k => [k, true]));
