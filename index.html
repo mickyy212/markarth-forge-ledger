@@ -659,6 +659,12 @@ ul.loan-list li .hint { grid-column: 2 / -1; font-size: .8rem; }
 .top-emp { position: relative; }
 .ts-pin-form { position: absolute; top: calc(100% + 6px); right: 0; z-index: 30; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; padding: 10px; border: 1px solid #c9a227; border-radius: 10px; background: #1f1812; box-shadow: 0 8px 24px rgba(0,0,0,.6); }
 #topEmpIn .btn-ghost, #topEmpIn .btn-add { white-space: nowrap; }
+/* Business Partner sign-in (Resident Tailors): a smaller row under the Employee sign-in */
+.bp-form { margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--line); font-size: .8rem; }
+.bp-lbl { margin: 0; font-size: .78rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.bp-form select { padding: 3px 6px; font-size: .8rem; max-width: 130px; }
+.bp-form input { width: 70px !important; padding: 3px 6px; font-size: .8rem; }
+.bp-form .btn-ghost { padding: 3px 10px; font-size: .8rem; white-space: nowrap; }
 .ts-pin-form input { width: 120px; }
 .ts-pin-form[hidden] { display: none; }
 .emp-off { display: none !important; }
@@ -1055,6 +1061,12 @@ table.val thead th { color: #cdb995; }
       <select id="tsWho" aria-label="Your name"></select>
       <input id="tsPin" type="text" class="pin" inputmode="numeric" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" maxlength="12" placeholder="PIN" aria-label="Your PIN">
       <button class="btn-add" type="submit">Sign in</button>
+    </form>
+    <form id="topBpForm" class="fm-sign-form bp-form" hidden>
+      <h3 id="topBpH" class="bp-lbl">Business Partner</h3>
+      <select id="bpWho" aria-label="Business partner name"></select>
+      <input id="bpPin" type="text" class="pin" inputmode="numeric" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" maxlength="12" placeholder="PIN" aria-label="Business partner PIN">
+      <button class="btn-ghost" type="submit">Sign in</button>
     </form>
     <div class="fm-sign-form" id="topEmpIn" hidden>
       <span class="ts-who">Signed in as <b id="tsName"></b></span>
@@ -5312,7 +5324,8 @@ function render() {
     names.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join("");
   fSel.value = empFilter;
   // Sign-in and roster
-  const roster = [...state.employees].sort((a, b) => a.name.localeCompare(b.name));
+  const roster = [...state.employees].filter(e => !isTailor(e)).sort((a, b) => a.name.localeCompare(b.name));   // Resident Tailors sign in under Business Partner
+  const partners = [...state.employees].filter(isTailor).sort((a, b) => a.name.localeCompare(b.name));
   const signed = currentEmp();
   setSelect($("siWho"), roster.length ? roster.map(e => `<option value="${e.id}">${esc(e.name)}</option>`).join("")
     : `<option value="">No employees yet</option>`);
@@ -5321,6 +5334,7 @@ function render() {
   $("signinBox").hidden = !!signed || unlocked;
   setSelect($("tsWho"), roster.length ? roster.map(e => `<option value="${e.id}">${esc(e.name)}</option>`).join("") : `<option value="">No employees yet</option>`);
   $("topEmp").hidden = unlocked; $("topEmpForm").hidden = !!signed; $("topEmpIn").hidden = !signed;
+  setSelect($("bpWho"), partners.map(e => `<option value="${e.id}">${esc(e.name)}</option>`).join("")); $("topBpForm").hidden = !!signed || !partners.length;
   { const ap = !unlocked && isApprentice(currentEmp()); $("tsPinBtn").hidden = !ap; if (!ap) $("tsPinForm").hidden = true; }   // Change PIN up top: apprentice blacksmiths only
   $("tsName").textContent = signed ? signed.name : "";
   $("signedBox").hidden = !(signed || unlocked);
@@ -6218,12 +6232,13 @@ async function empSignIn(empId, pinEl, errEl) {
   let h = ""; try { h = await hashPin(emp.name, pinEl.value); } catch (_) {}
   if (h !== emp.pinHash) { errEl.textContent = "Wrong PIN. Check with the ForgeMaster if you're not sure what it is."; pinEl.select(); return; }
   me = { id: emp.id, pinHash: emp.pinHash }; fmAs = false; testPromo = false; stopTestTick(); try { sessionStorage.removeItem("fm-as-emp"); } catch (_) {}
-  $("siPin").value = ""; $("tsPin").value = ""; $("siErr").textContent = ""; $("tsErr").textContent = "";
+  $("siPin").value = ""; $("tsPin").value = ""; $("bpPin").value = ""; $("siErr").textContent = ""; $("tsErr").textContent = "";
   try { sessionStorage.setItem("ore-emp", JSON.stringify(me)); } catch (_) {}
   empFilter = emp.name; render(); toast(`Signed in as ${emp.name}`);
 }
 $("signinForm").addEventListener("submit", e => { e.preventDefault(); empSignIn($("siWho").value, $("siPin"), $("siErr")); });
 $("topEmpForm").addEventListener("submit", e => { e.preventDefault(); empSignIn($("tsWho").value, $("tsPin"), $("tsErr")); });
+$("topBpForm").addEventListener("submit", e => { e.preventDefault(); empSignIn($("bpWho").value, $("bpPin"), $("tsErr")); });
 $("tsOut").addEventListener("click", () => $("signOut").click());
 $("signOut").addEventListener("click", () => {
   me = null; try { sessionStorage.removeItem("ore-emp"); } catch (_) {}
