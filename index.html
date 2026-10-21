@@ -348,6 +348,10 @@ table.val tfoot th { text-align: left; }
 .val-sum b { font-family: var(--mono); font-size: 1.6rem; font-variant-numeric: tabular-nums; }
 #valBig { color: var(--ok); }
 
+.fuel-note { border: 1px solid var(--danger); border-left-width: 5px; border-radius: 6px; background: var(--surface); padding: 14px 18px; margin: 0 0 14px; font-size: 1.05rem; line-height: 1.5; }
+.fuel-note h2 { font-size: 1.1rem; margin: 0 0 6px; color: var(--danger); }
+.fuel-note p { margin: 0 0 8px; }
+.fuel-note p:last-child { margin-bottom: 0; }
 .notice { border: 1px solid var(--danger); color: var(--danger); background: var(--surface); border-radius: 6px; padding: 10px 14px; font-weight: 600; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .notice > span:first-child { flex: 1 1 260px; min-width: 0; }
 .notice-acts { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -1194,6 +1198,11 @@ table.val thead th { color: #cdb995; }
     <div class="ing-hint" id="persIngHint" role="status" hidden><span class="ih-arrow" aria-hidden="true">👇</span><span class="ih-t">New: click <b>Ingot view</b> to see and manage your personal ingots</span></div>
     <div id="persBody"></div>
   </section>
+  <aside class="fuel-note" id="fuelNote" role="status" hidden>
+    <h2>Buying is paused: the forge is low on Charcoal</h2>
+    <p>The forge has fallen below the minimum Charcoal it needs to operate, and the ForgeMaster is working to secure more as soon as possible.</p>
+    <p>Until the forge is restocked, buying is halted so that the forge does not go into the red. Thank you for your understanding. In the meantime, please feel free to sell any materials you have at other locations.</p>
+  </aside>
   <div class="ingot-bar" id="ingotBar" data-views="stock" hidden><button type="button" class="btn-ghost" id="ingotToggle" aria-pressed="false">Ingot view</button><span class="hint">Ingots on hand and smelting more from the stockpile</span></div>
   <section aria-labelledby="ingotH" id="ingotSec" data-views="stock" hidden>
     <div class="sec-head"><h2 id="ingotH">Ingot stockpile</h2><span class="hint">Confirmed sell orders take the ingots they need from here.</span><span class="empty-stock"><button type="button" class="btn-ghost" id="emptyIng">Empty ingot stockpile</button><span id="emptyIngAsk" hidden>Set every ingot to 0? Employees keep their part-ownership of the ingots as claims. <button type="button" class="btn-danger" id="emptyIngYes">Yes, empty it</button> <button type="button" class="btn-ghost" id="emptyIngNo">Cancel</button></span></span></div>
@@ -4567,12 +4576,12 @@ const LEVEL_TEXT = { "lv-red": "Low stock", "lv-yellow": "Additional stock neede
 // Items with no goal are left to the ForgeMaster.
 const autoStockOn = () => !state.autoStockOff;
 const CORE_MATS = new Set(["iron", "corundum", "poor", "regular"]);   // Iron, Corundum, Poor Charcoal, Charcoal: Dire need below a third of the goal
-// Fuel gates: without the fuel to smelt them the forge stops buying these ores. Iron, Corundum, Silver and Gold: Not buying while Charcoal is
+// Fuel gates: without the fuel to smelt them the forge stops buying these ores. Iron, Corundum, Silver, Gold and the hunters' leather items: Not buying while Charcoal is
 // below 50. Advanced ores (worth 1 coin or more each, not Dwarven): Not buying while Charcoal Briquettes are below 20.
 const FUEL_GATE_LOW = { regular: 50, briquettes: 20 };
 const advancedOre = k => k !== "dwarven" && ORES.some(o => o.key === k) && rawCost(k) >= 1;
 function fuelGate(k) {
-  if (["iron", "corundum", "silver", "gold"].includes(k) && (state.stock.regular || 0) < FUEL_GATE_LOW.regular) return `Charcoal is below ${FUEL_GATE_LOW.regular}`;
+  if ((["iron", "corundum", "silver", "gold"].includes(k) || LEATHER.some(o => o.key === k)) && (state.stock.regular || 0) < FUEL_GATE_LOW.regular) return `Charcoal is below ${FUEL_GATE_LOW.regular}`;
   if (advancedOre(k) && (state.stock.briquettes || 0) < FUEL_GATE_LOW.briquettes) return `Charcoal Briquettes are below ${FUEL_GATE_LOW.briquettes}`;
   return "";
 }
@@ -5176,6 +5185,7 @@ function render() {
   placeEmployeeView();
   document.querySelectorAll("#ores .adjust, #coal .adjust, #leather .adjust").forEach(el => el.hidden = !unlocked);   // forge stockpile: ForgeMaster only; apprentices keep Add/Remove on their personal stockpile
   $("stockHint").hidden = unlocked;
+  $("fuelNote").hidden = unlocked || (state.stock.regular || 0) >= FUEL_GATE_LOW.regular;   // employees only: Charcoal below the minimum, so buying is halted
   $("emptyStockWrap").hidden = !unlocked; $("testStock").setAttribute("aria-pressed", !!state.testStock); if (!unlocked) { $("emptyStockAsk").hidden = true; $("emptyStock").hidden = false; }
   $("valueSec").hidden = !unlocked;
   if (unlocked) {
