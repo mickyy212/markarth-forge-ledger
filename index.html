@@ -442,6 +442,13 @@ table.cat-table td .row-acts { display: flex; gap: 6px; justify-content: flex-en
 .cart-line:first-child { border-top: 0; }
 .eq-tag { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: rgba(90,180,120,.18); border: 1px solid #5ab478; color: #9fe0b4; font-size: .78rem; font-weight: 700; }
 .mrow.eq-row { color: #9fe0b4; }
+/* Resident Tailor: a tailor sees only the sign-in strip and the Tailored goods tab. The ForgeMaster's Tailored goods sell menu replaces the normal sell form. */
+body.tailor-mode .wrap > *:not(#topSigns):not(#tlTabs):not(#tailorSec):not(script):not(dialog):not(#toast) { display: none !important; }
+#sellSec.tl-on > .panel > :not(#tailorSell) { display: none !important; }
+.tl-form { display: grid; gap: 12px; }
+.tl-form > label { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; max-width: 24rem; }
+#sellSec:not(.tl-on) #tailorSell { display: none !important; }
+.tl-total { display: flex; justify-content: space-between; font-weight: 700; padding: 8px 10px; border-top: 1px solid var(--line); }
 .eq-form { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end; }
 .eq-form label { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; }
 .eq-form select { min-width: 16rem; max-width: 100%; }
@@ -1092,6 +1099,13 @@ table.val thead th { color: #cdb995; }
       <button type="button" role="tab" data-ap="profit">Profit</button>
     </div>
   </nav>
+  <nav class="fm-tabs ap-tabs" id="tlTabs" hidden aria-label="Tailor views">
+    <div class="tabs" role="tablist"><button type="button" role="tab" aria-selected="true">Tailored goods</button></div>
+  </nav>
+  <section aria-labelledby="tailorH" id="tailorSec" hidden>
+    <div class="sec-head"><h2 id="tailorH">Tailored goods</h2><span class="hint">Goods you've made and stored for the forge to sell. They stay yours: every sale's coins are your earnings.</span></div>
+    <div class="panel" id="tailorBody"></div>
+  </section>
   <nav class="fm-tabs" id="fmTabs" hidden aria-label="ForgeMaster views">
     <div class="tabs" role="tablist">
       <button type="button" role="tab" data-view="all">Everything</button>
@@ -1473,6 +1487,7 @@ table.val thead th { color: #cdb995; }
     <div class="sec-head">
       <h2 id="sellH">Sell orders</h2>
       <button type="button" class="watch-btn sell-watch" id="sellHelpBtn" hidden>WATCH THIS!!</button>
+      <button type="button" class="pm-toggle" id="sellTlT" aria-pressed="false" hidden title="Sell the Resident Tailor's stored goods. Only tailored goods: no profit, discounts, materials or stockpiles involved, and the coins are the Tailor's.">Tailored goods</button>
       <button type="button" class="pm-toggle" id="sellEqT" aria-pressed="false" hidden title="Items in this order that are already made (Crafted equipment tab) come from there: their materials aren't taken from the stockpiles again.">Crafted equipment</button>
       <button type="button" class="pm-toggle" id="sellGiftT" aria-pressed="false" hidden title="The customer handed the blacksmith all the materials for this order: nothing is taken from the stockpiles and you charge a blacksmith fee instead of the price.">Gifted materials</button>
       <button type="button" class="pm-toggle" id="testS" aria-pressed="false" hidden title="Try the commission rules on a pretend stockpile. Nothing is saved, and orders can't be confirmed while it's on.">Test S</button>
@@ -1550,6 +1565,7 @@ table.val thead th { color: #cdb995; }
         <button class="btn-add" type="submit">Confirm sell order</button>
       </form>
       <datalist id="custNames"></datalist>
+      <div id="tailorSell"></div>
       <div id="saleRmReqs"></div>
       <div id="sellRows"></div>
       <p class="hint" id="sellHelp" hidden><b>Confirm sell order</b> counts the sale as paid right away and logs it as one purchase on the customer's record. Any older open orders still have <b>Paid</b> and <b>Cancel</b>.</p>
@@ -4509,7 +4525,7 @@ function renderOrders() {
   }
   updateSellQuote(); updateBuyQuote();
 }
-const blank = () => ({ stock: Object.fromEntries(ALL.map(o => [o.key, 0])), ingots: {}, pending: [], debts: [], edebts: [], levels: null, status: {}, loyalty: null, prices: {}, contribValue: {}, buyCfg: null, buys: [], buyHistory: [], payments: [], sells: [], customers: [], catalog: null, recipes: {}, debtSales: [], debtRequests: [], purchaseReqs: [], resolveReqs: [], saleRemovals: [], employees: [], contrib: {}, log: [] });
+const blank = () => ({ tailor: { goods: {}, sales: [] }, stock: Object.fromEntries(ALL.map(o => [o.key, 0])), ingots: {}, pending: [], debts: [], edebts: [], levels: null, status: {}, loyalty: null, prices: {}, contribValue: {}, buyCfg: null, buys: [], buyHistory: [], payments: [], sells: [], customers: [], catalog: null, recipes: {}, debtSales: [], debtRequests: [], purchaseReqs: [], resolveReqs: [], saleRemovals: [], employees: [], contrib: {}, log: [] });
 let empFilter = "";
 let fmView = "all", bsMode = "sell", purchaseMode = true;   // Purchase mode: only Buy / Sell, Stockpiles and Profit tabs
 const PM_VIEWS = ["buysell", "stock", "profit", "equip"];
@@ -4628,6 +4644,7 @@ const PROFESSIONS = [
   { key: "hunter", name: "Hunter", group: "leather" },
   { key: "apprentice", name: "Apprentice blacksmith", group: null, staff: true },
   { key: "expert", name: "Expert blacksmith", group: null, staff: true },
+  { key: "tailor", name: "Resident Tailor", group: null, staff: true },
 ];
 // Apprentice blacksmiths run buy and sell orders and see every stockpile, but manage nothing else.
 // Expert blacksmiths (promoted apprentices) have every apprentice function, plus an Advanced materials picker on sell orders.
@@ -5198,6 +5215,7 @@ function render() {
   renderIngots();
   renderCrown();
   placeEmployeeView();
+  renderTailor();
   document.querySelectorAll("#ores .adjust, #coal .adjust, #leather .adjust").forEach(el => el.hidden = !unlocked);   // forge stockpile: ForgeMaster only; apprentices keep Add/Remove on their personal stockpile
   $("stockHint").hidden = unlocked;
   $("fuelNote").hidden = unlocked || (state.stock.regular || 0) >= FUEL_GATE_LOW.regular;   // employees only: Charcoal below the minimum, so buying is halted
@@ -6296,8 +6314,8 @@ $("testR").addEventListener("click", () => { testR = !testR; $("testR").setAttri
 $("testS").addEventListener("click", () => { testS = !testS;
   // Test S starts from the promotion test run: Orlog is an Advanced prospector, everyone else normal. The rank buttons can change it.
   if (testS) { const pt = promoTest(); testRanks = { [pt.ore]: pt.progress.rank }; testStreaks = {}; testPend = false; } render(); updateSellQuote(); toast(testS ? "Test S on: pretend stockpile, nothing is saved" : "Test S off"); });
-$("sellEqT").addEventListener("click", () => { if (!unlocked) return; sellUseEq = !sellUseEq; if (sellUseEq) { sellGift = false; $("sellGiftT").setAttribute("aria-pressed", false); } $("sellEqT").setAttribute("aria-pressed", sellUseEq); updateSellQuote.key = ""; updateSellQuote(); toast(sellUseEq ? "Crafted equipment on: items already made come from storage" : "Crafted equipment off"); });
-$("sellGiftT").addEventListener("click", () => { if (!unlocked) return; sellGift = !sellGift; giftNot = new Set(); if (sellGift) { sellUseEq = false; $("sellEqT").setAttribute("aria-pressed", false); }
+$("sellEqT").addEventListener("click", () => { if (!unlocked) return; sellUseEq = !sellUseEq; if (sellUseEq) sellTailor = false; if (sellUseEq) { sellGift = false; $("sellGiftT").setAttribute("aria-pressed", false); } $("sellEqT").setAttribute("aria-pressed", sellUseEq); updateSellQuote.key = ""; updateSellQuote(); toast(sellUseEq ? "Crafted equipment on: items already made come from storage" : "Crafted equipment off"); });
+$("sellGiftT").addEventListener("click", () => { if (!unlocked) return; sellGift = !sellGift; if (sellGift) sellTailor = false; giftNot = new Set(); if (sellGift) { sellUseEq = false; $("sellEqT").setAttribute("aria-pressed", false); }
   { const chip = $("sellForm").querySelector(`[data-profit="${sellGift ? 0 : 20}"]`); if (chip) chip.click(); }   // gifted orders start at no fee / profit
   $("sellGiftT").setAttribute("aria-pressed", sellGift); updateSellQuote.key = ""; updateSellQuote(); if (sellGift) $("sellGiftFee").focus();
   toast(sellGift ? "Gifted materials on: enter the blacksmith fee. Nothing is taken from the stockpiles." : "Gifted materials off"); });
@@ -7095,6 +7113,102 @@ function applyCommission(o, plan) {
     state.log.unshift({ at, by: "ForgeMaster", fm: true, kind: "hold-c", text: `${d.who}'s new deferred claim (${matsText(d.mats)}) was combined with their earlier one: one claim of ${matsText(c.mats)} now waits for the next order made mostly of their ${roleName(d.role)}.` }); }
 }
 // What an order would pay in commission, worked out on a copy of the stockpile so nothing changes. testEnv: the "Test S" sample stockpile.
+// ---- Resident Tailor. Tailored goods are the Tailor's own: they add and remove what they've made (Tailored goods tab, the only tab they see),
+// and the ForgeMaster sells them from the Tailored goods menu on Sell orders. Fixed prices; no profit, discounts, materials or stockpiles;
+// the coins are the Tailor's earnings (forge funds and profit don't change). Sales show on the Tailor's tab.
+const TAILOR_ITEMS = [["sewing-kit", "Sewing kit", 5], ["gloves", "Gloves", 15], ["cowl", "Cowl", 15], ["rugged-mask", "Rugged mask", 15], ["rugged-cape", "Rugged cape", 15],
+  ["simple-common-clothes", "Simple common clothes", 20], ["short-cape", "Short cape", 20], ["chef-set", "Chef set (tunic and hat)", 20], ["traveler-robes", "Traveler robes", 25],
+  ["layered-common-clothes", "Layered common clothes", 25], ["gathered-scarf", "Gathered scarf", 25], ["neck-gaiter", "Neck gaiter", 25], ["shoulder-mantle", "Shoulder mantle", 25],
+  ["linen-cape", "Linen cape", 25], ["legged-mage-robes", "Legged mage robes (scandalous)", 30], ["mantled-mage-robes", "Mantled mage robes", 30], ["belted-tunic", "Belted tunic", 30],
+  ["scholar-robes", "Scholar robes", 30], ["long-mage-robes", "Long mage robes", 30], ["light-armor-clothes", "Light armor clothes", 30], ["fine-clothes", "Fine clothes", 30],
+  ["blue-mage-set", "Blue mage set (tunic and hood)", 35], ["pouch", "Pouch (30 carry capacity)", 40], ["satchel", "Satchel (35 carry capacity)", 45],
+  ["toothlock-satchel", "Toothlock satchel (35 carry capacity)", 45], ["backpack", "Backpack (40 carry capacity)", 50], ["backpack-lantern", "Backpack & lantern", 65],
+  ["traders-resource-pack", "Trader's resource pack (50 carry capacity)", 75], ["traders-resource-lantern", "Trader's resource pack & lantern", 90],
+  ["guilded-fine-clothes", "Guilded fine clothes (19 colors)", 120], ["exquisite-cloak", "Exquisite cloak", 400]].map(([id, name, price]) => ({ id, name, price }));
+const TL_NAME = Object.fromEntries(TAILOR_ITEMS.map(i => [i.id, i.name])), TL_PRICE = Object.fromEntries(TAILOR_ITEMS.map(i => [i.id, i.price]));
+const isTailor = e => !!e && e.prof === "tailor";
+const tailorView = () => !unlocked && isTailor(currentEmp());
+const tlOf = () => state.tailor || (state.tailor = { goods: {}, sales: [] });
+const tlHave = id => tlOf().goods[id] || 0;
+let sellTailor = false, tlLines = [], tlAddItem = TAILOR_ITEMS[0].id, tlSellItem = "";
+function renderTailor() {
+  const tv = tailorView();
+  document.body.classList.toggle("tailor-mode", tv); $("tlTabs").hidden = $("tailorSec").hidden = !tv;
+  if (tv) renderTailorTab();
+  $("sellTlT").hidden = !unlocked; if (!unlocked) sellTailor = false;
+  $("sellTlT").setAttribute("aria-pressed", sellTailor); $("sellSec").classList.toggle("tl-on", sellTailor && unlocked);
+  if (sellTailor && unlocked) renderTailorSell();
+}
+const tlStoredRows = (edit) => { const g = TAILOR_ITEMS.filter(i => tlHave(i.id) > 0);
+  if (!g.length) return `<div class="empty">No tailored goods stored${edit ? ". Pick an item above and press Add." : "."}</div>`;
+  const tot = g.reduce((a, i) => a + tlHave(i.id) * i.price, 0);
+  return `<div class="cat-wrap"><table class="val"><thead><tr><th scope="col">Item</th><th scope="col">Stored</th><th scope="col">Price each</th><th scope="col">Value</th>${edit ? `<th scope="col"></th>` : ""}</tr></thead><tbody>
+    ${g.map(i => `<tr><td>${esc(i.name)}</td><td><b>${tlHave(i.id).toLocaleString()}</b></td><td>${coins(i.price)}</td><td>${coins(tlHave(i.id) * i.price)}</td>${edit ? `<td><button type="button" class="btn-ghost" data-tlrm="${i.id}">Remove 1</button></td>` : ""}</tr>`).join("")}
+    </tbody></table></div><div class="tl-total"><span>Stored goods worth</span><span>${coins(tot)} coins</span></div>`; };
+function renderTailorTab() {
+  const body = $("tailorBody"), sales = tlOf().sales, earned = sales.reduce((a, x) => a + (Number(x.total) || 0), 0);
+  const sig = JSON.stringify([tlOf(), tlAddItem]); if (body.dataset.sig === sig) return; body.dataset.sig = sig;
+  const a = document.activeElement, keepQty = a && a.id === "tlQty" ? a.value : "1";
+  body.innerHTML = `<form id="tlAddForm" class="eq-form"><label>Tailored good<select id="tlItem">${TAILOR_ITEMS.map(i => `<option value="${i.id}">${esc(i.name)} (${coins(i.price)})</option>`).join("")}</select></label>
+      <label>How many<input id="tlQty" type="number" min="1" step="1" value="${esc(keepQty)}"></label><button type="submit" class="btn-return">Add</button></form>
+    <h3 class="sub-h" style="margin-top:8px">Stored goods</h3>${tlStoredRows(true)}
+    <h3 class="sub-h" style="margin-top:8px">Sales</h3>
+    ${sales.length ? `<div class="cat-wrap"><table class="val"><thead><tr><th scope="col">Date</th><th scope="col">Customer</th><th scope="col">Items</th><th scope="col">Coins</th></tr></thead><tbody>
+      ${sales.map(x => `<tr><td>${shortDate(x.at)}</td><td>${esc(x.who)}</td><td>${esc(x.lines.map(l => `${l.qty} × ${l.name}`).join(", "))}</td><td><b>${coins(x.total)}</b></td></tr>`).join("")}</tbody></table></div>
+      <div class="tl-total"><span>Your earnings from ${sales.length} ${sales.length === 1 ? "sale" : "sales"}</span><span>${coins(round2(earned))} coins</span></div>` : `<div class="empty">No sales yet. When the forge sells one of your goods it shows here.</div>`}`;
+  $("tlItem").value = tlAddItem;
+}
+function renderTailorSell() {
+  const box = $("tailorSell"), stored = TAILOR_ITEMS.filter(i => tlHave(i.id) > 0);
+  if (!stored.some(i => i.id === tlSellItem)) tlSellItem = stored.length ? stored[0].id : "";
+  const inCart = id => tlLines.filter(l => l.id === id).reduce((a, l) => a + l.qty, 0), total = tlLines.reduce((a, l) => a + l.qty * TL_PRICE[l.id], 0);
+  const sig = JSON.stringify([tlOf().goods, tlLines, tlSellItem]); if (box.dataset.sig === sig) return; box.dataset.sig = sig;
+  const a = document.activeElement, who = $("tlWho") ? $("tlWho").value : "", keepQty = $("tlSellQty") ? $("tlSellQty").value : "1";
+  box.innerHTML = `<form id="tlSellForm" class="tl-form">
+    <p class="hint" style="margin:0">Tailored goods only, at their set prices. No profit, discounts, materials or stockpiles are involved, and the coins are the Resident Tailor's earnings.</p>
+    <label>Customer<input id="tlWho" maxlength="40" placeholder="Name" list="custNames" autocomplete="off" value="${esc(who)}"></label>
+    ${stored.length ? `<div class="eq-form"><label>Tailored good<select id="tlSellItem">${stored.map(i => `<option value="${i.id}">${esc(i.name)} (${coins(i.price)}) · ${tlHave(i.id) - inCart(i.id)} stored</option>`).join("")}</select></label>
+      <label>Qty<input id="tlSellQty" type="number" min="1" step="1" value="${esc(keepQty)}"></label><button type="button" class="btn-ghost" id="tlSellAdd">Add item</button></div>`
+      : `<div class="empty">The Tailor has no goods stored to sell.</div>`}
+    ${tlLines.length ? `<div class="cat-wrap"><table class="val"><thead><tr><th scope="col">Item</th><th scope="col">Qty</th><th scope="col">Price each</th><th scope="col">Total</th><th scope="col"></th></tr></thead><tbody>
+      ${tlLines.map((l, n) => `<tr><td>${esc(TL_NAME[l.id])}</td><td>${l.qty}</td><td>${coins(TL_PRICE[l.id])}</td><td>${coins(l.qty * TL_PRICE[l.id])}</td><td><button type="button" class="btn-ghost" data-tlcut="${n}">Remove</button></td></tr>`).join("")}</tbody></table></div>
+      <div class="tl-total"><span>Order total (Tailor's earnings)</span><span>${coins(total)} coins</span></div>` : `<p class="hint" style="margin:0">No items yet. Pick a tailored good and press Add item.</p>`}
+    <button class="btn-add" type="submit" ${tlLines.length ? "" : "disabled"}>Confirm tailored goods sale</button></form>`;
+  if ($("tlSellItem")) $("tlSellItem").value = tlSellItem;
+  if (a && a.id && $(a.id) && a !== $(a.id)) $(a.id).focus();
+}
+document.addEventListener("change", e => { if (e.target.id === "tlItem") tlAddItem = e.target.value; if (e.target.id === "tlSellItem") tlSellItem = e.target.value; });
+document.addEventListener("submit", e => {
+  if (e.target.id === "tlAddForm") { e.preventDefault(); const emp = currentEmp(); if (readOnly || !tailorView()) return;
+    const id = $("tlItem").value, q = Math.floor(Number($("tlQty").value)); if (!TL_NAME[id]) return; if (!(q >= 1)) { toast("Enter a whole number above 0."); return; }
+    tlOf().goods[id] = tlHave(id) + q; tlAddItem = id;
+    commit({ kind: "plus", text: `${emp.name} (Resident Tailor) added ${q} ${TL_NAME[id]} to tailored goods (now ${tlHave(id)} stored)` }); toast(`Added ${q} ${TL_NAME[id]}`); }
+  if (e.target.id === "tlSellForm") { e.preventDefault(); if (readOnly || !unlocked) return;
+    const who = $("tlWho").value.trim(); if (!who) { toast("Enter the customer's name."); return; }
+    if (!tlLines.length) { toast("Add a tailored good first."); return; }
+    const need = {}; for (const l of tlLines) need[l.id] = (need[l.id] || 0) + l.qty;
+    const short = Object.entries(need).filter(([id, q]) => q > tlHave(id)); if (short.length) { toast(`Not enough stored: ${short.map(([id]) => TL_NAME[id]).join(", ")}`); return; }
+    const lines = Object.entries(need).map(([id, qty]) => ({ id, name: TL_NAME[id], qty, price: TL_PRICE[id] })), total = round2(lines.reduce((a, l) => a + l.qty * l.price, 0));
+    for (const l of lines) { tlOf().goods[l.id] = tlHave(l.id) - l.qty; if (tlOf().goods[l.id] <= 0) delete tlOf().goods[l.id]; }
+    tlOf().sales.unshift({ id: uid(), at: Date.now(), who, lines, total });
+    tlLines = [];
+    commit({ kind: "hold-c", fm: true, text: `ForgeMaster sold tailored goods to ${who}: ${lines.map(l => `${l.qty} ${l.name}`).join(", ")} for ${coins(total)} coins (the Resident Tailor's earnings)` });
+    $("tlWho").value = ""; toast("Tailored goods sold"); }
+});
+document.addEventListener("click", e => {
+  const rm = e.target.closest("[data-tlrm]");
+  if (rm) { const emp = currentEmp(), id = rm.dataset.tlrm; if (readOnly || !tailorView() || !(tlHave(id) > 0)) return;
+    tlOf().goods[id] = tlHave(id) - 1; if (tlOf().goods[id] <= 0) delete tlOf().goods[id];
+    commit({ kind: "minus", text: `${emp.name} (Resident Tailor) removed 1 ${TL_NAME[id]} from tailored goods` }); return; }
+  if (e.target.id === "tlSellAdd") { if (!unlocked) return; const id = $("tlSellItem").value, q = Math.floor(Number($("tlSellQty").value));
+    if (!(q >= 1)) { toast("Enter a whole number above 0."); return; }
+    const inCart = tlLines.filter(l => l.id === id).reduce((a, l) => a + l.qty, 0); if (q + inCart > tlHave(id)) { toast(`Only ${tlHave(id) - inCart} ${TL_NAME[id]} stored`); return; }
+    tlSellItem = id; tlLines.push({ id, qty: q }); renderTailorSell(); return; }
+  const cut = e.target.closest("[data-tlcut]"); if (cut && unlocked) { tlLines.splice(Number(cut.dataset.tlcut), 1); renderTailorSell(); }
+});
+$("sellTlT").addEventListener("click", () => { if (!unlocked) return; sellTailor = !sellTailor;
+  if (sellTailor) { sellUseEq = false; sellGift = false; $("sellEqT").setAttribute("aria-pressed", false); $("sellGiftT").setAttribute("aria-pressed", false); }
+  render(); });
 // ---- Crafted equipment (ForgeMaster, purchase mode). Items made ahead of time: their materials leave the stockpiles when made. Each batch keeps,
 // per item, whose materials went into it (shares, totals, values, raw use) so a sale of it later earns commission and promotion credit
 // exactly as if the materials were taken at the sale, without taking anything from the stockpiles again.
@@ -7571,6 +7685,8 @@ function normalize(d) {
     if (Array.isArray(d.ingGhosts)) s.ingGhosts = d.ingGhosts.filter(g => g && g.id && INGOT_NAME[g.key] && g.qty > 0 && Array.isArray(g.comp) && g.comp.length);
     if (Array.isArray(d.ingotLots)) s.ingotLots = d.ingotLots.filter(l => l && INGOT_NAME[l.key] && l.qty > 0 && Array.isArray(l.comp));
     if (Array.isArray(d.equipment)) s.equipment = d.equipment.filter(b => b && b.id && b.itemId && b.qty > 1e-9);
+    if (d.tailor && typeof d.tailor === "object") s.tailor = { goods: Object.fromEntries(Object.entries(d.tailor.goods || {}).filter(([k, q]) => TL_NAME[k] && Number(q) > 0).map(([k, q]) => [k, Math.floor(Number(q))])),
+      sales: (Array.isArray(d.tailor.sales) ? d.tailor.sales : []).filter(x => x && x.id && Array.isArray(x.lines)).slice(0, 2000) };
     if (Array.isArray(d.commBank)) s.commBank = mergeBank(d.commBank.filter(b => b && b.id && b.who && b.mats && Object.keys(b.mats).length));
     if (Array.isArray(d.commissions)) s.commissions = d.commissions.filter(c => c && c.id && c.who).slice(0, 1000);
     if (d.statusManual && typeof d.statusManual === "object") s.statusManual = Object.fromEntries(Object.keys(d.statusManual).filter(k => NAME[k]).map(k => [k, true]));
