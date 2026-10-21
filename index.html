@@ -678,6 +678,20 @@ ul.loan-list li .hint { grid-column: 2 / -1; font-size: .8rem; }
 .clock-note { flex: 1 1 260px; max-width: 460px; margin: 0; align-self: center; padding: 8px 12px; border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 6px; background: var(--surface); font-size: .85rem; line-height: 1.45; }
 body.hours-mode .wrap > *:not(#topSigns):not(#hrTabs):not(#hoursSec):not(script):not(dialog):not(#toast) { display: none !important; }
 .hr-chart { display: grid; gap: 10px; }
+.av-wrap { display: grid; gap: 8px; margin-top: 18px; }
+.av-legend { display: flex; flex-wrap: wrap; gap: 6px; font-size: .78rem; }
+.av-legend span { padding: 2px 8px; border-radius: 4px; }
+.av-table { border-collapse: separate; border-spacing: 2px; width: 100%; font-size: .78rem; table-layout: fixed; }
+.av-table th { font-weight: 600; color: var(--muted); padding: 2px 4px; text-align: center; white-space: nowrap; }
+.av-table tbody th { text-align: right; width: 3.4rem; }
+.av-table th.av-today { color: var(--accent); }
+.av-table td { text-align: center; padding: 4px 2px; border-radius: 3px; height: 20px; }
+.av-hi { background: rgba(62,207,110,.55); color: #08210f; font-weight: 700; }
+.av-mid { background: rgba(232,176,74,.45); color: #2a1c02; font-weight: 600; }
+.av-lo { background: rgba(255,255,255,.06); color: var(--muted); }
+.av-na { background: transparent; color: var(--muted); opacity: .6; }
+html.mobile .av-table { font-size: .62rem; }
+html.mobile .av-table td { padding: 3px 0; }
 .hr-chart svg { width: 100%; height: auto; display: block; }
 .hr-chart .hr-total { display: flex; justify-content: space-between; align-items: baseline; font-weight: 700; }
 .hr-chart .hr-total b { font-size: 1.3rem; color: var(--accent); }
@@ -858,11 +872,26 @@ html.mobile #embers, html.mobile .confetti { display: none !important; }
 .mobile-note[hidden] { display: none; }
 html.mobile button, html.mobile select, html.mobile input:not([type=checkbox]):not([type=radio]):not([type=range]) { min-height: 40px; }
 html.mobile input, html.mobile select, html.mobile textarea { font-size: 16px; }   /* stops phones zooming in when a box is tapped */
-html.mobile .fm-tabs .tabs, html.mobile .ap-tabs .tabs { flex-wrap: wrap; overflow: visible; }
+html.mobile .ap-tabs .tabs { flex-wrap: wrap; overflow: visible; }   /* the ForgeMaster tab row stays one swipeable line: it sticks to the top, so it must stay short */
 html.mobile .tl-row > * { flex: 1 1 100%; min-width: 0; max-width: 100%; }
 html.mobile .eq-form label { min-width: 0; max-width: 100%; }
 html.mobile .eq-form select { min-width: 0; width: 100%; }
 html.mobile .tl-row { gap: 12px; }
+/* Phones: stockpile cards (main, fuel, leather, ingots, personal stock) two per row and compact, so a stockpile fits in far less scrolling */
+html.mobile .ores { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+html.mobile .ore { padding: 9px; gap: 6px; border-radius: 6px; }
+html.mobile .ore-top { min-height: 0; gap: 6px; }
+html.mobile .ore-top .swatch { width: 12px; height: 12px; }
+html.mobile .ore-name { font-size: .88rem; }
+html.mobile .ore-badge { min-height: 18px; margin-top: -2px; }
+html.mobile .ore .stat-badge { font-size: .6rem; padding: 2px 6px; letter-spacing: .02em; }
+html.mobile .ore .count { font-size: 1.55rem; }
+html.mobile .ore .count small { font-size: .65rem; }
+html.mobile .ore .lvl-slot { min-height: 0; font-size: .75rem; }
+html.mobile .ore .lvl-slot * { font-size: inherit; }
+html.mobile .adjust { gap: 4px; }
+html.mobile .adjust input { padding: 4px 6px; }
+html.mobile .adjust button { padding: 4px 2px; font-size: .82rem; }
 html.vid-open body *:not(video) { animation-play-state: paused !important; }
 .vid-dlg .vid-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 14px; }
 .vid-dlg .vid-acts { display: flex; gap: 8px; align-items: center; }
@@ -1636,7 +1665,7 @@ table.val thead th { color: #cdb995; }
         </div>
         <p class="hint craft-note" id="sellCraftNote" hidden></p>
         <div class="card-banner" id="sellCard" hidden></div>
-        <div class="gift-fee wide4" id="sellGiftWrap" hidden><label>Blacksmith fee<input id="sellGiftFee" type="number" min="0" step="0.01" inputmode="decimal" placeholder="coins"></label><span class="hint">Replaces the order's price. The customer handed over every material, so nothing is taken from the stockpiles and no employee's materials are touched.</span></div>
+        <div class="gift-fee wide4" id="sellGiftWrap" hidden><label>Blacksmith fee<input id="sellGiftFee" type="number" min="0" step="0.01" inputmode="decimal" placeholder="coins"></label><span class="hint" id="sellGiftDef"></span><span class="hint">Default fee per item: <b>40</b> Orcish · <b>50</b> Dwarven · <b>70</b> Elven/Bosmer. You can type your own. Replaces the order's price. The customer handed over every material, so nothing is taken from the stockpiles and no employee's materials are touched.</span></div>
         <div class="quote wide" id="sellQuote" aria-live="polite"></div>
         <div class="wide4" id="sellComm"></div>
         <div class="pie-wrap" id="sellPie"></div>
@@ -2623,6 +2652,9 @@ function updateSellQuote() {
   const cat = catalog();
   const emp = sellEmployee(), prof = emp ? emp.prof || "" : "";
   const lines = sellLines.map(l => ({ ...l, it: cat.find(i => i.id === l.itemId) })).filter(l => l.it).map(l => ({ ...l, perk: emp ? perkFor(l.it.name, prof) : null }));
+  if (sellGift && unlocked) { const dflt = giftDefaultFee(lines);   // gifted materials: the fee follows the default until the ForgeMaster types their own
+    if (sellGiftAuto) sellGiftFee = dflt > 0 ? String(dflt) : "";
+    $("sellGiftDef").textContent = !lines.length ? "" : dflt > 0 ? `Default for this order: ${coins(dflt)} coins${sellGiftAuto ? "" : " (you've set your own fee; clear the box to go back to it)"}.` : "No default for these items (only Orcish, Dwarven, Elven and Bosmer armor and weapons have one): enter the fee."; }
   const cartKey = JSON.stringify(sellLines) + catSig + "|" + (emp ? emp.name + prof : "") + JSON.stringify(state.recipes || {}) + "|" + (sellUseEq && unlocked ? JSON.stringify(equipOf().map(b => [b.itemId, b.qty])) : "");
   const empNote = $("sellEmp").checked
     ? (!emp ? "Pick the employee who is buying from the list." : !prof ? `${emp.name} has no job set, so no tool discounts apply.` : `Employee purchase for ${emp.name} (${PROF[prof].name.toLowerCase()}).`)
@@ -2683,7 +2715,7 @@ function updateSellQuote() {
     $("sellComm").innerHTML = `<div class="comm-box"><div class="ln"><span>Commission</span><span>None on a gifted materials order</span></div>${g.paid.length ? `<div class="hint">Employees whose stockpile materials are used get a deferred claim for them instead.</div>` : ""}<div class="ln comm-profit"><span>Profit on this order</span><span class="gain">${ok ? signed(round2(total - g.cost)) : "–"}</span></div></div>`;
   }
   if (sellGift && unlocked) $("sellCard").hidden = true;
-  $("sellGiftWrap").hidden = !(sellGift && unlocked); if ($("sellGiftFee").value !== sellGiftFee && document.activeElement !== $("sellGiftFee")) $("sellGiftFee").value = sellGiftFee;
+  $("sellGiftWrap").hidden = !(sellGift && unlocked); if ($("sellGiftFee").value !== sellGiftFee && (document.activeElement !== $("sellGiftFee") || sellGiftAuto)) $("sellGiftFee").value = sellGiftFee;
 }
 // "Material reduced cost" on an employee purchase: the toggle shows when the employee has craft request materials; ticked, their value comes off.
 function craftQuote(lines, emp) {
@@ -6438,9 +6470,9 @@ $("testS").addEventListener("click", () => { testS = !testS;
 $("sellEqT").addEventListener("click", () => { if (!unlocked) return; sellUseEq = !sellUseEq; if (sellUseEq) sellTailor = false; if (sellUseEq) { sellGift = false; $("sellGiftT").setAttribute("aria-pressed", false); } $("sellEqT").setAttribute("aria-pressed", sellUseEq); updateSellQuote.key = ""; updateSellQuote(); toast(sellUseEq ? "Crafted equipment on: items already made come from storage" : "Crafted equipment off"); });
 $("sellGiftT").addEventListener("click", () => { if (!unlocked) return; sellGift = !sellGift; if (sellGift) sellTailor = false; giftNot = new Set(); if (sellGift) { sellUseEq = false; $("sellEqT").setAttribute("aria-pressed", false); }
   { const chip = $("sellForm").querySelector(`[data-profit="${sellGift ? 0 : 20}"]`); if (chip) chip.click(); }   // gifted orders start at no fee / profit
-  $("sellGiftT").setAttribute("aria-pressed", sellGift); updateSellQuote.key = ""; updateSellQuote(); if (sellGift) $("sellGiftFee").focus();
+  $("sellGiftT").setAttribute("aria-pressed", sellGift); if (sellGift) { sellGiftAuto = true; sellGiftFee = ""; } updateSellQuote.key = ""; updateSellQuote(); if (sellGift) $("sellGiftFee").focus();
   toast(sellGift ? "Gifted materials on: enter the blacksmith fee. Nothing is taken from the stockpiles." : "Gifted materials off"); });
-$("sellGiftFee").addEventListener("input", e => { sellGiftFee = e.target.value; updateSellQuote(); });
+$("sellGiftFee").addEventListener("input", e => { sellGiftFee = e.target.value; sellGiftAuto = e.target.value === ""; updateSellQuote(); });
 $("sellMats").addEventListener("change", e => { const c = e.target.closest("[data-giftmat]"); if (!c) return; if (c.checked) giftNot.delete(c.dataset.giftmat); else giftNot.add(c.dataset.giftmat); updateSellQuote(); });
 $("equipBody").addEventListener("change", e => { if (e.target.id !== "eqItem") return; equipItem = e.target.value; e.target.blur(); renderEquip(); });
 $("equipBody").addEventListener("input", e => { if (e.target.id !== "eqQty") return; equipQty = e.target.value; renderEquip(); });
@@ -6831,7 +6863,7 @@ $("sellForm").addEventListener("submit", e => {
   if (testS) { toast("Test S is on: turn it off to confirm a real order."); return; }
   if (testSale) { toast("Test sale is on: turn it off to confirm a real order."); return; }
   if (!unlocked) $("sellDebt").checked = false;
-  if (isTestName($("sellWho").value) && !$("sellEmp").checked) { if (!sellLines.length && !addSellLine()) return; sellLines = []; sellGiftFee = ""; $("sellGiftFee").value = ""; giftNot = new Set(); $("sellQty").value = 1; updateSellQuote(); toast("TEST sell order: nothing was changed or saved"); return; }
+  if (isTestName($("sellWho").value) && !$("sellEmp").checked) { if (!sellLines.length && !addSellLine()) return; sellLines = []; sellGiftFee = ""; sellGiftAuto = true; $("sellGiftFee").value = ""; giftNot = new Set(); $("sellQty").value = 1; updateSellQuote(); toast("TEST sell order: nothing was changed or saved"); return; }
   if (profitTooLow()) { updateSellQuote(); toast("Apprentices must charge a fee / profit of 20% or more. Raise it to 20% or higher to sell."); return; }
   { const miss = sellMissing(); if (miss.length) { updateSellQuote(); toast(`Order blocked: missing ${miss.map(u => `${fmtQty(u.miss)} ${u.name}`).join(", ")}. Add the material first, or lower the quantity.`); return; } }
   const who = $("sellWho").value.trim(), note = "";
@@ -6885,7 +6917,7 @@ $("sellForm").addEventListener("submit", e => {
   $("sellEmp").checked = false; $("sellDebt").checked = false; $("sellNoComm").checked = false; $("sellCraft").checked = false;
   commit({ kind: "plus", debt: !!debted, text: `Sell order confirmed: ${who} paid ${coins(finalPrice)} coins for ${linesText(lines)}${gift ? ` (gifted materials: blacksmith fee ${coins(fee)}${gs.cost > 0.004 ? ` + ${coins(round2(finalPrice - fee))} for materials not gifted: ${gs.paid.map(u => `${fmtQty(u.qty)} ${u.name}`).join(", ")}` : ", nothing taken from the stockpiles"})` : ""}${craftOff > 0 ? ` (material reduced cost: −${coins(craftOff)} for their craft request ${craftUnitsText(cp.units)})` : ""}${!gift && d.pct && (unlocked || d.reach) ? ` (−${d.pct}% ${d.label})` : ""}${debted ? `. Debted material: ${debted.map(c => `${coins(c.used)} coins to ${c.who} for their ${ROLE[c.role].short} (${coins(c.toDebt)} toward their debt, waiting for confirmation${c.surplus > 0.004 ? `, ${coins(c.surplus)} owed to them in coins` : ""})`).join(", ")}` : ""}` });
   setDiscMode("card");
-  sellLines = []; sellGiftFee = ""; $("sellGiftFee").value = ""; giftNot = new Set(); $("sellQty").value = 1; updateSellQuote(); toast("Sell order confirmed and paid");
+  sellLines = []; sellGiftFee = ""; sellGiftAuto = true; $("sellGiftFee").value = ""; giftNot = new Set(); $("sellQty").value = 1; updateSellQuote(); toast("Sell order confirmed and paid");
 });
 
 $("custForm").addEventListener("submit", e => {
@@ -7298,6 +7330,32 @@ function hoursBlock(who, slot) {
   return `<div class="hr-chart"><div class="chips" role="group" aria-label="Range">${[["week", "This week"], ["month", "This month"], ["all", "All time"]].map(([k, n]) => `<button type="button" class="chip" data-hrr="${slot}:${k}" aria-pressed="${r === k}">${n}</button>`).join("")}</div>
     <div class="hr-total"><span>${r === "week" ? "This week" : r === "month" ? now.toLocaleDateString([], { month: "long" }) : "All time"}</span><b>${(Math.round(total * 10) / 10).toLocaleString()} hours</b></div>${svg}</div>`;
 }
+// Predicted availability (ForgeMaster's Hours tab): for each day and hour from 8am to 2am, how often this employee has been clocked in at that
+// time on that weekday, since their clock-ins began. Recent weeks count more (each older week counts 0.7x the one after it), so it follows
+// changes in their routine. 12am-2am belongs to the night before (Monday's 1am row = early Tuesday morning). Times are in the viewer's time zone.
+const AV_HOURS = Array.from({ length: 18 }, (_, i) => 8 + i);   // 8..25 (24 = 12am, 25 = 1am)
+const avLabel = h => { const x = h % 24, ap = x < 12 ? "am" : "pm", n = x % 12 || 12; return n + ap; };
+function availBlock(who) {
+  const iv = clockIntervals(who); if (!iv.length) return `<div class="av-wrap"><h3 class="sub-h">Predicted availability</h3><p class="hint" style="margin:0">No clock-ins yet. This fills in as hours are logged.</p></div>`;
+  const now = Date.now(), first = new Date(iv[0][0]), d0 = new Date(first.getFullYear(), first.getMonth(), first.getDate());
+  const w = Array.from({ length: 7 }, () => AV_HOURS.map(() => ({ on: 0, all: 0 })));
+  const thisWeek = (() => { const n = new Date(); return +new Date(n.getFullYear(), n.getMonth(), n.getDate() - ((n.getDay() + 6) % 7)); })();
+  for (let day = new Date(d0); +day <= now; day = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1)) {
+    const wd = (day.getDay() + 6) % 7, wkStart = +new Date(day.getFullYear(), day.getMonth(), day.getDate() - wd), ago = Math.max(0, Math.round((thisWeek - wkStart) / 6048e5)), wt = Math.pow(0.7, ago);
+    AV_HOURS.forEach((h, i) => { const a = +new Date(day.getFullYear(), day.getMonth(), day.getDate(), h), b = a + 3600e3;
+      if (b > now || b <= iv[0][0]) return;   // only hours that have fully passed since tracking began
+      const mins = iv.reduce((t, [s, e]) => t + Math.max(0, Math.min(e, b) - Math.max(s, a)), 0) / 60000;
+      w[wd][i].all += wt; if (mins >= 15) w[wd][i].on += wt; });
+  }
+  const weeks = Math.max(1, Math.ceil((now - +d0) / 6048e5)), days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], today = (new Date().getDay() + 6) % 7;
+  const cell = c => { if (!(c.all > 0)) return `<td class="av-na" title="No data yet">–</td>`; const p = c.on / c.all, k = p >= 0.6 ? "hi" : p >= 0.25 ? "mid" : "lo";
+    return `<td class="av-${k}" title="${Math.round(p * 100)}% of the time">${k === "hi" ? "Likely" : k === "mid" ? "Maybe" : ""}</td>`; };
+  return `<div class="av-wrap"><h3 class="sub-h">Predicted availability</h3>
+    <p class="hint" style="margin:0">When ${esc((state.employees.find(e => e.id === who) || {}).name || "they")} is likely to be on, from their clock-ins over ${weeks === 1 ? "the past week" : `${weeks} weeks`} (recent weeks count more). ${weeks < 3 ? "<b>Early estimate:</b> it gets more reliable as more hours are logged. " : ""}Times are in your time zone; 12am–2am is the night before.</p>
+    <div class="av-legend"><span class="av-hi">Likely</span><span class="av-mid">Maybe</span><span class="av-lo">Unlikely</span><span class="av-na">No data yet</span></div>
+    <div class="cat-wrap"><table class="av-table"><thead><tr><th scope="col"></th>${days.map((d, i) => `<th scope="col"${i === today ? ' class="av-today"' : ""}>${d}</th>`).join("")}</tr></thead><tbody>
+    ${AV_HOURS.map((h, i) => `<tr><th scope="row">${avLabel(h)}</th>${days.map((_, d) => cell(w[d][i])).join("")}</tr>`).join("")}</tbody></table></div></div>`;
+}
 document.addEventListener("click", e => { const b = e.target.closest("[data-hrr]"); if (!b) return; const [slot, k] = b.dataset.hrr.split(":"); hrRange[slot] = k;
   if (slot === "tl") $("tailorBody").dataset.sig = ""; else $("hoursBody").dataset.sig = ""; render(); });
 // The note for signed-in gatherers; the Hours tab for the ForgeMaster viewing as an employee.
@@ -7315,7 +7373,7 @@ function renderClockUI() {
   $("hrTabs").hidden = !show; document.body.classList.toggle("hours-mode", show && hrTab === "hours"); $("hoursSec").hidden = !(show && hrTab === "hours");
   $("hrTabs").querySelectorAll("[data-hr]").forEach(b => b.setAttribute("aria-selected", b.dataset.hr === hrTab));
   if (show && hrTab === "hours") { const body = $("hoursBody"), sig = JSON.stringify([e.id, hrRange.emp, clockSig(e.id)]);
-    if (body.dataset.sig !== sig) { body.dataset.sig = sig; body.innerHTML = `<p style="margin:0"><b>${esc(e.name)}</b>: time signed in to the site.</p>${hoursBlock(e.id, "emp")}`; } }
+    if (body.dataset.sig !== sig) { body.dataset.sig = sig; body.innerHTML = `<p style="margin:0"><b>${esc(e.name)}</b>: time signed in to the site.</p>${hoursBlock(e.id, "emp")}${availBlock(e.id)}`; } }
   const id = clockIdent(); if (id !== clockLastIdent) { clockLastIdent = id; setTimeout(() => clockSync(true), 0); }
 }
 setInterval(() => { try { renderClockUI(); if (tailorView()) renderTailorTab(); } catch (_) {} }, 10000);   // clock-ins go stale over time even with no new data
@@ -7490,7 +7548,11 @@ $("sellTlT").addEventListener("click", () => { if (!unlocked) return; sellTailor
 // ---- Crafted equipment (ForgeMaster, purchase mode). Items made ahead of time: their materials leave the stockpiles when made. Each batch keeps,
 // per item, whose materials went into it (shares, totals, values, raw use) so a sale of it later earns commission and promotion credit
 // exactly as if the materials were taken at the sale, without taking anything from the stockpiles again.
-var sellUseEq = false, equipItem = "", equipQty = "1", sellGift = false, sellGiftFee = "", giftNot = new Set();   // sellGift: "Gifted materials" on the sell form; giftNot: materials NOT gifted ("i:"/"s:" + key)
+var sellUseEq = false, equipItem = "", equipQty = "1", sellGift = false, sellGiftFee = "", sellGiftAuto = true, giftNot = new Set();
+// Default blacksmith fee for a gifted materials order, per item: Orcish 40, Dwarven 50, Elven (Altmer) and Bosmer 70 (armor and weapons only; a Set counts as one item).
+const GIFT_FEE = [[/\bdwarven\b/i, 50], [/\borcish\b/i, 40], [/\b(elven|bosmer)\b/i, 70]];
+const giftFeeOf = it => { if (!it || !["Armor", "Weapons"].includes(it.cat)) return 0; const m = GIFT_FEE.find(([re]) => re.test(it.name)); return m ? m[1] : 0; };
+const giftDefaultFee = lines => round2(lines.reduce((a, l) => a + giftFeeOf(l.it) * (Number(l.qty) || 0), 0));   // sellGift: "Gifted materials" on the sell form; giftNot: materials NOT gifted ("i:"/"s:" + key)
 // Gifted materials: the order's materials (ingots, leather, strips...) and which of them the customer handed over.
 const useId = u => (u.ingot ? "i:" : "s:") + u.key;
 const useCost = u => round2(u.qty * (u.ingot ? ingotMatCost(u.key) : (PRICE[u.key] != null ? PRICE[u.key] : rawCost(u.key))));
