@@ -4567,12 +4567,12 @@ const LEVEL_TEXT = { "lv-red": "Low stock", "lv-yellow": "Additional stock neede
 // Items with no goal are left to the ForgeMaster.
 const autoStockOn = () => !state.autoStockOff;
 const CORE_MATS = new Set(["iron", "corundum", "poor", "regular"]);   // Iron, Corundum, Poor Charcoal, Charcoal: Dire need below a third of the goal
-// Fuel gates: without the fuel to smelt them the forge stops buying these ores. Iron, Corundum and Silver: Not buying while Charcoal is
+// Fuel gates: without the fuel to smelt them the forge stops buying these ores. Iron, Corundum, Silver and Gold: Not buying while Charcoal is
 // below 50. Advanced ores (worth 1 coin or more each, not Dwarven): Not buying while Charcoal Briquettes are below 20.
 const FUEL_GATE_LOW = { regular: 50, briquettes: 20 };
 const advancedOre = k => k !== "dwarven" && ORES.some(o => o.key === k) && rawCost(k) >= 1;
 function fuelGate(k) {
-  if (["iron", "corundum", "silver"].includes(k) && (state.stock.regular || 0) < FUEL_GATE_LOW.regular) return `Charcoal is below ${FUEL_GATE_LOW.regular}`;
+  if (["iron", "corundum", "silver", "gold"].includes(k) && (state.stock.regular || 0) < FUEL_GATE_LOW.regular) return `Charcoal is below ${FUEL_GATE_LOW.regular}`;
   if (advancedOre(k) && (state.stock.briquettes || 0) < FUEL_GATE_LOW.briquettes) return `Charcoal Briquettes are below ${FUEL_GATE_LOW.briquettes}`;
   return "";
 }
