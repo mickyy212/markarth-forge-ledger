@@ -666,6 +666,15 @@ ul.loan-list li .hint { grid-column: 2 / -1; font-size: .8rem; }
 .ts-pin-form { position: absolute; top: calc(100% + 6px); right: 0; z-index: 30; display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; padding: 10px; border: 1px solid #c9a227; border-radius: 10px; background: #1f1812; box-shadow: 0 8px 24px rgba(0,0,0,.6); }
 #topEmpIn .btn-ghost, #topEmpIn .btn-add { white-space: nowrap; }
 /* Clock in / out */
+.clocked-strip { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: -4px 0 12px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-size: .9rem; }
+.clocked-strip[hidden] { display: none; }
+.clocked-strip .lbl { font-size: .75rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.clocked-strip .who { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.clocked-strip .dot, .fm-on-badge .dot { width: 10px; height: 10px; border-radius: 50%; background: #3ecf6e; box-shadow: 0 0 0 3px rgba(62,207,110,.25); flex: none; }
+.fm-on-badge { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border: 2px solid #3ecf6e; border-radius: 10px; background: rgba(62,207,110,.1); align-self: center; }
+.fm-on-badge[hidden] { display: none; }
+.fm-on-badge b { display: block; color: #7fe3a0; font-size: .85rem; }
+.fm-on-badge .big { display: block; font-size: 1.15rem; font-weight: 800; letter-spacing: .03em; line-height: 1.2; }
 .clock-note { flex: 1 1 260px; max-width: 460px; margin: 0; align-self: center; padding: 8px 12px; border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 6px; background: var(--surface); font-size: .85rem; line-height: 1.45; }
 body.hours-mode .wrap > *:not(#topSigns):not(#hrTabs):not(#hoursSec):not(script):not(dialog):not(#toast) { display: none !important; }
 .hr-chart { display: grid; gap: 10px; }
@@ -1079,6 +1088,7 @@ table.val thead th { color: #cdb995; }
 <div class="wrap">
   <div class="fm-sign" id="topSigns">
   <p class="clock-note" id="clockNote" hidden><b>You're clocked in.</b> Signing in clocks you in, and signing out or closing the website clocks you out. <b>No amount of hours is required.</b> This is purely for logistics: it shows when you're around, to make buying easier.</p>
+  <div class="fm-on-badge" id="fmOnBadge" hidden><span class="dot" aria-hidden="true"></span><span><b>ForgeMaster is clocked in</b><span class="big">CONTACT FORGEMASTER FOR QUESTIONS</span></span></div>
   <div class="panel lock top-emp" id="topEmp" role="region" aria-labelledby="topEmpH">
     <form id="topEmpForm" class="fm-sign-form">
       <span class="pin-note">Default PIN: <b>1234</b><br>(changeable in Pending menu)</span>
@@ -1184,6 +1194,7 @@ table.val thead th { color: #cdb995; }
     </div>
     <div class="bug-menu" id="bugMenu" hidden role="region" aria-label="Bug reports"></div>
   </nav>
+  <div class="clocked-strip" id="clockedStrip" hidden aria-live="polite"></div>
   <section class="crown" id="crown" data-views="roster" aria-label="Top employee this month">
     <div class="confetti" id="confetti" aria-hidden="true"></div>
     <svg class="medal" viewBox="0 0 72 72" aria-hidden="true">
@@ -7268,8 +7279,14 @@ document.addEventListener("click", e => { const b = e.target.closest("[data-hrr]
   if (slot === "tl") $("tailorBody").dataset.sig = ""; else $("hoursBody").dataset.sig = ""; render(); });
 // The note for signed-in gatherers; the Hours tab for the ForgeMaster viewing as an employee.
 let hrTab = "page";
+const clockedIn = who => clockOf().sessions.some(x => x.who === who && !x.end && Date.now() - x.last <= CLOCK_STALE);
 function renderClockUI() {
   const e = !unlocked ? currentEmp() : null;
+  // ForgeMaster, Purchase mode: who's clocked in right now (names only). Employees: a badge while the ForgeMaster is clocked in.
+  { const strip = $("clockedStrip"), on = unlocked && purchaseMode && !fmAs ? state.employees.filter(x => clockedIn(x.id)).sort((a, b) => a.name.localeCompare(b.name)) : [];
+    const html = on.length ? `<span class="lbl">Clocked in</span>${on.map(x => `<span class="who"><span class="dot" aria-hidden="true"></span>${esc(x.name)}</span>`).join("")}` : "";
+    strip.hidden = !on.length; if (strip.dataset.sig !== html) { strip.dataset.sig = html; strip.innerHTML = html; } }
+  $("fmOnBadge").hidden = !(e && clockedIn("FM"));
   $("clockNote").hidden = !(e && !fmAs && ["prospector", "woodcutter", "hunter"].includes(e.prof));
   const show = !unlocked && fmAs && !!e && !isTailor(e); if (!show) hrTab = "page";
   $("hrTabs").hidden = !show; document.body.classList.toggle("hours-mode", show && hrTab === "hours"); $("hoursSec").hidden = !(show && hrTab === "hours");
@@ -7278,6 +7295,7 @@ function renderClockUI() {
     if (body.dataset.sig !== sig) { body.dataset.sig = sig; body.innerHTML = `<p style="margin:0"><b>${esc(e.name)}</b>: time signed in to the site.</p>${hoursBlock(e.id, "emp")}`; } }
   const id = clockIdent(); if (id !== clockLastIdent) { clockLastIdent = id; setTimeout(() => clockSync(true), 0); }
 }
+setInterval(() => { try { renderClockUI(); } catch (_) {} }, 30000);   // clock-ins go stale over time even with no new data
 $("hrTabs").addEventListener("click", e => { const b = e.target.closest("[data-hr]"); if (!b) return; hrTab = b.dataset.hr; render(); window.scrollTo({ top: 0 }); });
 // ---- Resident Tailor. Tailored goods are the Tailor's own: they add and remove what they've made (Tailored goods tab, the only tab they see),
 // and the ForgeMaster sells them from the Tailored goods menu on Sell orders. Fixed prices; no profit, discounts, materials or stockpiles;
