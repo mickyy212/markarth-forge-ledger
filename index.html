@@ -6488,8 +6488,9 @@ $("equipBody").addEventListener("change", e => { if (e.target.id !== "eqItem") r
 $("equipBody").addEventListener("input", e => { if (e.target.id !== "eqQty") return; equipQty = e.target.value; renderEquip(); });
 $("equipBody").addEventListener("submit", e => { if (e.target.id !== "eqForm") return; e.preventDefault(); if (readOnly || !unlocked) return;
   const q = Math.floor(Number(equipQty)); if (!(q >= 1)) { toast("Enter how many to make."); return; }
-  const err = craftEquipment(equipItem, q); if (err) { toast(err); return; }
-  equipQty = "1"; $("equipBody").dataset.sig = ""; renderEquip(); toast(`Made ${q} ${(catalog().find(i => i.id === equipItem) || {}).name}. The materials were taken from the stockpiles.`); });
+  const err = craftEquipment(equipItem, q, eqFree); if (err) { toast(err); return; }
+  equipQty = "1"; $("equipBody").dataset.sig = ""; renderEquip(); toast(`Made ${q} ${(catalog().find(i => i.id === equipItem) || {}).name}. ${eqFree ? "No material cost: the stockpiles weren't touched." : "The materials were taken from the stockpiles."}`); });
+$("equipBody").addEventListener("click", e => { if (!e.target.closest("#eqFreeT") || !unlocked) return; eqFree = !eqFree; $("equipBody").dataset.sig = ""; renderEquip(); });
 $("equipBody").addEventListener("click", e => { const b = e.target.closest("[data-eqrm]"); if (!b || readOnly || !unlocked) return;
   const k = b.dataset.eqrm, bt = equipOf().filter(x => x.itemId === k && x.qty > 1e-9).sort((x, y) => y.at - x.at)[0]; if (!bt) return;
   bt.qty = round2(bt.qty - 1); state.equipment = equipOf().filter(x => x.qty > 1e-9);
@@ -7587,6 +7588,7 @@ $("sellTlT").addEventListener("click", () => { if (!unlocked) return; sellTailor
 // ---- Crafted equipment (ForgeMaster, purchase mode). Items made ahead of time: their materials leave the stockpiles when made. Each batch keeps,
 // per item, whose materials went into it (shares, totals, values, raw use) so a sale of it later earns commission and promotion credit
 // exactly as if the materials were taken at the sale, without taking anything from the stockpiles again.
+var eqFree = false;   // Crafted equipment "No material cost": off every time the page loads
 var sellUseEq = false, equipItem = "", equipQty = "1", sellGift = false, sellGiftFee = "", sellGiftAuto = true, giftNot = new Set();
 // Default blacksmith fee for a gifted materials order, per item: Orcish 40, Dwarven 50, Elven (Altmer) and Bosmer 70 (armor and weapons only; a Set counts as one item).
 const GIFT_FEE = [[/\bdwarven\b/i, 50], [/\borcish\b/i, 40], [/\b(elven|bosmer)\b/i, 70]];
@@ -7645,8 +7647,12 @@ function takeSaleStock(lines, opt, useEq) {
   const shares = [...by.values()].map(x => ({ ...x, units: round2(x.units), val: round2(x.val), total: round2(total[x.role] || 0), share: total[x.role] ? x.units / total[x.role] : 0 }));
   return { ...t, shares, total, roleVal, rawUse, eqUsed };
 }
-function craftEquipment(itemId, qty) {
+function craftEquipment(itemId, qty, free) {
   const it = catalog().find(i => i.id === itemId); if (!it) return "Pick an item.";
+  if (free) {   // "No material cost": made without materials; the stockpiles aren't touched and nobody's materials are in it (so no commission when sold)
+    equipOf().push({ id: uid(), itemId, name: it.name, qty, made: qty, at: Date.now(), free: true, per: { shares: [], total: {}, roleVal: {}, rawUse: {} } });
+    commit({ kind: "plus", fm: true, text: `ForgeMaster crafted ${qty} ${it.name} with no material cost (stockpiles untouched; now ${fmtQty(equipHave(itemId))} in crafted equipment)` });
+    return ""; }
   if (!recipeFor(itemId)) return `${it.name} has no recipe, so there's nothing to make it from.`;
   const short = orderStockUse([{ itemId, qty }]).filter(u => u.qty > u.have + 1e-9);
   if (short.length) return `Not enough ${short.map(u => `${u.name} (short ${fmtQty(round2(u.qty - u.have))})`).join(", ")}.`;
@@ -7657,27 +7663,33 @@ function craftEquipment(itemId, qty) {
 }
 function renderEquip() {
   const body = $("equipBody"), cat = catalog(), a = document.activeElement;
-  const makeable = i => (["Armor", "Weapons", "Jewelry"].includes(i.cat) || ["weapon-repair-kits", "armor-repair-kits", "keys"].includes(i.id)) && !!recipeFor(i.id);
+  const isArrows = i => /arrow/i.test(i.name);   // arrow bundles are listed under Common items here
+  const makeable = i => (["Armor", "Weapons", "Jewelry"].includes(i.cat) || ["weapon-repair-kits", "armor-repair-kits", "keys"].includes(i.id) || (i.cat === "Common items" && isArrows(i))) && (eqFree || !!recipeFor(i.id));
+  const eqGroup = i => isArrows(i) ? "Common items" : i.cat;
   if (!equipItem || !cat.some(i => i.id === equipItem && makeable(i))) { const f = cat.find(makeable); equipItem = f ? f.id : ""; }
-  const q = Math.floor(Number(equipQty)), ok = q >= 1, use = ok && equipItem ? orderStockUse([{ itemId: equipItem, qty: q }]) : [], short = use.some(u => u.qty > u.have + 1e-9);
-  const groups = new Map(); for (const b of equipOf()) { const g = groups.get(b.itemId) || { name: b.name, qty: 0, at: b.at, who: new Set() }; g.qty += b.qty; g.at = Math.min(g.at, b.at); for (const x of (b.per && b.per.shares) || []) g.who.add(x.who); groups.set(b.itemId, g); }
-  const sig = JSON.stringify([equipItem, equipQty, use, [...groups].map(([k, g]) => [k, g.qty, [...g.who]]), catSig]);
+  const q = Math.floor(Number(equipQty)), ok = q >= 1, use = ok && equipItem ? orderStockUse([{ itemId: equipItem, qty: q }]) : [], short = !eqFree && use.some(u => u.qty > u.have + 1e-9);
+  const groups = new Map(); for (const b of equipOf()) { const g = groups.get(b.itemId) || { name: b.name, qty: 0, at: b.at, who: new Set() }; g.qty += b.qty; g.at = Math.min(g.at, b.at); for (const x of (b.per && b.per.shares) || []) g.who.add(x.who); if (b.free && b.qty > 1e-9) g.free = true; groups.set(b.itemId, g); }
+  const sig = JSON.stringify([equipItem, equipQty, eqFree, use, [...groups].map(([k, g]) => [k, g.qty, [...g.who], !!g.free]), catSig]);
   if (body.dataset.sig === sig) return;
-  if (body.contains(a) && a.id === "eqQty") { $("eqNeed").innerHTML = eqNeedHtml(use, q, short); $("eqMake").disabled = !ok || short; body.dataset.sig = ""; return; }
+  if (body.contains(a) && a.id === "eqQty") { $("eqNeed").innerHTML = eqNeedHtml(use, q, short, eqFree); $("eqMake").disabled = !ok || short; body.dataset.sig = ""; return; }
   body.dataset.sig = sig;
-  body.innerHTML = `<form id="eqForm" class="eq-form"><label>Item<select id="eqItem">${catalogOptions(["Common items", "Armor", "Weapons", "Jewelry"], makeable)}</select></label>
+  const opts = (() => { const items = cat.filter(i => ["Common items", "Armor", "Weapons", "Jewelry"].includes(i.cat) && makeable(i));
+    return CAT_ORDER.map(c => { const xs = items.filter(i => eqGroup(i) === c); return xs.length ? `<optgroup label="${esc(c)}">${xs.map(i => `<option value="${esc(i.id)}">${esc(i.name)} (${coins(i.base)})</option>`).join("")}</optgroup>` : ""; }).join(""); })();
+  body.innerHTML = `<form id="eqForm" class="eq-form"><label>Item<select id="eqItem">${opts}</select></label>
       <label>How many<input id="eqQty" type="number" min="1" step="1" value="${esc(equipQty)}"></label>
-      <button type="submit" class="btn-return" id="eqMake" ${!ok || short ? "disabled" : ""}>Make it</button></form>
-    <div id="eqNeed">${eqNeedHtml(use, q, short)}</div>
+      <button type="submit" class="btn-return" id="eqMake" ${!ok || short ? "disabled" : ""}>Make it</button>
+      <button type="button" class="pm-toggle" id="eqFreeT" aria-pressed="${eqFree}" title="On: items are made without using any materials. The stockpiles aren't touched, and no employee's materials are in them (so selling them pays no commission).">No material cost</button></form>
+    <div id="eqNeed">${eqNeedHtml(use, q, short, eqFree)}</div>
     <h3 class="sub-h" style="margin-top:16px">Made and waiting to be sold</h3>
     ${groups.size ? `<div class="cat-wrap"><table class="val"><thead><tr><th scope="col">Item</th><th scope="col">In storage</th><th scope="col">Made since</th><th scope="col">Materials from</th><th scope="col"></th></tr></thead><tbody>
-      ${[...groups].sort((x, y) => x[1].name.localeCompare(y[1].name)).map(([k, g]) => `<tr><td>${esc(g.name)}</td><td><b>${fmtQty(round2(g.qty))}</b></td><td>${shortDate(g.at)}</td><td>${g.who.size ? esc([...g.who].join(", ")) : '<span class="hint">the forge</span>'}</td><td><button type="button" class="btn-ghost" data-eqrm="${esc(k)}">Remove 1</button></td></tr>`).join("")}</tbody></table></div>
+      ${[...groups].sort((x, y) => x[1].name.localeCompare(y[1].name)).map(([k, g]) => `<tr><td>${esc(g.name)}</td><td><b>${fmtQty(round2(g.qty))}</b></td><td>${shortDate(g.at)}</td><td>${g.who.size ? esc([...g.who].join(", ")) + (g.free ? ' <span class="hint">(some with no material cost)</span>' : "") : g.free ? '<span class="hint">no material cost</span>' : '<span class="hint">the forge</span>'}</td><td><button type="button" class="btn-ghost" data-eqrm="${esc(k)}">Remove 1</button></td></tr>`).join("")}</tbody></table></div>
       <p class="hint">Sell them with "Crafted equipment" switched on in Sell orders. "Remove 1" takes one out without a sale (its materials don't come back).</p>`
     : `<div class="empty">Nothing made yet. Pick an item above and press Make it.</div>`}`;
   $("eqItem").value = equipItem;
 }
-function eqNeedHtml(use, q, short) {
+function eqNeedHtml(use, q, short, free) {
   if (!(q >= 1)) return `<p class="hint">Enter how many to make.</p>`;
+  if (free) return `<p class="mrow eq-row"><b>No material cost is on.</b> ${q.toLocaleString()} ${esc((catalog().find(i => i.id === equipItem) || {}).name || "")} will be made without using any materials: the stockpiles aren't touched. Selling them later pays no commission, since no one's materials are in them.</p>`;
   if (!use.length) return `<p class="hint">This item has no recipe.</p>`;
   return `<h3>Materials for ${q.toLocaleString()} ${esc((catalog().find(i => i.id === equipItem) || {}).name || "")}</h3>
     <div class="cat-wrap"><table class="val"><thead><tr><th scope="col">Material</th><th scope="col">Needed</th><th scope="col">In stock</th><th scope="col">Left after</th></tr></thead><tbody>
