@@ -325,6 +325,8 @@ form.hold.hold3 { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto; }
 .r-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
 .r-row .nm { font-weight: 600; overflow-wrap: anywhere; }
 .r-row .sub { font-size: .8rem; color: var(--muted); }
+.r-row .r-pin { color: var(--text, #f3e6c8); font-family: ui-monospace, monospace; letter-spacing: .08em; }
+.r-row .r-pin-unk { font-style: italic; }
 .r-acts { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .r-acts input { width: 110px; }
 .r-acts select { padding: 4px 6px; font-size: .85rem; }
@@ -448,6 +450,10 @@ body.tailor-mode .wrap > *:not(#topSigns):not(#tlTabs):not(#tailorSec):not(scrip
 .tl-form { display: grid; gap: 12px; }
 .tl-form > label { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; max-width: 24rem; }
 #sellSec:not(.tl-on) #tailorSell { display: none !important; }
+.tl-owed { color: #e8b04a; border-top: 0; padding-top: 0; }
+.tl-owed-act { display: flex; gap: 10px; align-items: center; justify-content: flex-end; flex-wrap: wrap; padding: 4px 10px 8px; }
+.tl-coin-note { flex: 1 1 260px; margin: 0 8px; padding: 6px 12px; border: 1px solid #c9a227; border-radius: 8px; background: rgba(201,162,39,.1); color: #f0d68a; font-size: .85rem; line-height: 1.35; }
+#tlTabs { flex-wrap: wrap; gap: 8px; }
 .tl-total { display: flex; justify-content: space-between; font-weight: 700; padding: 8px 10px; border-top: 1px solid var(--line); }
 .eq-form { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end; }
 .eq-form label { display: flex; flex-direction: column; gap: 4px; font-size: .85rem; }
@@ -1140,7 +1146,8 @@ table.val thead th { color: #cdb995; }
   </nav>
   <nav class="fm-tabs ap-tabs" id="tlTabs" hidden aria-label="Tailor views">
     <div class="tabs" role="tablist"><button type="button" role="tab" aria-selected="true">Tailored goods</button></div>
-    <div class="fm-acts"><button type="button" class="pm-toggle" id="tlTestT" aria-pressed="false" title="Goods you add while this is on are test goods: they show in Stored goods and Sales for 10 minutes, then disappear for good. The ForgeMaster can sell them: that sale shows for 5 minutes with its coins, then is gone. Test goods never count toward your real earnings.">Test Add</button></div>
+    <p class="tl-coin-note"><b>Coins earned from your sales are never used by the forge. They are always stored separately and transferred to you at your earliest convenience. The full earnings from your tailored goods belong to you.</b></p>
+    <div class="fm-acts"><button type="button" class="pm-toggle" id="tlTestT" aria-pressed="false" title="Goods you add while this is on are test goods: they show in Stored goods for 10 minutes, then disappear for good. The ForgeMaster can sell them: that sale shows for 5 minutes with its coins, then is gone. Test goods never count toward your real earnings.">Test Add</button></div>
   </nav>
   <nav class="fm-tabs ap-tabs" id="hrTabs" hidden aria-label="ForgeMaster employee views">
     <div class="tabs" role="tablist"><button type="button" role="tab" data-hr="page" aria-selected="true">Their page</button><button type="button" role="tab" data-hr="hours" aria-selected="false">Hours</button></div>
@@ -4791,6 +4798,15 @@ let confirmClearLog = false;
 const cleanPin = v => String(v || "").replace(/\s+/g, "");
 const pinName = e => (e && e.pinSalt) || (e ? e.name : "");   // PINs are hashed with the name they were set under (a renamed employee keeps her old one)
 const hashPin = (name, pin) => sha256(name.trim().toLowerCase() + ":" + cleanPin(pin));
+// A PIN matches if it hashes to the stored code under the employee's name, the name it was set under, or a former name (Va’shaa was "Vassha").
+async function pinOk(emp, pin) { for (const n of [...new Set([emp.pinSalt, emp.name, ...(emp.oldNames || [])].filter(Boolean))]) if ((await hashPin(n, pin)) === emp.pinHash) return true; return false; }
+// Setting a PIN: hashed under the current name, and kept readable (emp.pin) so the ForgeMaster can see it in the Employee roster.
+async function setPinOf(emp, pin) { emp.pinHash = await hashPin(emp.name, pin); delete emp.pinSalt; emp.pin = cleanPin(pin); }
+function rosterPin(e) {
+        if (e.pin) return `<b class="r-pin">${esc(e.pin)}</b>`;
+        const k = e.id + "|" + e.pinHash; if (!pinDefault.has(k)) { pinDefault.set(k, null); pinOk(e, DEFAULT_PIN).then(v => { pinDefault.set(k, v); render(); }).catch(() => {}); }
+        const v = pinDefault.get(k); return v ? `<b class="r-pin">${DEFAULT_PIN}</b>` : v === false ? `<span class="r-pin-unk" title="Set before PINs were kept. It shows here after their next sign-in, or when you change it.">Unknown until their next sign-in</span>` : "…"; }
+const pinDefault = new Map();   // "id|hash" -> true/false: is this PIN still the default (for PINs set before they were kept)
 function currentEmp() {
   return me ? state.employees.find(e => e.id === me.id && e.pinHash === me.pinHash) || null : null;
 }
@@ -5399,7 +5415,7 @@ function render() {
     return `<div class="r-row">
       <div><div class="nm">${esc(e.name)}${(() => { const tr = testR && sameName(promoTest().ore, e.name) ? Math.max(promoTest().progress.rank, e.rank || 0) : 0, r = RANK_PROFS.has(e.prof) ? Math.max(e.rank || 0, tr) : 0;
         return r ? ` <span class="rank-badge r${r}">${RANK_NAME[r]}${tr > (e.rank || 0) ? " (test)" : ""}</span>` : ""; })()}${(() => { const o = onboarding(e); if (!o.total) return "";
-        return o.ok ? ` <span class="onb-ok">Onboarded · ${o.done}/${o.total} videos</span>` : ` <span class="onb-warn" title="Hasn't watched all their WATCH THIS!! videos">⚠ Onboarding not complete · ${o.done}/${o.total} videos watched</span>`; })()}</div><div class="sub">${held ? `${held.toLocaleString()} items pending` : "Nothing pending"}</div>${rankLine(e)}</div>
+        return o.ok ? ` <span class="onb-ok">Onboarded · ${o.done}/${o.total} videos</span>` : ` <span class="onb-warn" title="Hasn't watched all their WATCH THIS!! videos">⚠ Onboarding not complete · ${o.done}/${o.total} videos watched</span>`; })()}</div><div class="sub">${held ? `${held.toLocaleString()} items pending` : "Nothing pending"} · PIN ${rosterPin(e)}</div>${rankLine(e)}</div>
       <div class="r-acts">
         <select data-prof-for="${e.id}" aria-label="Profession of ${esc(e.name)}">${PROFESSIONS.map(p => `<option value="${p.key}" ${p.key === (e.prof || "") ? "selected" : ""}>${p.name}</option>`).join("")}</select>
         <input id="rp-${e.id}" type="text" class="pin" inputmode="numeric" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" maxlength="12" placeholder="New PIN" aria-label="New PIN for ${esc(e.name)}" data-pin-for="${e.id}">
@@ -5411,6 +5427,10 @@ function render() {
           : `<button class="btn-ghost" data-act="rmEmp" data-id="${e.id}">Remove</button>`}
       </div></div>`; }).join("")
     : `<div class="empty">No employees yet. Add a name and PIN above. Give each person their PIN so they can sign in.</div>`;
+  { const bps = state.employees.filter(isTailor).sort((a, b) => a.name.localeCompare(b.name));   // Business Partners aren't on the roster, but their PINs are shown here too
+    if (bps.length) $("rosterRows").insertAdjacentHTML("beforeend", `<h3 class="sub-h" style="margin-top:10px">Business Partners</h3>` + bps.map(e => `<div class="r-row"><div><div class="nm">${esc(e.name)} <span class="hint">Resident Tailor</span></div><div class="sub">PIN ${rosterPin(e)}</div></div>
+      <div class="r-acts"><input id="rp-${e.id}" type="text" class="pin" inputmode="numeric" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" maxlength="12" placeholder="New PIN" aria-label="New PIN for ${esc(e.name)}" data-pin-for="${e.id}">
+      <button class="btn-ghost" data-act="setPin" data-id="${e.id}">Change PIN</button></div></div>`).join("")); }
   for (const [id, v] of pendQtyDrafts) { const el = $("pq-" + id); if (el) el.value = v; else pendQtyDrafts.delete(id); }
   if (pendFocus && $("pq-" + pendFocus)) $("pq-" + pendFocus).focus();
   for (const [id, v] of pinDrafts) { const el = $("rp-" + id); if (el) el.value = v; else pinDrafts.delete(id); }
@@ -6266,9 +6286,10 @@ $("fmAsEmp").addEventListener("change", e => {
 async function empSignIn(empId, pinEl, errEl) {
   const emp = state.employees.find(x => x.id === empId);
   if (!emp) { errEl.textContent = "Pick your name first."; return; }
-  let h = ""; try { h = await hashPin(pinName(emp), pinEl.value); } catch (_) {}
-  if (h !== emp.pinHash) { errEl.textContent = "Wrong PIN. Check with the ForgeMaster if you're not sure what it is."; pinEl.select(); return; }
+  let ok = false; try { ok = await pinOk(emp, pinEl.value); } catch (_) {}
+  if (!ok) { errEl.textContent = "Wrong PIN. Check with the ForgeMaster if you're not sure what it is."; pinEl.select(); return; }
   me = { id: emp.id, pinHash: emp.pinHash }; fmAs = false; testPromo = false; stopTestTick(); try { sessionStorage.removeItem("fm-as-emp"); } catch (_) {}
+  { const typed = cleanPin(pinEl.value); if (typed && emp.pin !== typed) { emp.pin = typed; if (!readOnly) persist(); } }   // an older PIN becomes visible to the ForgeMaster once it's used
   $("siPin").value = ""; $("tsPin").value = ""; $("bpPin").value = ""; $("siErr").textContent = ""; $("tsErr").textContent = "";
   try { sessionStorage.setItem("ore-emp", JSON.stringify(me)); } catch (_) {}
   empFilter = emp.name; render(); toast(`Signed in as ${emp.name}`);
@@ -6314,10 +6335,10 @@ $("logWho").addEventListener("change", () => { logWho = $("logWho").value; rende
 async function changeMyPin(oldEl, newEl, errEl, done) {
   const emp = currentEmp(); if (!emp || readOnly || unlocked) return;
   const oldPin = cleanPin(oldEl.value), newPin = cleanPin(newEl.value);
-  let ok = false; try { ok = (await hashPin(pinName(emp), oldPin)) === emp.pinHash; } catch (_) {}
+  let ok = false; try { ok = await pinOk(emp, oldPin); } catch (_) {}
   if (!ok) { errEl.textContent = "Your current PIN isn't right."; oldEl.select(); return; }
   if (newPin.length < 4) { errEl.textContent = "Use a new PIN of at least 4 characters."; newEl.focus(); return; }
-  emp.pinHash = await hashPin(pinName(emp), newPin);
+  await setPinOf(emp, newPin);
   me = { id: emp.id, pinHash: emp.pinHash };   // stay signed in with the new PIN
   try { sessionStorage.setItem("ore-emp", JSON.stringify(me)); } catch (_) {}
   oldEl.value = ""; newEl.value = ""; errEl.textContent = ""; done();
@@ -6333,10 +6354,10 @@ $("bpPinForm").addEventListener("submit", async e => {
   e.preventDefault(); const errEl = $("tsErr");
   const emp = state.employees.find(x => x.id === $("bpWho").value); if (!emp || readOnly || unlocked) { errEl.textContent = "Pick your name first."; return; }
   const oldPin = cleanPin($("bpPinOld").value), newPin = cleanPin($("bpPinNew").value);
-  let ok = false; try { ok = (await hashPin(pinName(emp), oldPin)) === emp.pinHash; } catch (_) {}
+  let ok = false; try { ok = await pinOk(emp, oldPin); } catch (_) {}
   if (!ok) { errEl.textContent = "Your current PIN isn't right."; $("bpPinOld").select(); return; }
   if (newPin.length < 4) { errEl.textContent = "Use a new PIN of at least 4 characters."; $("bpPinNew").focus(); return; }
-  emp.pinHash = await hashPin(pinName(emp), newPin);
+  await setPinOf(emp, newPin);
   closeBpPin(); errEl.textContent = "";
   commit({ kind: "hold-c", text: `${emp.name} changed their PIN` });
   toast("Your PIN is changed. Use the new one next time you sign in.");
@@ -6496,7 +6517,7 @@ $("pinResetAll").addEventListener("click", () => { if (!unlocked) return; $("pin
 $("pinResetNo").addEventListener("click", () => { $("pinResetAsk").hidden = true; $("pinResetAll").hidden = false; });
 $("pinResetYes").addEventListener("click", async () => {
   if (readOnly || !unlocked) return;
-  for (const emp of state.employees) emp.pinHash = await hashPin(pinName(emp), DEFAULT_PIN);
+  for (const emp of state.employees) await setPinOf(emp, DEFAULT_PIN);
   $("pinResetAsk").hidden = true; $("pinResetAll").hidden = false;
   commit({ kind: "hold-c", fm: true, text: `ForgeMaster reset every employee's PIN to ${DEFAULT_PIN}` }); toast(`All PINs are now ${DEFAULT_PIN}`);
 });
@@ -6507,7 +6528,7 @@ $("rosterForm").addEventListener("submit", async e => {
   if (pin.length < 4) { toast("Use a PIN of at least 4 characters."); return; }
   if (isEmpName(name)) { toast(`${name} is already on the roster.`); return; }
   const pinHash = await hashPin(name, pin);
-  state.employees.push({ id: uid(), name, pinHash, prof, at: Date.now() });
+  state.employees.push({ id: uid(), name, pinHash, pin, prof, at: Date.now() });
   commit({ kind: "hold-c", fm: true, text: `ForgeMaster added ${name} to the roster${prof ? ` as a ${PROF[prof].name.toLowerCase()}` : ""}` });
   $("rName").value = ""; $("rPin").value = ""; $("rName").focus();
 });
@@ -6543,7 +6564,7 @@ document.addEventListener("click", async e => {
     const emp = state.employees.find(x => x.id === b.dataset.id); if (!emp) return;
     const pin = cleanPin($("rp-" + emp.id).value);
     if (pin.length < 4) { toast("Type the new PIN in the box first (at least 4 characters)."); $("rp-" + emp.id).focus(); return; }
-    emp.pinHash = await hashPin(pinName(emp), pin);
+    await setPinOf(emp, pin);
     pinDrafts.delete(emp.id);
     commit({ kind: "hold-c", fm: true, text: `ForgeMaster changed ${emp.name}'s PIN` }); toast(`${emp.name}'s PIN changed to ${pin}`);
   }
@@ -7303,7 +7324,8 @@ const tlStoredRows = (edit) => { const g = TAILOR_ITEMS.filter(i => tlHave(i.id)
     ${g.map(i => `<tr><td>${esc(i.name)}</td><td><b>${tlHave(i.id).toLocaleString()}</b></td><td>${coins(i.price)}</td><td>${coins(tlHave(i.id) * i.price)}</td>${edit ? `<td><button type="button" class="btn-ghost" data-tlrm="${i.id}">Remove 1</button></td>` : ""}</tr>`).join("")}
     </tbody></table></div><div class="tl-total"><span>Stored goods worth</span><span>${coins(tot)} coins</span></div>`; };
 function renderTailorTab() {
-  const body = $("tailorBody"), sales = tlOf().sales.filter(tlTestLive), real = sales.filter(x => !x.test), earned = real.reduce((a, x) => a + (Number(x.total) || 0), 0);
+  const body = $("tailorBody"), sales = tlOf().sales.filter(tlTestLive), real = sales.filter(x => !x.test), earned = sales.reduce((a, x) => a + (Number(x.total) || 0), 0);   // test sales count too, for their 5 minutes
+  const unpaid = sales.filter(x => !x.paidAt), owed = round2(unpaid.reduce((a, x) => a + (Number(x.total) || 0), 0));
   const tests = tlOf().test.filter(tlAddTestLive), minsLeft = x => Math.max(1, Math.ceil((TL_ADDTEST_MS - (Date.now() - x.at)) / 60000));
   const sig = JSON.stringify([tlOf(), tlAddItem, tlTestAdd, fmAs, tlOrdDraft.na, hrRange.tl, !fmAs ? clockSig("FM") : "", sales.filter(x => x.test).map(x => Math.ceil((TL_TEST_MS - (Date.now() - x.at)) / 60000)), tests.map(minsLeft)]); if (body.dataset.sig === sig) return; body.dataset.sig = sig;
   const a = document.activeElement, keepQty = a && a.id === "tlQty" ? a.value : "1";
@@ -7325,10 +7347,11 @@ function renderTailorTab() {
     ${tests.length ? `<div class="cat-wrap"><table class="val"><thead><tr><th scope="col">Test goods</th><th scope="col">Stored</th><th scope="col">Price each</th><th scope="col">Disappears</th></tr></thead><tbody>
       ${tests.map(x => `<tr class="tl-test"><td>${esc(TL_NAME[x.item])} <span class="eq-tag">test</span></td><td><b>${x.qty}</b></td><td>${coins(TL_PRICE[x.item])}</td><td>in ${minsLeft(x)} min</td></tr>`).join("")}</tbody></table></div>` : ""}
     <h3 class="sub-h" style="margin-top:8px">Sales</h3>
-    ${sales.length || tests.length ? `<div class="cat-wrap"><table class="val"><thead><tr><th scope="col">Date</th><th scope="col">Customer</th><th scope="col">Items</th><th scope="col">Coins</th></tr></thead><tbody>
-      ${tests.map(x => `<tr class="tl-test"><td>${shortDate(x.at)}</td><td>Test <span class="eq-tag">test · gone in ${minsLeft(x)} min</span></td><td>${x.qty} × ${esc(TL_NAME[x.item])}</td><td><b>${coins(x.qty * TL_PRICE[x.item])}</b></td></tr>`).join("")}
-      ${sales.map(x => `<tr${x.test ? ' class="tl-test"' : ""}><td>${shortDate(x.at)}</td><td>${esc(x.who)}${x.test ? ` <span class="eq-tag">test · gone in ${Math.max(1, Math.ceil((TL_TEST_MS - (Date.now() - x.at)) / 60000))} min</span>` : ""}</td><td>${esc(x.lines.map(l => `${l.qty} × ${l.name}`).join(", "))}</td><td><b>${coins(x.total)}</b></td></tr>`).join("")}</tbody></table></div>
-      <div class="tl-total"><span>Your earnings from ${real.length} ${real.length === 1 ? "sale" : "sales"}${real.length < sales.length || tests.length ? " (test items not counted)" : ""}</span><span>${coins(round2(earned))} coins</span></div>` : `<div class="empty">No sales yet. When the forge sells one of your goods it shows here.</div>`}
+    ${sales.length ? `<div class="cat-wrap"><table class="val"><thead><tr><th scope="col">Date</th><th scope="col">Customer</th><th scope="col">Items</th><th scope="col">Coins</th></tr></thead><tbody>
+      ${sales.map(x => `<tr${x.test ? ' class="tl-test"' : ""}><td>${shortDate(x.at)}</td><td>${esc(x.who)}${x.test ? ` <span class="eq-tag">test · gone in ${Math.max(1, Math.ceil((TL_TEST_MS - (Date.now() - x.at)) / 60000))} min</span>` : ""}</td><td>${esc(x.lines.map(l => `${l.qty} × ${l.name}`).join(", "))}</td><td><b>${coins(x.total)}</b>${x.paidAt ? ` <span class="eq-tag">paid</span>` : ""}</td></tr>`).join("")}</tbody></table></div>
+      <div class="tl-total"><span>Your earnings from ${sales.length} ${sales.length === 1 ? "sale" : "sales"}${real.length < sales.length ? " (test sales count for 5 minutes)" : ""}</span><span>${coins(round2(earned))} coins</span></div>
+      <div class="tl-total tl-owed"><span>Coins owed to ${esc((currentEmp() || {}).name || "you")}</span><span>${coins(owed)} coins</span></div>
+      ${owed > 0 ? `<div class="tl-owed-act"><span class="hint">Once the forge has paid you everything owed, press Paid in full.</span><button type="button" class="btn-return" id="tlPaidAll">Paid in full</button></div>` : ""}` : `<div class="empty">No sales yet. When the forge sells one of your goods it shows here.</div>`}
     ${mine ? `<h3 class="sub-h" style="margin-top:8px">ForgeMaster's hours</h3><p class="hint" style="margin:0">When the ForgeMaster has been on the site. Only you can see this.</p>${hoursBlock("FM", "tl")}` : ""}`;
   $("tlItem").value = tlAddItem;
 }
@@ -7412,6 +7435,13 @@ document.addEventListener("submit", e => { if (e.target.id !== "tlOrdForm") retu
 setInterval(() => { const t = state.tailor; if (!t || !(t.sales.some(x => x.test) || (t.test || []).length)) return;
   if (t.sales.some(x => !tlTestLive(x)) || (t.test || []).some(x => !tlAddTestLive(x))) { t.sales = t.sales.filter(tlTestLive); t.test = (t.test || []).filter(tlAddTestLive); if (!readOnly && (unlocked || currentEmp())) persist(); }
   if (tailorView()) renderTailorTab(); }, 15000);
+document.addEventListener("click", e => { if (e.target.id !== "tlPaidAll" || readOnly || !tailorView()) return;
+  const emp = currentEmp(), t = tlOf(), now = Date.now(), open = t.sales.filter(x => tlTestLive(x) && !x.paidAt); if (!open.length) return;
+  const realAmt = round2(open.filter(x => !x.test).reduce((a, x) => a + (Number(x.total) || 0), 0)), all = round2(open.reduce((a, x) => a + (Number(x.total) || 0), 0));
+  for (const x of open) x.paidAt = now;
+  if (realAmt > 0) commit({ kind: "hold-c", text: `${emp.name} (Resident Tailor) confirmed being paid ${coins(realAmt)} coins owed for tailored goods${fmAs ? " (marked by the ForgeMaster)" : ""}` });
+  else { persist(); render(); }   // test sales only: nothing goes in the log
+  toast(`Marked ${coins(all)} coins as paid`); });
 $("tlTestT").addEventListener("click", () => { if (!tailorView()) return; tlTestAdd = !tlTestAdd; render(); });
 $("sellTlT").addEventListener("click", () => { if (!unlocked) return; sellTailor = !sellTailor;
   if (sellTailor) { sellUseEq = false; sellGift = false; $("sellEqT").setAttribute("aria-pressed", false); $("sellGiftT").setAttribute("aria-pressed", false); }
@@ -7832,10 +7862,10 @@ function normalize(d) {
   // The Resident Tailor's name is Va’shaa (was "Vassha"): rename her everywhere in stored data (roster, log, any keys) so history matches.
   if (d && typeof d === "object") {
     const OLD_TL = /\bVassha\b/g, NEW_TL = "Va\u2019shaa";
-    const ren = x => Array.isArray(x) ? x.map(ren) : x && typeof x === "object" ? Object.fromEntries(Object.entries(x).map(([k, v]) => [k === "Vassha" ? NEW_TL : k, ren(v)])) : typeof x === "string" ? x.replace(OLD_TL, NEW_TL) : x;
+    const ren = x => Array.isArray(x) ? x.map(ren) : x && typeof x === "object" ? Object.fromEntries(Object.entries(x).map(([k, v]) => [k === "Vassha" ? NEW_TL : k, k === "pinSalt" || k === "oldNames" ? v : ren(v)])) : typeof x === "string" ? x.replace(OLD_TL, NEW_TL) : x;
     const oldTl = Array.isArray(d.employees) ? d.employees.filter(e => e && e.name === "Vassha" && !e.pinSalt) : [];
     d = ren(d);
-    if (Array.isArray(d.employees)) for (const e of d.employees) if (e && e.name === NEW_TL && !e.pinSalt && oldTl.length) e.pinSalt = "Vassha";   // her PIN was hashed under the old spelling; keep that so it still works
+    if (Array.isArray(d.employees)) for (const e of d.employees) if (e && e.name === NEW_TL && !(e.oldNames || []).includes("Vassha")) e.oldNames = [...(e.oldNames || []), "Vassha"];   // her PIN may have been set as "Vassha": it keeps working   // her PIN was hashed under the old spelling; keep that so it still works
   }
   if (d && typeof d === "object") {
     for (const o of ALL) s.stock[o.key] = Math.max(0, Number(d.stock?.[o.key]) || 0);
