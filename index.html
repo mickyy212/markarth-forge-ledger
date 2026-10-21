@@ -6658,6 +6658,7 @@ $("buyForm").addEventListener("submit", e => {
   const who = $("buyWho").value.trim(), note = "";
   if (!who) { toast("Enter who the forge is buying from, or pick an employee."); return; }
   if (!buyLines.length && !addBuyLine()) return;
+  if (isTestName(who)) { buyLines = []; renderBuyCart(); toast("TEST buy order: nothing was changed or saved"); return; }
   const group = uid(), at = Date.now();
   if (!unlocked) buyLines.forEach(l => { l.debt = false; });   // only the ForgeMaster can buy on credit
   if (buyBlocked()) { updateBuyQuote(); toast(`Order blocked: it costs ${coins(round2(buyPaidCost()))} coins but ${apprView() ? "you only have" : "the forge only has"} ${coins(round2(buyFundsNow()))}. A buy order can't take funds below 0.`); return; }
@@ -6709,6 +6710,7 @@ $("sellForm").addEventListener("submit", e => {
   if (testS) { toast("Test S is on: turn it off to confirm a real order."); return; }
   if (testSale) { toast("Test sale is on: turn it off to confirm a real order."); return; }
   if (!unlocked) $("sellDebt").checked = false;
+  if (isTestName($("sellWho").value) && !$("sellEmp").checked) { if (!sellLines.length && !addSellLine()) return; sellLines = []; sellGiftFee = ""; $("sellGiftFee").value = ""; giftNot = new Set(); $("sellQty").value = 1; updateSellQuote(); toast("TEST sell order: nothing was changed or saved"); return; }
   if (profitTooLow()) { updateSellQuote(); toast("Apprentices must charge a fee / profit of 20% or more. Raise it to 20% or higher to sell."); return; }
   { const miss = sellMissing(); if (miss.length) { updateSellQuote(); toast(`Order blocked: missing ${miss.map(u => `${fmtQty(u.miss)} ${u.name}`).join(", ")}. Add the material first, or lower the quantity.`); return; } }
   const who = $("sellWho").value.trim(), note = "";
@@ -7127,6 +7129,10 @@ const TAILOR_ITEMS = [["sewing-kit", "Sewing kit", 5], ["gloves", "Gloves", 15],
   ["guilded-fine-clothes", "Guilded fine clothes (19 colors)", 120], ["exquisite-cloak", "Exquisite cloak", 400]].map(([id, name, price]) => ({ id, name, price }));
 const TL_NAME = Object.fromEntries(TAILOR_ITEMS.map(i => [i.id, i.name])), TL_PRICE = Object.fromEntries(TAILOR_ITEMS.map(i => [i.id, i.price]));
 const isTailor = e => !!e && e.prof === "tailor";
+// An order whose name is exactly "TEST" is a dry run: it changes nothing and is never saved (a tailored goods TEST sale only shows for 5 minutes).
+const isTestName = n => String(n || "").trim() === "TEST";
+const TL_TEST_MS = 5 * 60 * 1000;
+const tlTestLive = x => !x.test || Date.now() - x.at < TL_TEST_MS;
 const tailorView = () => !unlocked && isTailor(currentEmp());
 const tlOf = () => state.tailor || (state.tailor = { goods: {}, sales: [] });
 const tlHave = id => tlOf().goods[id] || 0;
@@ -7146,16 +7152,16 @@ const tlStoredRows = (edit) => { const g = TAILOR_ITEMS.filter(i => tlHave(i.id)
     ${g.map(i => `<tr><td>${esc(i.name)}</td><td><b>${tlHave(i.id).toLocaleString()}</b></td><td>${coins(i.price)}</td><td>${coins(tlHave(i.id) * i.price)}</td>${edit ? `<td><button type="button" class="btn-ghost" data-tlrm="${i.id}">Remove 1</button></td>` : ""}</tr>`).join("")}
     </tbody></table></div><div class="tl-total"><span>Stored goods worth</span><span>${coins(tot)} coins</span></div>`; };
 function renderTailorTab() {
-  const body = $("tailorBody"), sales = tlOf().sales, earned = sales.reduce((a, x) => a + (Number(x.total) || 0), 0);
-  const sig = JSON.stringify([tlOf(), tlAddItem]); if (body.dataset.sig === sig) return; body.dataset.sig = sig;
+  const body = $("tailorBody"), sales = tlOf().sales.filter(tlTestLive), real = sales.filter(x => !x.test), earned = real.reduce((a, x) => a + (Number(x.total) || 0), 0);
+  const sig = JSON.stringify([tlOf(), tlAddItem, sales.filter(x => x.test).map(x => Math.ceil((TL_TEST_MS - (Date.now() - x.at)) / 60000))]); if (body.dataset.sig === sig) return; body.dataset.sig = sig;
   const a = document.activeElement, keepQty = a && a.id === "tlQty" ? a.value : "1";
   body.innerHTML = `<form id="tlAddForm" class="eq-form"><label>Tailored good<select id="tlItem">${TAILOR_ITEMS.map(i => `<option value="${i.id}">${esc(i.name)} (${coins(i.price)})</option>`).join("")}</select></label>
       <label>How many<input id="tlQty" type="number" min="1" step="1" value="${esc(keepQty)}"></label><button type="submit" class="btn-return">Add</button></form>
     <h3 class="sub-h" style="margin-top:8px">Stored goods</h3>${tlStoredRows(true)}
     <h3 class="sub-h" style="margin-top:8px">Sales</h3>
     ${sales.length ? `<div class="cat-wrap"><table class="val"><thead><tr><th scope="col">Date</th><th scope="col">Customer</th><th scope="col">Items</th><th scope="col">Coins</th></tr></thead><tbody>
-      ${sales.map(x => `<tr><td>${shortDate(x.at)}</td><td>${esc(x.who)}</td><td>${esc(x.lines.map(l => `${l.qty} × ${l.name}`).join(", "))}</td><td><b>${coins(x.total)}</b></td></tr>`).join("")}</tbody></table></div>
-      <div class="tl-total"><span>Your earnings from ${sales.length} ${sales.length === 1 ? "sale" : "sales"}</span><span>${coins(round2(earned))} coins</span></div>` : `<div class="empty">No sales yet. When the forge sells one of your goods it shows here.</div>`}`;
+      ${sales.map(x => `<tr${x.test ? ' class="tl-test"' : ""}><td>${shortDate(x.at)}</td><td>${esc(x.who)}${x.test ? ` <span class="eq-tag">test · gone in ${Math.max(1, Math.ceil((TL_TEST_MS - (Date.now() - x.at)) / 60000))} min</span>` : ""}</td><td>${esc(x.lines.map(l => `${l.qty} × ${l.name}`).join(", "))}</td><td><b>${coins(x.total)}</b></td></tr>`).join("")}</tbody></table></div>
+      <div class="tl-total"><span>Your earnings from ${real.length} ${real.length === 1 ? "sale" : "sales"}${real.length < sales.length ? " (test sales not counted)" : ""}</span><span>${coins(round2(earned))} coins</span></div>` : `<div class="empty">No sales yet. When the forge sells one of your goods it shows here.</div>`}`;
   $("tlItem").value = tlAddItem;
 }
 function renderTailorSell() {
@@ -7189,6 +7195,8 @@ document.addEventListener("submit", e => {
     const need = {}; for (const l of tlLines) need[l.id] = (need[l.id] || 0) + l.qty;
     const short = Object.entries(need).filter(([id, q]) => q > tlHave(id)); if (short.length) { toast(`Not enough stored: ${short.map(([id]) => TL_NAME[id]).join(", ")}`); return; }
     const lines = Object.entries(need).map(([id, qty]) => ({ id, name: TL_NAME[id], qty, price: TL_PRICE[id] })), total = round2(lines.reduce((a, l) => a + l.qty * l.price, 0));
+    if (isTestName(who)) {   // shows on the Tailor's Sales for 5 minutes, then is removed for good; stored goods and the log are untouched
+      tlOf().sales.unshift({ id: uid(), at: Date.now(), who, lines, total, test: true }); tlLines = []; persist(); render(); $("tlWho").value = ""; toast("TEST tailored sale: shows for 5 minutes, nothing else changed"); return; }
     for (const l of lines) { tlOf().goods[l.id] = tlHave(l.id) - l.qty; if (tlOf().goods[l.id] <= 0) delete tlOf().goods[l.id]; }
     tlOf().sales.unshift({ id: uid(), at: Date.now(), who, lines, total });
     tlLines = [];
@@ -7206,6 +7214,10 @@ document.addEventListener("click", e => {
     tlSellItem = id; tlLines.push({ id, qty: q }); renderTailorSell(); return; }
   const cut = e.target.closest("[data-tlcut]"); if (cut && unlocked) { tlLines.splice(Number(cut.dataset.tlcut), 1); renderTailorSell(); }
 });
+// Expired TEST tailored sales are removed for good: whoever has the site open drops them and saves (loading also drops them).
+setInterval(() => { const t = state.tailor; if (!t || !t.sales.some(x => x.test)) return;
+  if (t.sales.some(x => !tlTestLive(x))) { t.sales = t.sales.filter(tlTestLive); if (!readOnly && (unlocked || currentEmp())) persist(); }
+  if (tailorView()) renderTailorTab(); }, 15000);
 $("sellTlT").addEventListener("click", () => { if (!unlocked) return; sellTailor = !sellTailor;
   if (sellTailor) { sellUseEq = false; sellGift = false; $("sellEqT").setAttribute("aria-pressed", false); $("sellGiftT").setAttribute("aria-pressed", false); }
   render(); });
@@ -7686,7 +7698,7 @@ function normalize(d) {
     if (Array.isArray(d.ingotLots)) s.ingotLots = d.ingotLots.filter(l => l && INGOT_NAME[l.key] && l.qty > 0 && Array.isArray(l.comp));
     if (Array.isArray(d.equipment)) s.equipment = d.equipment.filter(b => b && b.id && b.itemId && b.qty > 1e-9);
     if (d.tailor && typeof d.tailor === "object") s.tailor = { goods: Object.fromEntries(Object.entries(d.tailor.goods || {}).filter(([k, q]) => TL_NAME[k] && Number(q) > 0).map(([k, q]) => [k, Math.floor(Number(q))])),
-      sales: (Array.isArray(d.tailor.sales) ? d.tailor.sales : []).filter(x => x && x.id && Array.isArray(x.lines)).slice(0, 2000) };
+      sales: (Array.isArray(d.tailor.sales) ? d.tailor.sales : []).filter(x => x && x.id && Array.isArray(x.lines) && (!x.test || Date.now() - x.at < 5 * 60 * 1000)).slice(0, 2000) };
     if (Array.isArray(d.commBank)) s.commBank = mergeBank(d.commBank.filter(b => b && b.id && b.who && b.mats && Object.keys(b.mats).length));
     if (Array.isArray(d.commissions)) s.commissions = d.commissions.filter(c => c && c.id && c.who).slice(0, 1000);
     if (d.statusManual && typeof d.statusManual === "object") s.statusManual = Object.fromEntries(Object.keys(d.statusManual).filter(k => NAME[k]).map(k => [k, true]));
