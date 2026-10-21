@@ -2367,6 +2367,8 @@ const DEFAULT_RECIPES = {
   "copper-moonstone-circlet": "1 corundum-ingot, 1 refined-moonstone", "jade-sapphire-circlet": "1 refined-malachite, 1 sapphire",
   "jade-emerald-circlet": "1 refined-malachite, 1 emerald", "leather-strips": "0.25 leather",
   "steel-arrows": "1 steel-ingot, 1 firewood",
+  "weapon-repair-kits": "2 corundum-ore, 2 iron-ore, 1 poor-charcoal", "armor-repair-kits": "2 corundum-ore, 2 iron-ore, 1 poor-charcoal",
+  "keys": "1 iron-ingot, 1 corundum-ingot, 1 leather-strips",
 };
 const SHEET_RECIPE_IDS = new Set(["bosmer-armor", "bosmer-boots", "bosmer-gloves", "bosmer-helmet", "bosmer-plate-armor", "bosmer-plate-boots", "bosmer-plate-gauntlets", "bosmer-plate-helmet", "bosmer-wild-armor", "bosmer-wild-boots", "bosmer-wild-gloves", "bosmer-wild-helmet", "bosmer-set", "bosmer-plate-set", "bosmer-wild-set", "bosmer-mask", "bosmer-cape", "bosmer-shoulder-cape", "dunmer-armor", "dunmer-boots", "dunmer-gauntlets", "dunmer-helmet", "dunmer-set", "dunmer-shield", "iron-banded-armor", "iron-armor", "iron-boots", "iron-gauntlets", "iron-helmet", "iron-banded-set", "iron-set", "iron-shield", "steel-armor", "steel-boots", "steel-gauntlets", "steel-helmet", "steel-set", "steel-shield", "orcish-hide-armor", "orcish-hide-boots", "orcish-hide-gauntlets", "orcish-hide-helmet", "orcish-armor", "orcish-boots", "orcish-gauntlets", "orcish-helmet", "orcish-hide-set", "orcish-heavy-set", "orcish-shield", "dwarven-armor", "dwarven-boots", "dwarven-gauntlets", "dwarven-helmet", "dwarven-set", "dwarven-shield", "altmer-gilded-armor", "altmer-elven-armor", "altmer-elven-boots", "altmer-elven-gauntlets", "altmer-elven-helmet", "altmer-gilded-set", "altmer-elven-set", "altmer-elven-shield", "glass-armor", "glass-boots", "glass-gauntlets", "glass-helmet", "glass-set", "glass-shield", "iron-pickaxe-wood-axe", "iron-dagger", "iron-sword", "iron-war-axe", "iron-mace", "iron-greatsword", "iron-battleaxe", "iron-warhammer", "iron-long-bow", "iron-arrows-x80", "steel-dagger", "steel-sword", "steel-war-axe", "steel-mace", "steel-greatsword", "steel-battleaxe", "steel-warhammer", "steel-bow", "steel-arrows-x80", "orcish-dagger", "orcish-sword", "orcish-war-axe", "orcish-mace", "orcish-greatsword", "orcish-battleaxe", "orcish-warhammer", "orcish-bow", "orcish-arrows-x80", "altmer-dagger", "altmer-elven-sword", "altmer-elven-war-axe", "altmer-elven-mace", "altmer-elven-greatsword", "altmer-elven-battleaxe", "altmer-elven-warhammer", "altmer-elven-bow", "altmer-elven-arrows-x80", "bosmer-blade", "bosmer-bow", "dwarven-dagger", "dwarven-sword", "dwarven-war-axe", "dwarven-mace", "dwarven-greatsword", "dwarven-battleaxe", "dwarven-warhammer", "dwarven-bow", "dwarven-arrows-x80", "glass-dagger", "glass-sword", "glass-war-axe", "glass-mace", "glass-greatsword", "glass-battleaxe", "glass-warhammer", "glass-bow", "glass-arrows-x80"]);
 // Every armor piece and weapon, read from the Markarth Blacksmithing Ledger (materials and amounts per item). These replace the older guesses.
@@ -7144,7 +7146,7 @@ function craftEquipment(itemId, qty) {
 }
 function renderEquip() {
   const body = $("equipBody"), cat = catalog(), a = document.activeElement;
-  const makeable = i => ["Armor", "Weapons", "Jewelry"].includes(i.cat) && !!recipeFor(i.id);
+  const makeable = i => (["Armor", "Weapons", "Jewelry"].includes(i.cat) || ["weapon-repair-kits", "armor-repair-kits", "keys"].includes(i.id)) && !!recipeFor(i.id);
   if (!equipItem || !cat.some(i => i.id === equipItem && makeable(i))) { const f = cat.find(makeable); equipItem = f ? f.id : ""; }
   const q = Math.floor(Number(equipQty)), ok = q >= 1, use = ok && equipItem ? orderStockUse([{ itemId: equipItem, qty: q }]) : [], short = use.some(u => u.qty > u.have + 1e-9);
   const groups = new Map(); for (const b of equipOf()) { const g = groups.get(b.itemId) || { name: b.name, qty: 0, at: b.at, who: new Set() }; g.qty += b.qty; g.at = Math.min(g.at, b.at); for (const x of (b.per && b.per.shares) || []) g.who.add(x.who); groups.set(b.itemId, g); }
@@ -7152,7 +7154,7 @@ function renderEquip() {
   if (body.dataset.sig === sig) return;
   if (body.contains(a) && a.id === "eqQty") { $("eqNeed").innerHTML = eqNeedHtml(use, q, short); $("eqMake").disabled = !ok || short; body.dataset.sig = ""; return; }
   body.dataset.sig = sig;
-  body.innerHTML = `<form id="eqForm" class="eq-form"><label>Item<select id="eqItem">${catalogOptions(["Armor", "Weapons", "Jewelry"], makeable)}</select></label>
+  body.innerHTML = `<form id="eqForm" class="eq-form"><label>Item<select id="eqItem">${catalogOptions(["Common items", "Armor", "Weapons", "Jewelry"], makeable)}</select></label>
       <label>How many<input id="eqQty" type="number" min="1" step="1" value="${esc(equipQty)}"></label>
       <button type="submit" class="btn-return" id="eqMake" ${!ok || short ? "disabled" : ""}>Make it</button></form>
     <div id="eqNeed">${eqNeedHtml(use, q, short)}</div>
