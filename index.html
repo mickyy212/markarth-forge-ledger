@@ -7220,12 +7220,12 @@ function applyCommission(o, plan) {
 // unlock and out only when they close the site (locking or viewing as an employee keeps them clocked in). A closed tab can't report, so every open
 // session sends a heartbeat (last = now) every 3 minutes; one with no heartbeat for 7 minutes ended at its last heartbeat.
 // Each clock save re-reads the shared ledger first and changes only clock data, so it never undoes someone else's edit.
-const CLOCK_BEAT = 3 * 60 * 1000, CLOCK_STALE = 7 * 60 * 1000;
+const CLOCK_BEAT = 10 * 1000, CLOCK_STALE = 30 * 1000;   // an open tab checks in every 10 seconds; 30 seconds of silence = clocked out
 const clockOf = () => state.clock || (state.clock = { sessions: [] });
 const ssGet = k => { try { return JSON.parse(sessionStorage.getItem(k) || "null"); } catch (_) { return null; } };
 const ssSet = (k, v) => { try { v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
 const clockEmp = () => { const e = !unlocked && !fmAs ? currentEmp() : null; return e && !isTailor(e) ? e : null; };
-const clockIdent = () => `${(clockEmp() || {}).id || ""}|${unlocked ? "FM" : ""}`;
+const clockIdent = () => `${(clockEmp() || {}).id || ""}|${unlocked ? "FM" : fmAs ? "FMas" : ""}`;
 let clockBusy = false, clockLastIdent = null, clockBeatAt = 0;
 async function clockSync(beat) {
   if (!db || readOnly || clockBusy) return;
@@ -7234,6 +7234,7 @@ async function clockSync(beat) {
   const start = (who, name) => { const sid = uid(); muts.push(() => clockOf().sessions.push({ id: sid, who, name, start: now, last: now })); return sid; };
   if (cur && (!emp || cur.who !== emp.id)) { muts.push(() => { const x = clockOf().sessions.find(y => y.id === cur.sid); if (x && !x.end) { x.last = now; x.end = now; } }); ssSet("clock-emp", null); }
   if (emp && (!cur || cur.who !== emp.id || !live(cur.sid))) ssSet("clock-emp", { sid: start(emp.id, emp.name), who: emp.id });
+  if (fm && !unlocked && !fmAs) { muts.push(() => { const x = clockOf().sessions.find(y => y.id === fm.sid); if (x && !x.end) { x.last = now; x.end = now; } }); ssSet("clock-fm", null); }   // Lock clocks the ForgeMaster out ("Sign in as" doesn't)
   if (unlocked && (!fm || !live(fm.sid))) ssSet("clock-fm", { sid: start("FM", "ForgeMaster") });
   if (beat || now - clockBeatAt >= CLOCK_BEAT) { const ids = [ssGet("clock-emp"), ssGet("clock-fm")].filter(Boolean).map(x => x.sid);
     if (ids.length) { clockBeatAt = now; muts.push(() => { for (const x of clockOf().sessions) if (ids.includes(x.id) && !x.end) x.last = Date.now(); }); } }
@@ -7244,7 +7245,8 @@ async function clockSync(beat) {
     muts.forEach(f => f()); clockOf().sessions = clockOf().sessions.slice(-6000); persist();
   } finally { clockBusy = false; }
 }
-setInterval(() => clockSync(false), 30000);
+setInterval(() => clockSync(false), CLOCK_BEAT);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) clockSync(true); });   // check in as soon as a tab comes back to the front
 // A person's time on the site as merged intervals (two open tabs at once count once).
 function clockIntervals(who) {
   const now = Date.now(), iv = clockOf().sessions.filter(x => x.who === who).map(x => [x.start, x.end || (now - x.last > CLOCK_STALE ? x.last : now)]).filter(([a, b]) => b > a).sort((a, b) => a[0] - b[0]);
@@ -7295,7 +7297,7 @@ function renderClockUI() {
     if (body.dataset.sig !== sig) { body.dataset.sig = sig; body.innerHTML = `<p style="margin:0"><b>${esc(e.name)}</b>: time signed in to the site.</p>${hoursBlock(e.id, "emp")}`; } }
   const id = clockIdent(); if (id !== clockLastIdent) { clockLastIdent = id; setTimeout(() => clockSync(true), 0); }
 }
-setInterval(() => { try { renderClockUI(); } catch (_) {} }, 30000);   // clock-ins go stale over time even with no new data
+setInterval(() => { try { renderClockUI(); } catch (_) {} }, 10000);   // clock-ins go stale over time even with no new data
 $("hrTabs").addEventListener("click", e => { const b = e.target.closest("[data-hr]"); if (!b) return; hrTab = b.dataset.hr; render(); window.scrollTo({ top: 0 }); });
 // ---- Resident Tailor. Tailored goods are the Tailor's own: they add and remove what they've made (Tailored goods tab, the only tab they see),
 // and the ForgeMaster sells them from the Tailored goods menu on Sell orders. Fixed prices; no profit, discounts, materials or stockpiles;
