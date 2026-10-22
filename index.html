@@ -7170,6 +7170,7 @@ function recordSellPaid(o) {
     state.apprWork = [{ id: o.id, kind: "sell", by: o.by, at: o.at, doneAt: Date.now(), who: o.who, text: linesText(orderLines(o)), final: o.final, mat: x.mat, paid: x.paid, profit: x.profit }, ...(state.apprWork || [])].slice(0, 1000); }
   let c = custByName(o.who);
   if (!c) { c = { id: uid(), name: o.who, reach: !!o.reach, purchases: [], at: Date.now() }; if (!notCust(o.who)) state.customers.push(c); }
+  const cardCust = hasSilverCard(cardsFor(custTotal(c), !!c.reach).best);   // the card they held before this order
   const ls = orderLines(o), single = ls.length === 1;
   c.purchases.push({ at: Date.now(), item: single ? ls[0].item : linesText(ls), qty: single ? ls[0].qty : 1, coin: o.final, lines: ls, orderId: o.id, ...(o.craftOff ? { craftOff: o.craftOff, craftCost: o.craftCost, craftUnits: o.craftUnits } : {}) , ...(o.gifted ? { gifted: true, giftMat: o.giftMat || 0 } : {})});
   const ds = (state.debtSales || []).find(x => x.id === o.id); if (ds) { ds.status = "paid"; ds.paidAt = Date.now(); }
@@ -7181,7 +7182,7 @@ function recordSellPaid(o) {
   if ((!o.by || o.by === "ForgeMaster") && !o.gifted) { const t = takeSaleStock(orderLines(o), o.craftFor ? { craftFor: o.craftFor } : null, !!o.useEq);
     if (t.eqUsed.length) state.log.unshift({ at: Date.now(), by: "ForgeMaster", fm: true, kind: "hold-c", text: `Taken from crafted equipment for ${o.who}'s order: ${t.eqUsed.map(u => `${fmtQty(u.qty)} ${u.name}`).join(", ")} (their materials were already taken when they were made)` });
     if (t.use.length) state.log.unshift({ at: Date.now(), by: "ForgeMaster", fm: true, kind: "minus", text: `Taken from the stockpile for ${o.who}'s order: ${t.use.map(u => `${fmtQty(u.qty)} ${u.name}`).join(", ")}${t.short.length ? `. Not enough in stock: ${t.short.join(", ")} short, so those went to 0` : ""}` });
-    applyCommission(o, planCommission(o.final, t, !!o.noComm));
+    applyCommission(o, planCommission(o.final, t, !!o.noComm, cardCust));
     // Ranks: how much of each employee's bought material this sale used
     const usedBy = new Map(); for (const x of t.shares) usedBy.set(x.who, (usedBy.get(x.who) || 0) + (x.val || 0));
     for (const [n, v] of usedBy) { const e = empByName(n); addProgress(e, "used", v); checkPromotion(e); }
@@ -7275,7 +7276,11 @@ function univList() {
   if (Array.isArray(state.univComm)) return state.univComm.map(u => ({ emp: state.employees.find(e => e.id === u.id), pct: u.pct })).filter(u => ok(u.emp) && u.pct > 0).slice(0, UNIV_MAX);
   return UNIV_DEFAULT.map(([n, pct]) => ({ emp: state.employees.find(e => sameName(e.name, n)), pct })).filter(u => ok(u.emp));
 }
-function planCommission(final, t, off) {
+// A customer holding a Silver card or better (any card that discounts at least as much as Silver) cuts every universal commission on their order to 1%.
+const UNIV_CARD_PCT = 1;
+const silverPct = () => (((loyalty().tiers || []).find(t => t.key === "silver")) || { pct: 2.5 }).pct;
+const hasSilverCard = best => !!best && best.pct >= silverPct() - 1e-9;
+function planCommission(final, t, off, cardCust) {
   if (off) return { winners: [], deferred: [], off: true };
   // Commission is for employees only: never apprentices, never the Resident Tailor (business partner), never anyone not on the roster (e.g. Markarth Trader).
   const empOk = n => { const e = state.employees.find(e => sameName(e.name, n)); return e && !isApprentice(e) && e.prof !== "tailor" ? e : null; };
@@ -7315,7 +7320,7 @@ function planCommission(final, t, off) {
   }
   deferred = deferred.filter(d => !winners.some(w => sameName(w.who, d.who)));
   // Universal commission: when nobody won the order on materials, each chosen employee gets their % of the final price, whoever owned the materials.
-  if (!winners.length && !deferred.length) for (const u of univList()) { const e = empOk(u.emp.name); if (e) winners.push({ who: e.name, role: "base", base: true, pct: u.pct, share: 0, val: 0, rank: 0 }); }
+  if (!winners.length && !deferred.length) for (const u of univList()) { const e = empOk(u.emp.name); if (e) winners.push({ who: e.name, role: "base", base: true, pct: cardCust ? Math.min(u.pct, UNIV_CARD_PCT) : u.pct, cardCut: !!cardCust && u.pct > UNIV_CARD_PCT, share: 0, val: 0, rank: 0 }); }
   for (const w of winners) w.amount = round2(final * w.pct / 100);
   return { winners: winners.filter(w => w.amount > 0), deferred, bankIdx: bi, ru, claimLeft, nQual: quals.length, held: held.map(q => q.who) };
 }
@@ -7357,7 +7362,7 @@ function applyCommission(o, plan) {
     state.debts.push({ id: uid(), who: e.name, item: "coins", qty: w.amount, note: `${w.pct}% commission on ${o.who}'s order (${why})`, city: false, orderId: o.id, at });
     state.log.unshift({ at, by: "ForgeMaster", fm: true, kind: "debt", text: w.fromBank
       ? `${e.name} earns a ${w.pct}% commission (${coins(w.amount)} coins) on ${o.who}'s order from their deferred claim${w.handover ? ` (${w.handover.join(" and ")} won the last ${STREAK_LIMIT} conflicts in a row, so the waiting claim went first)` : ""} (${plan.claimLeft(w.fromBank) > 1e-9 ? `${matsText(w.fromBank.mats)} of claim left` : "claim used up"}). The forge owes it to them.`
-      : w.base ? `${e.name} earns a ${w.pct}% universal commission (${coins(w.amount)} coins) on ${o.who}'s order: nobody supplied 90% of a material, so every employee on the universal list gets their cut. The forge owes it to them.`
+      : w.base ? `${e.name} earns a ${w.pct}% universal commission (${coins(w.amount)} coins) on ${o.who}'s order: nobody supplied 90% of a material, so every employee on the universal list gets their cut${w.cardCut ? ` (cut to ${w.pct}% because the customer holds a Silver card or better)` : ""}. The forge owes it to them.`
       : `${e.name} earns a ${w.pct}% commission (${coins(w.amount)} coins) on ${o.who}'s order: ${Math.round(w.share * 100)}% of its ${roleName(w.role)} came from them${w.split ? ` (split with ${plan.winners.find(x => x !== w).who}: their materials were within 10% by cost)` : ""}. The forge owes it to them.` });
   }
   state.commBank = mergeBank(state.commBank || []);
@@ -7827,10 +7832,11 @@ function eqNeedHtml(use, q, short, free) {
     ${short ? `<p class="mrow short"><b>Not enough material.</b> Ingots come from the ingot stockpile, so smelt the ones in red first (Stockpiles tab, Ingot view).</p>` : `<p class="hint">Making it takes these out of the stockpiles straight away.</p>`}`;
 }
 function previewCommission(lines, final, off, test, craftFor, useEq) {
+  const cardCust = !test && hasSilverCard(sellCards().best);
   const base = test ? testSaleEnv() : state, saved = state; rankOverride = test ? { ...testRanks } : null; streakOverride = test ? { ...testStreaks } : null;
   const cl = v => JSON.parse(JSON.stringify(v || []));
   state = { ...base, stock: { ...base.stock }, ingots: { ...(base.ingots || {}) }, lots: cl(base.lots), ingotLots: cl(base.ingotLots), commBank: cl(base.commBank), ghosts: cl(base.ghosts), equipment: cl(base.equipment) };
-  try { const t = takeSaleStock(lines, craftFor ? { craftFor } : null, !!useEq && !test); return planCommission(final, t, off); } finally { state = saved; rankOverride = null; streakOverride = null; }
+  try { const t = takeSaleStock(lines, craftFor ? { craftFor } : null, !!useEq && !test); return planCommission(final, t, off, cardCust); } finally { state = saved; rankOverride = null; streakOverride = null; }
 }
 // Heads-up when an order would have to use another employee's craft request materials (only happens when nothing else is left).
 function craftUseWarn(lines, craftFor) {
@@ -7872,7 +7878,7 @@ function commPreviewHtml(lines, final, profit, craftFor) {
   // Profit on the order: final price less the material cost; commissions come out of it.
   const profitLn = `<div class="ln comm-profit"><span>Profit on this order${total > 0.004 ? " after commission" : ""}</span><span class="${after >= 0 ? "gain" : "loss"}">${total > 0.004 ? `<s>${signed(profit)}</s> ` : ""}${signed(after)}</span></div>`;
   const rows = p.off ? `<div class="ln"><span>Commission</span><span>Off for this order</span></div>${profitLn}`
-    : p.winners.length ? p.winners.map(w => `<div class="ln comm-ln"><span>Commission to ${esc(w.who)}${w.rank ? ` (${RANK_NAME[w.rank]})` : ""} (${w.pct}%${w.fromBank ? ", deferred claim" : w.split ? ", split" : w.base ? ", universal" : ""})</span><span>−${coins(w.amount)}</span></div>`).join("")
+    : p.winners.length ? p.winners.map(w => `<div class="ln comm-ln"><span>Commission to ${esc(w.who)}${w.rank ? ` (${RANK_NAME[w.rank]})` : ""} (${w.pct}%${w.fromBank ? ", deferred claim" : w.split ? ", split" : w.base ? (w.cardCut ? ", universal, cut: Silver card or better" : ", universal") : ""})</span><span>−${coins(w.amount)}</span></div>`).join("")
       + `<div class="ln"><span>Forge keeps after commission</span><span>${coins(round2(final - total))}</span></div>${profitLn}`
     : `<div class="ln"><span>Commission</span><span>${(p.held || []).length ? "None (held back by a win streak)" : "None (no employee supplied 90% of a material)"}</span></div>${profitLn}`;
   const def = !p.off && p.deferred.length ? `<div class="hint">${p.deferred.map(d => (p.held || []).includes(d.who) ? `<b>${esc(d.who)} is held back:</b> they have won the last ${STREAK_LIMIT} conflicts in a row and other deferred claims are still waiting, so their ${matsText(d.mats)} will be banked.` : `${esc(d.who)}'s ${matsText(d.mats)} will be banked as a deferred claim.`).join(" ")}</div>` : "";
