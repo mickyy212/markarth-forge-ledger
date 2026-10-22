@@ -2375,7 +2375,7 @@ const custCards = c => cardsFor(custTotal(c), !!c.reach);
 function cardBadge(card, dim) {
   return card ? `<span class="tier-badge${dim ? " dim" : ""}"><i style="background:${TIER_COLOR[card.kind] || "var(--accent)"}"></i>${esc(card.name)} · ${card.pct}%</span>` : "";
 }
-let sellProfit = 20, sellDiscMode = "card", catSig = "", confirmCust = null, loySig = "";
+let sellProfit = 23, sellDiscMode = "card", catSig = "", confirmCust = null, loySig = "";
 let sellLines = [];   // the basket being built in the sell order form: [{ itemId, qty }]
 const linesText = lines => lines.map(l => `${l.qty} × ${l.item}`).join(", ");
 function orderLines(o) { return Array.isArray(o.lines) ? o.lines : [{ itemId: o.itemId, item: o.item, qty: o.qty, base: o.base }]; }
@@ -3087,7 +3087,7 @@ function renderMySales() {
   const commHtml = comm.length ? `<h3 class="sub-h">Commission sales</h3>` + comm.map(c => `<div class="ms-row">
       <div class="ms-top"><span><b>${esc(c.customer)}</b> <span class="hint">${shortDate(c.at)}</span></span><span class="bulk-badge">${c.pct || COMMISSION_PCT}% commission${c.split ? " (split)" : ""}</span></div>
       <div class="hint">${c.lines.map(l => `${l.qty} × ${esc(l.name)}`).join(", ")}</div>
-      <div class="ms-money"><span>Final price <b>${coins(c.final)}</b></span>${c.fromBank ? `<span>From an earlier deferred claim</span>` : `<span>Your ${(ROLE[c.role] || { name: "materials" }).name.toLowerCase()} <b>${c.share}%</b> <span class="hint">(${fmtQty(c.units)} of ${fmtQty(c.total)})</span></span>`}<span>Commission <b class="gain">+${coins(c.amount)}</b></span></div>
+      <div class="ms-money"><span>Final price <b>${coins(c.final)}</b></span>${c.fromBank ? `<span>From an earlier deferred claim</span>` : c.role === "base" ? `<span>Base commission <span class="hint">(${c.pct}% of every order nobody won on materials)</span></span>` : `<span>Your ${(ROLE[c.role] || { name: "materials" }).name.toLowerCase()} <b>${c.share}%</b> <span class="hint">(${fmtQty(c.units)} of ${fmtQty(c.total)})</span></span>`}<span>Commission <b class="gain">+${coins(c.amount)}</b></span></div>
     </div>`).join("") : "";
   if ($("msComm").dataset.html !== commHtml) { $("msComm").dataset.html = commHtml; $("msComm").innerHTML = commHtml; }
   const my = s => s.contribs.filter(c => sameName(c.who, emp.name));
@@ -4104,7 +4104,7 @@ function renderPfComm(comms, commCost) {
     <div class="ms-tile"><span>Still owed</span><b>${coins(round2(open.reduce((a, c) => a + c.amount, 0)))}</b></div>`;
   $("pfCommRows").innerHTML = comms.length ? `<div class="cat-wrap"><table class="val pie-table bh-table"><thead><tr><th scope="col">Date</th><th scope="col">Employee</th><th scope="col">Order</th><th scope="col">Why</th><th scope="col">Commission</th><th scope="col">Status</th></tr></thead><tbody>
     ${comms.slice(0, 200).map(c => `<tr><td>${shortDate(c.at)}</td><td>${esc(c.who)}</td><td class="bh-items">${esc(c.customer)}: ${c.lines.map(l => `${l.qty} × ${esc(l.name)}`).join(", ")} <span class="hint">(${coins(c.final)})</span></td>
-      <td>${c.fromBank ? "Deferred claim" : `${c.share}% of the ${(ROLE[c.role] || { name: "materials" }).name.toLowerCase()}${c.split ? ` (split ${c.pct}%)` : ""}`}</td><td class="loss">−${coins(c.amount)}</td><td>${c.test ? "Test" : isOwed(c) ? "Owed" : "Settled"}</td></tr>`).join("")}
+      <td>${c.fromBank ? "Deferred claim" : c.role === "base" ? "Base commission" : `${c.share}% of the ${(ROLE[c.role] || { name: "materials" }).name.toLowerCase()}${c.split ? ` (split ${c.pct}%)` : ""}`}</td><td class="loss">−${coins(c.amount)}</td><td>${c.test ? "Test" : isOwed(c) ? "Owed" : "Settled"}</td></tr>`).join("")}
     </tbody></table></div>` : `<div class="empty">No commissions ${pfPeriod === "all" ? "yet" : "in this period"}.</div>`;
   const bank = [...(testC ? TEST_BANK : []), ...(state.commBank || [])];
   const streaks = Object.entries(state.commStreak || {}).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
@@ -4470,7 +4470,7 @@ function renderOrders() {
   // Apprentices charge at least a 20% fee: no None or +10%, and +20% is their default.
   { const appr = apprView(), key = appr ? "appr" : unlocked ? "fm" : "";
     $("sellForm").querySelectorAll("[data-profit]").forEach(b => { b.hidden = appr && Number(b.dataset.profit) < 20; });
-    if (key !== renderOrders.feeViewer) { renderOrders.feeViewer = key; sellProfit = 20; $("sellProfitOther").value = ""; }   // +20% is ticked by default for everyone
+    if (key !== renderOrders.feeViewer) { renderOrders.feeViewer = key; sellProfit = 23; $("sellProfitOther").value = "23"; }   // the Custom box starts at 23% for everyone
     if (appr && sellProfit < 20 && $("sellProfitOther").value === "") sellProfit = 20;
     const custom = $("sellProfitOther").value !== "";
     $("sellProfitWrap").classList.toggle("on", custom);
@@ -6694,7 +6694,7 @@ function setDiscMode(m) {
 // Custom fee / profit %: typing one replaces the buttons; clearing it goes back to the usual default. Apprentices still charge at least 20%.
 $("sellProfitOther").addEventListener("input", () => {
   const raw = $("sellProfitOther").value, appr = apprView();
-  if (raw === "") sellProfit = 20;
+  if (raw === "") sellProfit = 23;
   else sellProfit = Math.min(500, Math.max(0, Number(raw) || 0));   // apprentices below 20% aren't clamped: the sell button is blocked instead
   const custom = raw !== "";
   $("sellProfitWrap").classList.toggle("on", custom);
@@ -7229,6 +7229,7 @@ function beats(a, b) {
 }
 // Who can never be a customer (removed from the customer list and rankings).
 const NOT_CUSTOMERS = new Set(["markarth trader"]), notCust = n => NOT_CUSTOMERS.has(String(n || "").trim().toLowerCase());
+const BASE_COMM_WHO = ["Acheron Ruu", "Orlog", "Oswald"], BASE_COMM_PCT = 1;
 function planCommission(final, t, off) {
   if (off) return { winners: [], deferred: [], off: true };
   // Commission is for employees only: never apprentices, never the Resident Tailor (business partner), never anyone not on the roster (e.g. Markarth Trader).
@@ -7268,6 +7269,8 @@ function planCommission(final, t, off) {
     deferred = [...deferred, ...held];
   }
   deferred = deferred.filter(d => !winners.some(w => sameName(w.who, d.who)));
+  // Base commission: when nobody won the order on materials, Acheron Ruu, Orlog and Oswald each get 1% of the final price (3% in all), whoever owned the materials.
+  if (!winners.length && !deferred.length) for (const n of BASE_COMM_WHO) { const e = empOk(n); if (e) winners.push({ who: e.name, role: "base", base: true, pct: BASE_COMM_PCT, share: 0, val: 0, rank: 0 }); }
   for (const w of winners) w.amount = round2(final * w.pct / 100);
   return { winners: winners.filter(w => w.amount > 0), deferred, bankIdx: bi, ru, claimLeft, nQual: quals.length, held: held.map(q => q.who) };
 }
@@ -7301,7 +7304,7 @@ function applyCommission(o, plan) {
     const e = state.employees.find(e => sameName(e.name, w.who)); if (!e) continue;
     if (w.fromBank) { const m = w.fromBank.mats || {}; for (const k of Object.keys(m)) { m[k] = round2(Math.max(0, m[k] - (plan.ru[k] || 0))); if (m[k] <= 1e-9) delete m[k]; }
       state.commBank = bank.filter(b => plan.claimLeft(b) > 1e-9); }
-    const why = w.fromBank ? "from your earlier deferred claim" : `${Math.round(w.share * 100)}% of its ${roleName(w.role)} was yours${w.split ? ", split with " + plan.winners.find(x => x !== w).who : ""}`;
+    const why = w.base ? "base commission: nobody supplied 90% of a material, so it is shared between Acheron Ruu, Orlog and Oswald" : w.fromBank ? "from your earlier deferred claim" : `${Math.round(w.share * 100)}% of its ${roleName(w.role)} was yours${w.split ? ", split with " + plan.winners.find(x => x !== w).who : ""}`;
     state.commissions = [{ id: uid(), orderId: o.id, at, customer: o.who, lines: orderLines(o).map(l => ({ qty: l.qty, name: l.item })), final: o.final, who: e.name, role: w.role,
       units: w.units ?? null, total: w.total ?? null, share: w.fromBank ? null : round2(w.share * 100), fromBank: !!w.fromBank, pct: w.pct, split: !!w.split, rank: w.rank || 0, amount: w.amount }, ...(state.commissions || [])].slice(0, 1000);
     if (plan.nQual >= 2 && !w.fromBank && !w.split) { const n = (state.commStreak[e.name] = (state.commStreak[e.name] || 0) + 1);
@@ -7309,6 +7312,7 @@ function applyCommission(o, plan) {
     state.debts.push({ id: uid(), who: e.name, item: "coins", qty: w.amount, note: `${w.pct}% commission on ${o.who}'s order (${why})`, city: false, orderId: o.id, at });
     state.log.unshift({ at, by: "ForgeMaster", fm: true, kind: "debt", text: w.fromBank
       ? `${e.name} earns a ${w.pct}% commission (${coins(w.amount)} coins) on ${o.who}'s order from their deferred claim${w.handover ? ` (${w.handover.join(" and ")} won the last ${STREAK_LIMIT} conflicts in a row, so the waiting claim went first)` : ""} (${plan.claimLeft(w.fromBank) > 1e-9 ? `${matsText(w.fromBank.mats)} of claim left` : "claim used up"}). The forge owes it to them.`
+      : w.base ? `${e.name} earns a ${w.pct}% base commission (${coins(w.amount)} coins) on ${o.who}'s order: nobody supplied 90% of a material, so Acheron Ruu, Orlog and Oswald each get ${w.pct}%. The forge owes it to them.`
       : `${e.name} earns a ${w.pct}% commission (${coins(w.amount)} coins) on ${o.who}'s order: ${Math.round(w.share * 100)}% of its ${roleName(w.role)} came from them${w.split ? ` (split with ${plan.winners.find(x => x !== w).who}: their materials were within 10% by cost)` : ""}. The forge owes it to them.` });
   }
   state.commBank = mergeBank(state.commBank || []);
@@ -7823,7 +7827,7 @@ function commPreviewHtml(lines, final, profit, craftFor) {
   // Profit on the order: final price less the material cost; commissions come out of it.
   const profitLn = `<div class="ln comm-profit"><span>Profit on this order${total > 0.004 ? " after commission" : ""}</span><span class="${after >= 0 ? "gain" : "loss"}">${total > 0.004 ? `<s>${signed(profit)}</s> ` : ""}${signed(after)}</span></div>`;
   const rows = p.off ? `<div class="ln"><span>Commission</span><span>Off for this order</span></div>${profitLn}`
-    : p.winners.length ? p.winners.map(w => `<div class="ln comm-ln"><span>Commission to ${esc(w.who)}${w.rank ? ` (${RANK_NAME[w.rank]})` : ""} (${w.pct}%${w.fromBank ? ", deferred claim" : w.split ? ", split" : ""})</span><span>−${coins(w.amount)}</span></div>`).join("")
+    : p.winners.length ? p.winners.map(w => `<div class="ln comm-ln"><span>Commission to ${esc(w.who)}${w.rank ? ` (${RANK_NAME[w.rank]})` : ""} (${w.pct}%${w.fromBank ? ", deferred claim" : w.split ? ", split" : w.base ? ", base" : ""})</span><span>−${coins(w.amount)}</span></div>`).join("")
       + `<div class="ln"><span>Forge keeps after commission</span><span>${coins(round2(final - total))}</span></div>${profitLn}`
     : `<div class="ln"><span>Commission</span><span>${(p.held || []).length ? "None (held back by a win streak)" : "None (no employee supplied 90% of a material)"}</span></div>${profitLn}`;
   const def = !p.off && p.deferred.length ? `<div class="hint">${p.deferred.map(d => (p.held || []).includes(d.who) ? `<b>${esc(d.who)} is held back:</b> they have won the last ${STREAK_LIMIT} conflicts in a row and other deferred claims are still waiting, so their ${matsText(d.mats)} will be banked.` : `${esc(d.who)}'s ${matsText(d.mats)} will be banked as a deferred claim.`).join(" ")}</div>` : "";
