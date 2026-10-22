@@ -683,6 +683,21 @@ body.hours-mode .wrap > *:not(#topSigns):not(#hrTabs):not(#hoursSec):not(script)
 #sellForm.eq-simple > :is(#sellEmpWrap, #sellEmpNote, .don-box, #quickBox, #sellCatsWrap, #sellMatsWrap, #sellMats, #sellCost, .opt-row, #sellDebtBox, #sellCraftNote, #sellCard, #sellPie, #sellGiftWrap),
 #sellForm.eq-simple #donToggle { display: none !important; }
 .comm-line { margin: 0; padding: 6px 10px; border: 1px dashed var(--line); border-radius: 8px; font-size: .88rem; }
+.fav-table td { vertical-align: middle; }
+.fav-table .fav-today td { background: rgba(62,207,110,.06); }
+.fav-scale { display: flex; justify-content: space-between; gap: 4px; min-width: 160px; font-weight: 500; }
+.fav-cell { min-width: 160px; width: 34%; }
+.fav-bar { position: relative; height: 12px; border-radius: 6px; background: rgba(255,255,255,.06); overflow: hidden; }
+.fav-bar span { position: absolute; top: 0; bottom: 0; background: #3ecf6e; border-radius: 6px; }
+.fav-now { color: #7fe3a0; }
+.fav-edit { display: grid; gap: 8px; }
+.fav-day { display: grid; grid-template-columns: 7rem 1fr; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); }
+.fav-ranges { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.fav-rng { display: inline-flex; gap: 6px; align-items: center; padding: 4px 6px; border: 1px solid var(--line); border-radius: 8px; }
+.fav-rng input { width: 8.6rem; }
+.fav-acts { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+html.mobile .fav-day { grid-template-columns: 1fr; }
+html.mobile .fav-cell, html.mobile .fav-scale { display: none; }
 .ing-req-note { display: grid; gap: 6px; margin: 0 0 12px; padding: 8px 12px; border: 1px solid #c9a227; border-left: 4px solid #c9a227; border-radius: 8px; background: rgba(201,162,39,.08); font-size: .88rem; }
 .ing-req-note[hidden] { display: none; }
 .ing-req-note .irn-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
@@ -6728,7 +6743,7 @@ $("donConfirm").addEventListener("click", () => {
   const parts = [...(coinsIn > 0 ? [`${coins(coinsIn)} coins`] : []), ...donLines.map(l => `${l.qty} ${NAME[l.item]}`)];
   // A donation counts as a paid sell order: it goes on the giver's purchase record (and an apprentice's orders), with the coins as its price.
   let c = custByName(who);
-  if (!c) { c = { id: uid(), name: who, reach: false, purchases: [], at }; state.customers.push(c); }
+  if (!c) { c = { id: uid(), name: who, reach: false, purchases: [], at }; if (!notCust(who)) state.customers.push(c); }
   c.purchases.push({ at, item: `Donation: ${parts.join(", ")}`, qty: 1, coin: coinsIn, lines: [], orderId: id, donation: true });
   if (by && by !== "ForgeMaster") state.apprWork = [{ id, kind: "sell", by, at, doneAt: at, who, text: `Donation: ${parts.join(", ")}`, final: coinsIn, mat: 0, paid: 0, profit: coinsIn }, ...(state.apprWork || [])].slice(0, 1000);
   commit({ kind: "plus", text: `Donation from ${who} (counted as a paid sell order): ${parts.join(", ")}${donLines.length ? ", materials added to the stockpile" : ""}` });
@@ -6954,6 +6969,7 @@ $("custForm").addEventListener("submit", e => {
   const name = $("custName").value.trim(), reach = $("custReach").checked;
   if (!name) { toast("Enter a name."); return; }
   if (custByName(name)) { toast(`${name} is already a customer.`); return; }
+  if (notCust(name)) { toast(`${name} can't be added as a customer.`); return; }
   state.customers.push({ id: uid(), name, reach, purchases: [], at: Date.now() });
   commit({ kind: "hold-c", fm: true, text: `Added customer ${name}${reach ? " (member of the Reach)" : ""}` });
   $("custName").value = ""; $("custReach").checked = false;
@@ -7115,7 +7131,7 @@ function recordSellPaid(o) {
   if (o.by && o.by !== "ForgeMaster") { const x = orderProfit(o);
     state.apprWork = [{ id: o.id, kind: "sell", by: o.by, at: o.at, doneAt: Date.now(), who: o.who, text: linesText(orderLines(o)), final: o.final, mat: x.mat, paid: x.paid, profit: x.profit }, ...(state.apprWork || [])].slice(0, 1000); }
   let c = custByName(o.who);
-  if (!c) { c = { id: uid(), name: o.who, reach: !!o.reach, purchases: [], at: Date.now() }; state.customers.push(c); }
+  if (!c) { c = { id: uid(), name: o.who, reach: !!o.reach, purchases: [], at: Date.now() }; if (!notCust(o.who)) state.customers.push(c); }
   const ls = orderLines(o), single = ls.length === 1;
   c.purchases.push({ at: Date.now(), item: single ? ls[0].item : linesText(ls), qty: single ? ls[0].qty : 1, coin: o.final, lines: ls, orderId: o.id, ...(o.craftOff ? { craftOff: o.craftOff, craftCost: o.craftCost, craftUnits: o.craftUnits } : {}) , ...(o.gifted ? { gifted: true, giftMat: o.giftMat || 0 } : {})});
   const ds = (state.debtSales || []).find(x => x.id === o.id); if (ds) { ds.status = "paid"; ds.paidAt = Date.now(); }
@@ -7211,9 +7227,12 @@ function beats(a, b) {
   const hiWins = hi.role === lo.role ? true : hi.val >= lo.val * (1 - (RANK_EDGE[hi.rank] - RANK_EDGE[lo.rank])) - 1e-9;
   return hiWins ? hi === a : lo === a;
 }
+// Who can never be a customer (removed from the customer list and rankings).
+const NOT_CUSTOMERS = new Set(["markarth trader"]), notCust = n => NOT_CUSTOMERS.has(String(n || "").trim().toLowerCase());
 function planCommission(final, t, off) {
   if (off) return { winners: [], deferred: [], off: true };
-  const empOk = n => { const e = state.employees.find(e => sameName(e.name, n)); return e && !isApprentice(e) ? e : null; };
+  // Commission is for employees only: never apprentices, never the Resident Tailor (business partner), never anyone not on the roster (e.g. Markarth Trader).
+  const empOk = n => { const e = state.employees.find(e => sameName(e.name, n)); return e && !isApprentice(e) && e.prof !== "tailor" ? e : null; };
   const quals0 = t.shares.filter(x => x.share >= COMMISSION_SHARE - 1e-9 && empOk(x.who)).map(x => ({ ...x, rank: rankOf(x.who) }));
   // One employee qualifying on two kinds (e.g. whole ingots they sold the forge: their ore AND charcoal) is one claim, never a conflict with themselves.
   const quals = []; for (const q of [...quals0].sort((a, b) => b.val - a.val)) { const m = quals.find(x => sameName(x.who, q.who)); if (m) m.val = round2(m.val + q.val); else quals.push({ ...q }); }
@@ -7458,11 +7477,55 @@ const tlStoredRows = (edit) => { const g = TAILOR_ITEMS.filter(i => tlHave(i.id)
   return `<div class="cat-wrap"><table class="val"><thead><tr><th scope="col">Item</th><th scope="col">Stored</th><th scope="col">Price each</th><th scope="col">Value</th>${edit ? `<th scope="col"></th>` : ""}</tr></thead><tbody>
     ${g.map(i => `<tr><td>${esc(i.name)}</td><td><b>${tlHave(i.id).toLocaleString()}</b></td><td>${coins(i.price)}</td><td>${coins(tlHave(i.id) * i.price)}</td>${edit ? `<td><button type="button" class="btn-ghost" data-tlrm="${i.id}">Remove 1</button></td>` : ""}</tr>`).join("")}
     </tbody></table></div><div class="tl-total"><span>Stored goods worth</span><span>${coins(tot)} coins</span></div>`; };
+// ---- ForgeMaster's availability (shown to the Resident Tailor in place of the ForgeMaster's hours chart). Times are minutes from midnight;
+// an end past 24:00 runs into the next morning (10:30pm-2am = [1350, 1560]). Only the ForgeMaster (viewing as the Tailor) can edit it.
+const FM_AVAIL_DEFAULT = () => Array.from({ length: 7 }, () => [[660, 960], [1350, 1560]]);
+const fmAvailOf = () => state.fmAvail || FM_AVAIL_DEFAULT();
+const AV_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const fmtMin = m => { m = ((m % 1440) + 1440) % 1440; const h = Math.floor(m / 60), mm = m % 60, ap = h < 12 ? "am" : "pm"; return `${h % 12 || 12}${mm ? ":" + String(mm).padStart(2, "0") : ""}${ap}`; };
+const toTimeVal = m => { m = ((m % 1440) + 1440) % 1440; return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); };
+const fromTimeVal = v => { const [h, mm] = String(v || "").split(":").map(Number); return h >= 0 && h < 24 && mm >= 0 && mm < 60 ? h * 60 + mm : null; };
+let fmAvDraft = null;   // the ForgeMaster's unsaved edit (null when not editing)
+function fmAvailNow() {   // is the ForgeMaster scheduled to be available right now?
+  const n = new Date(), wd = (n.getDay() + 6) % 7, min = n.getHours() * 60 + n.getMinutes(), av = fmAvailOf();
+  return av[wd].some(([a, b]) => min >= a && min < b) || av[(wd + 6) % 7].some(([a, b]) => b > 1440 && min + 1440 >= a && min + 1440 < b);
+}
+function fmAvailBlock() {
+  const av = fmAvailOf(), today = (new Date().getDay() + 6) % 7, edit = !!fmAvDraft && fmAs;
+  const bar = rs => `<div class="fav-bar" aria-hidden="true">${rs.map(([a, b]) => { const s0 = Math.max(480, a), e0 = Math.min(1560, b); return e0 > s0 ? `<span style="left:${(s0 - 480) / 1080 * 100}%;width:${(e0 - s0) / 1080 * 100}%"></span>` : ""; }).join("")}</div>`;
+  const head = `<h3 class="sub-h" style="margin-top:8px">ForgeMaster's availability</h3>
+    <p class="hint" style="margin:0">When the ForgeMaster is usually around. ${fmAs ? "Only you can change it." : "Set by the ForgeMaster."} ${fmAvailNow() ? '<b class="fav-now">● Available now</b>' : ""}</p>`;
+  if (!edit) return head + `<div class="cat-wrap"><table class="val fav-table"><thead><tr><th scope="col">Day</th><th scope="col">Available</th><th scope="col" class="fav-scale"><span>8am</span><span>2pm</span><span>8pm</span><span>2am</span></th></tr></thead><tbody>
+    ${av.map((rs, d) => `<tr${d === today ? ' class="fav-today"' : ""}><td>${AV_DAYS[d]}${d === today ? ' <span class="eq-tag">today</span>' : ""}</td><td>${rs.length ? rs.map(([a, b]) => `${fmtMin(a)} – ${fmtMin(b)}`).join(" · ") : '<span class="hint">Not available</span>'}</td><td class="fav-cell">${bar(rs)}</td></tr>`).join("")}</tbody></table></div>
+    ${fmAs ? `<button type="button" class="btn-ghost" id="favEdit">Edit timetable</button>` : ""}`;
+  return head + `<div class="fav-edit">${fmAvDraft.map((rs, d) => `<div class="fav-day"><b>${AV_DAYS[d]}</b><div class="fav-ranges">${rs.map(([a, b], i) => `<span class="fav-rng"><input type="time" data-fav="${d}:${i}:0" value="${toTimeVal(a)}" aria-label="${AV_DAYS[d]} from"> to <input type="time" data-fav="${d}:${i}:1" value="${toTimeVal(b)}" aria-label="${AV_DAYS[d]} until"><button type="button" class="btn-ghost" data-favrm="${d}:${i}" aria-label="Remove">✕</button></span>`).join("")}<button type="button" class="btn-ghost" data-favadd="${d}">+ Add time</button></div></div>`).join("")}
+    <p class="hint" style="margin:0">An end time earlier than the start runs past midnight (10:30pm to 2:00am).</p>
+    <div class="fav-acts"><button type="button" class="btn-ghost" id="favCopy">Copy Monday to every day</button><button type="button" class="btn-ghost" id="favReset">Back to default</button><button type="button" class="btn-add" id="favSave">Save timetable</button><button type="button" class="btn-ghost" id="favCancel">Cancel</button></div></div>`;
+}
+document.addEventListener("click", e => {
+  const t = e.target; if (!tailorView() || !fmAs) return;
+  const redraw = () => { $("tailorBody").dataset.sig = ""; renderTailorTab(); };
+  if (t.id === "favEdit") { fmAvDraft = fmAvailOf().map(rs => rs.map(r => [...r])); redraw(); return; }
+  if (!fmAvDraft) return;
+  if (t.id === "favCancel") { fmAvDraft = null; redraw(); return; }
+  if (t.id === "favCopy") { fmAvDraft = fmAvDraft.map(() => fmAvDraft[0].map(r => [...r])); redraw(); return; }
+  if (t.id === "favReset") { fmAvDraft = FM_AVAIL_DEFAULT(); redraw(); return; }
+  if (t.dataset.favadd != null) { fmAvDraft[Number(t.dataset.favadd)].push([720, 780]); redraw(); return; }
+  if (t.dataset.favrm) { const [d, i] = t.dataset.favrm.split(":").map(Number); fmAvDraft[d].splice(i, 1); redraw(); return; }
+  if (t.id === "favSave") { if (readOnly) return;
+    state.fmAvail = fmAvDraft.map(rs => rs.filter(([a, b]) => b > a).sort((x, y) => x[0] - y[0])); fmAvDraft = null;
+    commit({ kind: "hold-c", fm: true, text: `ForgeMaster updated their availability timetable` }); toast("Timetable saved"); }
+});
+document.addEventListener("change", e => { const k = e.target.dataset && e.target.dataset.fav; if (!k || !fmAvDraft) return;
+  const [d, i, w] = k.split(":").map(Number), v = fromTimeVal(e.target.value); if (v == null) return;
+  const r = fmAvDraft[d][i]; if (w === 0) r[0] = v; else r[1] = v;
+  const end = r[1] % 1440; r[1] = end <= r[0] ? end + 1440 : end;   // an end at or before the start = the next morning
+});
 function renderTailorTab() {
   const body = $("tailorBody"), sales = tlOf().sales.filter(tlTestLive), real = sales.filter(x => !x.test), earned = sales.reduce((a, x) => a + (Number(x.total) || 0), 0);   // test sales count too, for their 5 minutes
   const unpaid = sales.filter(x => !x.paidAt), owed = round2(unpaid.reduce((a, x) => a + (Number(x.total) || 0), 0));
   const tests = tlOf().test.filter(tlAddTestLive), minsLeft = x => Math.max(1, Math.ceil((TL_ADDTEST_MS - (Date.now() - x.at)) / 60000));
-  const sig = JSON.stringify([tlOf(), Object.keys(TL_ING).map(k => ingotsOf()[k] || 0), tlIngItem, tlAddItem, tlTestAdd, fmAs, tlOrdDraft.na, hrRange.tl, !fmAs ? clockSig("FM") : "", sales.filter(x => x.test).map(x => Math.ceil((TL_TEST_MS - (Date.now() - x.at)) / 60000)), tests.map(minsLeft)]); if (body.dataset.sig === sig) return; body.dataset.sig = sig;
+  const sig = JSON.stringify([tlOf(), Object.keys(TL_ING).map(k => ingotsOf()[k] || 0), tlIngItem, tlAddItem, tlTestAdd, fmAs, tlOrdDraft.na, JSON.stringify(state.fmAvail || null), !!fmAvDraft, fmAvailNow(), sales.filter(x => x.test).map(x => Math.ceil((TL_TEST_MS - (Date.now() - x.at)) / 60000)), tests.map(minsLeft)]); if (body.dataset.sig === sig) return; body.dataset.sig = sig;
   const a = document.activeElement, keepQty = a && a.id === "tlQty" ? a.value : "1";
   const fmAsTl = fmAs, orders = tlOf().orders, mine = !fmAs;
   body.innerHTML = `<div class="tl-row"><div><form id="tlAddForm" class="eq-form"><label>Tailored good<select id="tlItem">${TAILOR_ITEMS.map(i => `<option value="${i.id}">${esc(i.name)} (${coins(i.price)})</option>`).join("")}</select></label>
@@ -7494,7 +7557,7 @@ function renderTailorTab() {
       <div class="tl-total"><span>Your earnings from ${sales.length} ${sales.length === 1 ? "sale" : "sales"}${real.length < sales.length ? " (test sales count for 5 minutes)" : ""}</span><span>${coins(round2(earned))} coins</span></div>
       <div class="tl-total tl-owed"><span>Coins owed to ${esc((currentEmp() || {}).name || "you")}</span><span>${coins(owed)} coins</span></div>
       ${owed > 0 ? `<div class="tl-owed-act"><span class="hint">Once the forge has paid you everything owed, press Paid in full.</span><button type="button" class="btn-return" id="tlPaidAll">Paid in full</button></div>` : ""}` : `<div class="empty">No sales yet. When the forge sells one of your goods it shows here.</div>`}
-    ${mine ? `<h3 class="sub-h" style="margin-top:8px">ForgeMaster's hours</h3><p class="hint" style="margin:0">When the ForgeMaster has been on the site. Only you can see this.</p>${hoursBlock("FM", "tl")}` : ""}`;
+    ${fmAvailBlock()}`;
   $("tlItem").value = tlAddItem;
   if ($("tlIngCost")) $("tlIngCost").innerHTML = tlIngCostText();
 }
@@ -8108,6 +8171,7 @@ function normalize(d) {
       test: (Array.isArray(d.tailor.test) ? d.tailor.test : []).filter(x => x && x.id && TL_NAME[x.item] && x.qty > 0 && Date.now() - x.at < 10 * 60 * 1000),
       orders: (Array.isArray(d.tailor.orders) ? d.tailor.orders : []).filter(x => x && x.id && x.who && TL_NAME[x.item]).slice(0, 500),
       ingReq: (Array.isArray(d.tailor.ingReq) ? d.tailor.ingReq : []).filter(x => x && x.id && TL_ING[x.item] && x.qty > 0).slice(0, 200) };
+    if (Array.isArray(d.fmAvail) && d.fmAvail.length === 7) s.fmAvail = d.fmAvail.map(day => (Array.isArray(day) ? day : []).filter(r => Array.isArray(r) && r[0] >= 0 && r[1] > r[0] && r[1] <= 2880).map(r => [Math.round(r[0]), Math.round(r[1])]).slice(0, 6));
     if (d.clock && Array.isArray(d.clock.sessions)) s.clock = { sessions: d.clock.sessions.filter(x => x && x.id && x.who && x.start > 0 && x.last >= x.start)
       .map(x => (!x.end && Date.now() - x.last > CLOCK_STALE ? { ...x, end: x.last } : { ...x })).slice(-6000) };
     if (Array.isArray(d.commBank)) s.commBank = mergeBank(d.commBank.filter(b => b && b.id && b.who && b.mats && Object.keys(b.mats).length));
@@ -8125,7 +8189,7 @@ function normalize(d) {
     if (Array.isArray(d.buyHistory)) s.buyHistory = d.buyHistory.filter(x => x && x.who && okBuy(x.item) && x.qty > 0).slice(0, 500);
     if (Array.isArray(d.buys)) s.buys = d.buys.filter(x => x && okBuy(x.item) && x.qty > 0);
     if (Array.isArray(d.sells)) s.sells = d.sells.filter(x => x && ((Array.isArray(x.lines) && x.lines.length) || (x.item && x.qty > 0)));
-    if (Array.isArray(d.customers)) s.customers = d.customers.filter(x => x && x.id && x.name).map(x => ({ ...x, reach: !!x.reach, purchases: Array.isArray(x.purchases) ? x.purchases : [] }));
+    if (Array.isArray(d.customers)) s.customers = d.customers.filter(x => x && x.id && x.name && !NOT_CUSTOMERS.has(String(x.name).trim().toLowerCase())).map(x => ({ ...x, reach: !!x.reach, purchases: Array.isArray(x.purchases) ? x.purchases : [] }));
     if (Array.isArray(d.donations)) s.donations = d.donations.filter(x => x && x.id && x.who).slice(0, 500);
     if (Array.isArray(d.apprWork)) s.apprWork = d.apprWork.filter(x => x && x.id && x.by && (x.kind === "sell" || x.kind === "buy")).slice(0, 1000);
     if (Array.isArray(d.purchaseReqs)) s.purchaseReqs = d.purchaseReqs.filter(x => x && x.id && x.who && Array.isArray(x.lines) && x.lines.length && x.lines.every(l => NAME[l.item] && l.qty > 0)).map(x => ({ ...x, kind: x.kind === "withdraw" ? "withdraw" : "buy", total: Number(x.total) || 0 }));
