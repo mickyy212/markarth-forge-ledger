@@ -201,6 +201,8 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .test-ranks { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; margin-bottom: 4px; }
 .test-ranks .tr-one { display: inline-flex; gap: 4px; align-items: center; flex-wrap: wrap; }
 .test-ranks .chip { padding: 3px 8px; font-size: .78rem; }
+.net-spark-wrap { margin: 10px 0 6px; color: var(--ink-soft, #aaa); } .net-spark-wrap.gain { color: #7ac37a; } .net-spark-wrap.loss { color: #e07070; }
+.net-spark { display: block; width: 100%; height: 70px; }
 .pf-comm-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .ing-quick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
 .ing-adj { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -1713,6 +1715,29 @@ table.val thead th { color: #cdb995; }
         <div class="pie-wrap" id="sellPie"></div>
         <button class="btn-add" type="submit">Confirm sell order</button>
       </form>
+      <form class="order-form" id="rawSellForm" hidden>
+        <label>Employee<select id="rsEmp"></select></label>
+        <label class="wide">Customer<input id="rsWho" maxlength="40" placeholder="Name, or pick an employee" list="custNames" autocomplete="off"></label>
+        <label class="check wide"><input type="checkbox" id="rsCity"> Selling to the City of Markarth</label>
+        <label class="check wide"><input type="checkbox" id="rsAppr"> Apprentice sale <span class="hint">(no charge: the whole order is free)</span></label>
+        <label class="check wide" id="rsReachWrap"><input type="checkbox" id="rsReach"> Member of the Reach</label>
+        <div class="quick" role="group" aria-labelledby="rsQuickLbl">
+          <span class="chip-label" id="rsQuickLbl">Quick add <span class="hint">(repair kit)</span> <span class="tip" tabindex="0" role="note" data-tip="Non-armaments found here" title="Non-armaments found here" aria-label="Non-armaments found here">i</span></span>
+          <select id="rsQuickItem" aria-label="Common item"></select>
+          <input id="rsQuickQty" type="number" min="1" step="1" value="1" aria-label="Quantity">
+          <button class="btn-return" type="button" id="rsQuickAdd">Add</button>
+        </div>
+        <div class="wide4" id="rsSellCatsWrap"></div>
+        <div class="wide4" id="rsCatsWrap"></div>
+        <label class="wide">Item<select id="rsItem"></select></label>
+        <label>Qty<input id="rsQty" type="number" min="1" step="1" value="1"></label>
+        <label>Price each<input id="rsPrice" type="number" min="0" step="0.01" value="0"></label>
+        <button class="btn-return" type="button" id="rsAddLine">Add item</button>
+        <div class="cart" id="rsCart"></div>
+        <div class="quote wide" id="rsQuote"></div>
+        <p class="funds-warn wide" id="rsWarn" hidden role="status"></p>
+        <button class="btn-add" type="submit">Confirm sell order</button>
+      </form>
       <datalist id="custNames"></datalist>
       <div id="tailorSell"></div>
       <div id="saleRmReqs"></div>
@@ -1827,6 +1852,10 @@ table.val thead th { color: #cdb995; }
       <div class="ms-tiles" id="pfCommTiles"></div>
       <div id="pfCommRows"></div>
       <div id="pfBank"></div>
+    </div>
+    <div class="panel">
+      <h3 class="sub-h">Change in net worth</h3>
+      <div id="netChg"></div>
     </div>
   </section>
 
@@ -4052,7 +4081,7 @@ function syncPriceTimer() {
 }
 function renderProfit() {
   $("profitSec").hidden = !unlocked; if (!unlocked) return;
-  renderFunds();
+  renderFunds(); renderNetChange();
   $("pfPeriod").querySelectorAll("[data-pfp]").forEach(b => b.setAttribute("aria-pressed", b.dataset.pfp === pfPeriod));
   // Apprentices' sell and buy orders (and their donations) are theirs: they don't count toward the forge's profit.
   const apprIds = new Set((state.apprWork || []).filter(w => w.kind === "sell").map(w => w.id));
@@ -4148,10 +4177,10 @@ function renderPfComm(comms, commCost) {
     </tbody></table></div>` : `<div class="empty">No commissions ${pfPeriod === "all" ? "yet" : "in this period"}.</div>`;
   const bank = [...(testC ? TEST_BANK : []), ...(state.commBank || [])];
   const streaks = Object.entries(state.commStreak || {}).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
-  const waiting = who => bank.some(b => !sameName(b.who, who));
-  const streakHtml = streaks.length ? `<h3 class="sub-h" style="margin-top:12px">Win streaks</h3><p class="hint" style="margin:0 0 8px">Commission conflicts won in a row. After ${STREAK_LIMIT} in a row, an employee's next commission waits until every other deferred claim is paid. Losing a conflict resets it.</p>
+  const waiting = who => bank.some(b => !b.paidAt && !sameName(b.who, who) && (b.at || 0) < ((state.commStreakAt || {})[who] || Infinity));
+  const streakHtml = streaks.length ? `<h3 class="sub-h" style="margin-top:12px">Win streaks</h3><p class="hint" style="margin:0 0 8px">Commission conflicts won in a row. After ${STREAK_LIMIT} in a row, an employee's next commission waits until every other deferred claim banked before that streak is paid (claims banked after it don't count). Losing a conflict resets it.</p>
     <div class="ms-tiles">${streaks.map(([n, k]) => `<div class="ms-tile"><span>${esc(n)}</span><b>${k} in a row</b>${k >= STREAK_LIMIT ? `<span class="hint" style="text-transform:none;letter-spacing:0">${waiting(n) ? "Held until deferred claims are paid" : "Next win is held if a claim is waiting"}</span>` : ""}</div>`).join("")}</div>` : "";
-  $("pfBank").innerHTML = streakHtml + (bank.length ? `<h3 class="sub-h" style="margin-top:12px">Deferred claims waiting</h3><p class="hint" style="margin:0 0 8px">Employees who lost a commission to a bigger claim. Oldest first: each takes the next order made mostly of their kind of material. An employee's claims for the same kind of material are combined into one. Employees don't see this list.</p>
+  $("pfBank").innerHTML = streakHtml + (bank.length ? `<h3 class="sub-h" style="margin-top:12px">Deferred claims waiting</h3><p class="hint" style="margin:0 0 8px">Employees who lost a commission to a bigger claim. Oldest first: each takes the next order that uses their material when nobody qualified on it outright, or the order an employee on a win streak is held back from. An employee's claims for the same kind of material are combined into one. Employees don't see this list.</p>
     <div class="cat-wrap"><table class="val pie-table"><thead><tr><th scope="col">Since</th><th scope="col">Employee</th><th scope="col">Kind</th><th scope="col">Claim left</th><th scope="col">From</th></tr></thead><tbody>
     ${bank.map(b => `<tr><td>${shortDate(b.at)}</td><td>${esc(b.who)}</td><td>${(ROLE[b.role] || { name: "materials" }).name}</td><td>${esc(matsText(b.mats))}</td><td>${esc([...new Set(claimFrom(b).map(f => f.customer || ""))].join(", "))}'s order${claimFrom(b).length > 1 ? `s (${claimFrom(b).length} combined)` : ""}</td></tr>`).join("")}</tbody></table></div>` : "");
 }
@@ -4486,6 +4515,7 @@ function updateBuyQuote() {
 function renderOrders() {
   if (!$("buyItem").options.length) {
     $("sellCatsWrap").innerHTML = chipRow("sellCats", ["jewelry", "misc"]); $("buyCatsWrap").innerHTML = buyProfRow();
+    $("rsSellCatsWrap").innerHTML = chipRow("rsSellCats", ["jewelry", "misc"]); $("rsCatsWrap").innerHTML = rsProfRow(); setSelect($("rsItem"), rsItemHtml()); fillRsPrice();
     $("buyItem").innerHTML = buyItemHtml();
     fillBuyPrice();
     $("catCat").innerHTML = CAT_ORDER.map(c => `<option>${c}</option>`).join("");
@@ -4495,7 +4525,7 @@ function renderOrders() {
     catSig = sig;
     const opts = catalogOptions();
     $("sellItem").dataset.html = "";
-    setSelect($("buyItem"), buyItemHtml());
+    setSelect($("buyItem"), buyItemHtml()); setSelect($("rsItem"), rsItemHtml());
     setSelect($("quickItem"), QUICK_ITEMS.map(q => catalog().find(i => i.id === q.id)).filter(Boolean)
       .map(i => `<option value="${esc(i.id)}">${esc(i.name)} (${i.base > 0 ? coins(i.base) : "no price set"})</option>`).join(""));
     setSelect($("purchItem"), `<option value="">Other / not on the list</option>` + opts);
@@ -4503,6 +4533,7 @@ function renderOrders() {
   }
   const staff = orderStaff();
   for (const id of ["buyForm", "sellForm", "buyHelp", "sellHelp"]) $(id).hidden = !staff;
+  syncRawSale();
   $("custSec").hidden = !unlocked; $("catSec").hidden = !unlocked;
   // Buy and sell orders are ForgeMaster only; employees see their own orders under "Your history".
   $("sellSec").hidden = !staff; $("buySec").hidden = !staff;
@@ -4533,6 +4564,9 @@ function renderOrders() {
   const sellsShown = staff ? state.sells : state.sells.filter(o => mine(o.who));
   $("buyDebtNewWrap").hidden = !unlocked; if (!unlocked) $("buyDebtNew").checked = false;
   setSel($("bQuickItem"), QUICK_ITEMS.map(q => catalog().find(i => i.id === q.id)).filter(Boolean).map(i => `<option value="${esc(i.id)}">${esc(i.name)} (${i.base > 0 ? coins(i.base) : "no price set"})</option>`).join(""));
+  setSel($("rsQuickItem"), QUICK_ITEMS.map(q => catalog().find(i => i.id === q.id)).filter(Boolean).map(i => `<option value="${esc(i.id)}">${esc(i.name)} (${i.base > 0 ? coins(i.base) : "no price set"})</option>`).join(""));
+  setSel($("rsEmp"), `<option value="">Pick an employee</option>` + [...state.employees].sort((a, b) => a.name.localeCompare(b.name)).map(e => `<option value="${esc(e.name)}">${esc(e.name)}</option>`).join(""));
+  { const e = state.employees.find(x => sameName(x.name, $("rsWho").value)); $("rsEmp").value = e ? e.name : ""; }
   setSel($("buyEmp"), `<option value="">Pick an employee</option>` + [...state.employees].sort((a, b) => a.name.localeCompare(b.name)).map(e => `<option value="${esc(e.name)}">${esc(e.name)}</option>`).join(""));
   { const e = state.employees.find(x => sameName(x.name, $("buyWho").value)); $("buyEmp").value = e ? e.name : ""; }
   if (!$("buyCart").innerHTML) renderBuyCart();
@@ -5742,11 +5776,61 @@ function persist() {
   }).finally(() => { pendingSaves--; });
 }
 
+// ---- Net worth history: a reading (stockpile value + Forge funds) is saved whenever it changes, so the Profit tab can show how it moved ----
+const NET_KEEP = 1200, NET_MERGE_MS = 10 * 60000;
+function netReading() { const w = stockWorth(), f = forgeFunds(); return { s: w.total, f: f.now, v: round2(w.total + f.now) }; }
+function recordNet() {
+  if (readOnly || testP || !state.stock) return;
+  const r = netReading(), h = state.netHist || (state.netHist = []), last = h[h.length - 1], now = Date.now();
+  if (last && Math.abs(last.v - r.v) < 0.005 && Math.abs(last.s - r.s) < 0.005) return;   // nothing moved
+  if (last && h.length > 1 && now - last.at < NET_MERGE_MS) Object.assign(last, { at: now, ...r });   // a burst of changes is one reading
+  else h.push({ at: now, ...r });
+  if (h.length > NET_KEEP) {   // older than two weeks: keep the last reading of each day
+    const cut = now - 14 * 86400000, keep = [], seen = new Map();
+    for (const x of h) { if (x.at >= cut) { keep.push(x); continue; } seen.set(new Date(x.at).toDateString(), x); }
+    state.netHist = [...seen.values(), ...keep].slice(-NET_KEEP);
+  }
+}
+function netPeriodStart() {
+  if (pfPeriod === "all") return 0;
+  if (pfPeriod === "today") return new Date(new Date().toDateString()).getTime();
+  if (pfPeriod === "month") { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1).getTime(); }
+  return Date.now() - Number(pfPeriod) * 86400000;
+}
+function renderNetChange() {
+  const box = $("netChg"); if (!box) return;
+  const h = (state.netHist || []).filter(x => x && x.at > 0 && Number.isFinite(x.v)), now = netReading();
+  const tip = `<p class="hint" style="margin:0 0 8px">How net worth (stockpile value + Forge funds) has moved over the Period picked above. A reading is saved whenever it changes${h.length ? `; tracking started ${shortDate(h[0].at)}` : ""}.</p>`;
+  if (!h.length) { box.innerHTML = tip + `<div class="empty">No readings yet. The first one is saved with the next change to the ledger.</div>`; return; }
+  const start = netPeriodStart();
+  let base = null; for (const x of h) if (x.at <= start) base = x;
+  const partial = !base; if (!base) base = h[0];
+  const chg = round2(now.v - base.v), dS = round2(now.s - base.s), dF = round2(now.f - base.f), cls = n => n < -0.004 ? "loss" : n > 0.004 ? "gain" : "";
+  const inRange = h.filter(x => x.at >= base.at), pts = [...inRange, { at: Date.now(), ...now }];
+  let spark = "";
+  if (pts.length >= 2) { const W = 600, H = 70, t0 = pts[0].at, t1 = pts[pts.length - 1].at || t0 + 1, vs = pts.map(x => x.v), lo = Math.min(...vs), hi = Math.max(...vs), rng = hi - lo || 1;
+    const xy = x => `${round2((x.at - t0) / Math.max(1, t1 - t0) * W)},${round2(H - 6 - (x.v - lo) / rng * (H - 12))}`;
+    spark = `<svg class="net-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Net worth over the period: from ${coins(pts[0].v)} to ${coins(pts[pts.length - 1].v)} coins"><polyline fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke" points="${pts.map(xy).join(" ")}"/></svg>`; }
+  // The last reading of each day in the period, with its move from the day before
+  const days = new Map(); for (const x of inRange) days.set(new Date(x.at).toDateString(), x);
+  let prev = base; const rows = [...days.values()].map(x => { const r = { x, d: round2(x.v - prev.v) }; prev = x; return r; }).reverse().slice(0, 31);
+  box.innerHTML = tip + `<div class="ms-tiles">
+      <div class="ms-tile"><span>Net worth now</span><b>${coins(now.v)}</b></div>
+      <div class="ms-tile"><span>${partial ? `At first reading (${shortDate(base.at)})` : pfPeriod === "all" ? `At first reading (${shortDate(base.at)})` : "At start of period"}</span><b>${coins(base.v)}</b></div>
+      <div class="ms-tile"><span>Change</span><b class="${cls(chg)}">${signed(chg)} <span class="hint">(${base.v > 0.004 ? (chg < -0.004 ? "−" : "+") + Math.abs(Math.round(chg / base.v * 1000) / 10) + "%" : "–"})</span></b></div>
+      <div class="ms-tile"><span>Stockpile value change</span><b class="${cls(dS)}">${signed(dS)}</b></div>
+      <div class="ms-tile"><span>Forge funds change</span><b class="${cls(dF)}">${signed(dF)}</b></div>
+    </div>
+    ${partial && pfPeriod !== "all" ? `<p class="hint" style="margin:6px 0 0">Tracking started ${shortDate(h[0].at)}, after this period began, so the change is measured from the first reading.</p>` : ""}
+    ${spark ? `<div class="net-spark-wrap ${cls(chg)}">${spark}</div>` : ""}
+    ${rows.length ? `<div class="cat-wrap"><table class="val pie-table"><thead><tr><th scope="col">Day</th><th scope="col">Net worth at end of day</th><th scope="col">Change that day</th></tr></thead><tbody>
+      ${rows.map(r => `<tr><td>${shortDate(r.x.at)}</td><td>${coins(r.x.v)}</td><td class="${cls(r.d) === "loss" ? "loss" : cls(r.d) === "gain" ? "gain" : ""}">${signed(r.d)}</td></tr>`).join("")}</tbody></table></div>` : ""}`;
+}
 function commit(entry) {
   const actor = unlocked ? "ForgeMaster" : (currentEmp() ? currentEmp().name : "");
   state.log.unshift({ at: Date.now(), by: actor, ...entry });
   state.log = state.log.slice(0, 200);
-  if (!readOnly) syncClaims();
+  if (!readOnly) { syncClaims(); recordNet(); }
   render(); persist();
 }
 
@@ -6880,7 +6964,7 @@ function pickCat(e, which) {
   const b = e.target.closest("[data-ocat]"); if (!b) return false;
   b.parentElement.querySelectorAll("[data-ocat]").forEach(x => x.setAttribute("aria-pressed", x === b));
   const c = ORDER_CATS.find(x => x.key === b.dataset.ocat);
-  if (which === "sell") { sellCat = c.key; sellMat = "all"; renderSellMats(); setSel($("sellItem"), sellItemOptions()); updateSellQuote(); }
+  if (which === "sell") { sellCat = c.key; sellMat = "all"; renderSellMats(); setSel($("sellItem"), sellItemOptions()); updateSellQuote(); syncRawSale(); }
   else if (which === "calc") { calcCat = c.key; $("calcItem").dataset.html = ""; render(); }
   else { buyCat = c.key; setSelect($("buyItem"), buyItemOptions(c.key)); fillBuyPrice(); updateBuyQuote(); }
   return true;
@@ -7031,6 +7115,126 @@ $("sellForm").addEventListener("submit", e => {
   setDiscMode("card");
   sellLines = []; sellGiftFee = ""; sellGiftAuto = true; $("sellGiftFee").value = ""; giftNot = new Set(); $("sellQty").value = 1; updateSellQuote(); toast("Sell order confirmed and paid");
 });
+
+// ---- Raw materials sale menu ----
+// Picking "Raw materials" on the Sell form swaps it for this menu: the Buy menu's layout and controls, for selling. Prices start at the Stockpile value
+// unit prices. Confirming is an ordinary paid sell order (stock out, commission, loyalty card discount, profit).
+let rsLines = [], rsProf = "all";   // the basket: [{ key, item, qty, price }], item as on the Buy menu: stock key, "ing:<ingot>" or "cat:<price list id>"
+const RS_KEY_TO_ID = Object.fromEntries(Object.entries(STOCK_MAT).map(([id, k]) => [k, id]));
+const rsItemId = v => { v = String(v); return v.startsWith("ing:") || v.startsWith("cat:") ? v.slice(v.indexOf(":") + 1) : RS_KEY_TO_ID[v] || ""; };
+function rsDefaultPrice(v) { v = String(v);
+  if (v.startsWith("ing:")) return round2(ingotMatCost(v.slice(4)));
+  if (v.startsWith("cat:")) { const it = catalog().find(i => i.id === v.slice(4)); return it ? round2(it.base || 0) : 0; }
+  return round2(PRICE[v] != null ? PRICE[v] : (matCost(RS_KEY_TO_ID[v]) || 0)); }
+const rsProfRow = () => `<div class="chips cat-chips" role="group" aria-label="Profession" id="rsProfs">` + BUY_PROFS.map(p => `<button type="button" class="chip" data-rprof="${p.key}" aria-pressed="${p.key === rsProf}">${p.name}</button>`).join("") + `</div>`;
+function rsItemHtml() {
+  const grp = BUY_PROFS.find(p => p.key === rsProf).group, gs = grp ? GROUPS.filter(x => x.id === grp) : GROUPS;
+  const opts = g => g.items.map(o => `<option value="${o.key}">${o.name}</option>`).join("");
+  let h = grp === "ingots" ? "" : grp ? opts(gs[0]) : gs.map(g => `<optgroup label="${g.label}">${opts(g)}</optgroup>`).join("");
+  if (["all", "ingots"].includes(rsProf)) h += `<optgroup label="Ingots">${INGOTS.map(i => `<option value="ing:${i.key}">${esc(i.name)}</option>`).join("")}</optgroup>`;
+  if (rsProf === "all") { const stockNames = new Set([...ALL.map(a => a.name.toLowerCase()), "charcoal briquettes", "dwarven metal ingot"]);
+    const other = catalog().filter(i => i.cat === "Raw materials" && !stockNames.has(i.name.toLowerCase().replace(/ ore$/, "")) && !stockNames.has(i.name.toLowerCase()));
+    if (other.length) h += `<optgroup label="Other raw materials">${other.map(i => `<option value="cat:${esc(i.id)}">${esc(i.name)}</option>`).join("")}</optgroup>`; }
+  return h; }
+function fillRsPrice() { $("rsPrice").value = rsDefaultPrice($("rsItem").value); }
+function setRsProf(key) {
+  if (!BUY_PROFS.some(p => p.key === key) || key === rsProf) return;
+  rsProf = key; document.querySelectorAll("#rsProfs [data-rprof]").forEach(b => b.setAttribute("aria-pressed", b.dataset.rprof === key));
+  setSelect($("rsItem"), rsItemHtml()); fillRsPrice(); }
+// Show this menu instead of the Sell form while the Raw materials category is picked (ForgeMaster only).
+function syncRawSale() {
+  const staff = orderStaff(), on = staff && unlocked && sellCat === "raw";
+  if (on && !syncRawSale.was) { $("rsWho").value = $("sellWho").value; $("rsReach").checked = $("sellReach").checked; }
+  syncRawSale.was = on;
+  $("sellForm").hidden = !staff || on; $("rawSellForm").hidden = !on;
+  document.querySelectorAll("#rsSellCatsWrap [data-ocat]").forEach(b => b.setAttribute("aria-pressed", b.dataset.ocat === sellCat));
+  if (on) { updateRsQuote(); }
+}
+function rsMirror() { $("sellWho").value = $("rsCity").checked ? "" : $("rsWho").value; $("sellReach").checked = $("rsReach").checked && !$("rsCity").checked; }
+function rsDiscount() { if ($("rsCity").checked || $("rsAppr").checked) return { pct: 0, label: "" }; rsMirror(); const cc = sellCards(); return cc.best ? { pct: cc.best.pct, label: cc.best.name } : { pct: 0, label: "" }; }
+function rsMissing() {
+  if ((testS && unlocked) || testSale) return [];
+  return orderStockUse(rsLines.map(l => ({ itemId: rsItemId(l.item), qty: l.qty }))).filter(u => u.qty > u.have + 1e-9).map(u => ({ ...u, miss: round2(u.qty - u.have) })); }
+function pushRsLine(item, qty, price) {
+  const same = rsLines.find(l => l.item === item && l.price === price);
+  if (same) same.qty += qty; else rsLines.push({ key: uid(), item, qty, price });
+  renderRsCart(); }
+function addRsLine() {
+  const item = $("rsItem").value, qty = Math.floor(Number($("rsQty").value)), price = round2(Math.max(0, Number($("rsPrice").value) || 0));
+  if (!item) { toast("Pick an item."); return false; }
+  if (!(qty > 0)) { toast("Enter a whole number above 0."); return false; }
+  if (!catalog().some(i => i.id === rsItemId(item))) { toast(`${buyName(item)} isn't on the price list, so it can't be sold here.`); return false; }
+  pushRsLine(item, qty, price); $("rsQty").value = 1; fillRsPrice(); return true; }
+function renderRsCart() {
+  $("rsCart").innerHTML = rsLines.length ? rsLines.map(l => `<div class="cart-line buy-line">
+      <span class="nm">${buySw(l.item)}${esc(buyName(l.item))}</span>
+      <span class="q"><input type="number" min="1" step="1" value="${l.qty}" data-rline-qty="${l.key}" aria-label="Quantity of ${esc(buyName(l.item))}"><span class="hint">×</span><input type="number" min="0" step="0.01" value="${l.price}" data-rline-price="${l.key}" aria-label="Price each for ${esc(buyName(l.item))}"></span>
+      <span class="amt">${coins(l.qty * l.price)}</span>
+      <button type="button" class="x" data-rmrline="${l.key}" aria-label="Remove ${esc(buyName(l.item))}">Remove</button>
+    </div>`).join("") : `<div class="cart-empty">No items yet. Pick an item, quantity and price, then press Add item. Add as many as you're selling.</div>`;
+  updateRsQuote(); }
+function updateRsQuote() {
+  const miss = rsMissing(), w = $("rsWarn"), sb = $("rawSellForm").querySelector('button[type="submit"]');
+  w.hidden = !miss.length; w.textContent = miss.length ? `Not enough in stock: missing ${miss.map(u => `${fmtQty(u.miss)} ${u.name}`).join(", ")}. Lower the quantity or add the material first.` : "";
+  if (sb) sb.disabled = !!miss.length;
+  if (!rsLines.length) { $("rsQuote").innerHTML = `<span class="hint">The total appears here once items are added.</span>`; return; }
+  const free = $("rsAppr").checked, sub = rsLines.reduce((a, l) => a + l.qty * l.price, 0);
+  if (free) { $("rsQuote").innerHTML = `<div class="ln"><span>Items</span><span>${rsLines.length}</span></div><div class="ln perk"><span>Apprentice sale: no charge</span><span>−${coins(sub)}</span></div><div class="ln final"><span>Order total</span><span>0.00 coins</span></div>`; return; }
+  const d = rsDiscount(), q = orderQuote(rsLines.map(l => ({ qty: l.qty, base: l.price, fixed: true })), 0, d.pct);
+  $("rsQuote").innerHTML = `<div class="ln"><span>Items</span><span>${rsLines.length}</span></div>
+    ${d.pct ? `<div class="ln"><span>Subtotal</span><span>${coins(round2(sub))}</span></div><div class="ln perk"><span>${esc(d.label)} (−${d.pct}%)</span><span>−${coins(round2(sub - q.fin))}</span></div>` : ""}
+    <div class="ln final"><span>Order total</span><span>${coins(q.fin)} coins</span></div>`; }
+$("rsQuickAdd").addEventListener("click", () => {
+  const it = catalog().find(i => i.id === $("rsQuickItem").value), qty = Math.floor(Number($("rsQuickQty").value));
+  if (!it) { toast("Pick an item."); return; }
+  if (!(qty > 0)) { toast("Enter a whole number above 0."); return; }
+  pushRsLine("cat:" + it.id, qty, round2(it.base || 0)); $("rsQuickQty").value = 1; });
+$("rsAddLine").addEventListener("click", addRsLine);
+$("rsQty").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addRsLine(); } });
+$("rsItem").addEventListener("change", fillRsPrice);
+$("rsCatsWrap").addEventListener("click", e => { const b = e.target.closest("[data-rprof]"); if (b) setRsProf(b.dataset.rprof); });
+$("rawSellForm").addEventListener("click", e => {
+  const b = e.target.closest("#rsSellCatsWrap [data-ocat]"); if (!b) return;
+  sellCat = b.dataset.ocat; sellMat = "all";
+  document.querySelectorAll("#sellCatsWrap [data-ocat]").forEach(x => x.setAttribute("aria-pressed", x.dataset.ocat === sellCat));
+  rsMirror(); renderSellMats(); setSel($("sellItem"), sellItemOptions()); updateSellQuote(); syncRawSale(); });
+$("rsEmp").addEventListener("change", () => { const n = $("rsEmp").value;
+  if (n) { $("rsWho").value = n; const e = state.employees.find(x => x.name === n); if (e) setRsProf(BUY_PROFS.some(p => p.key === e.prof) ? e.prof : "all"); }
+  updateRsQuote(); });
+$("rsWho").addEventListener("input", () => { const e = state.employees.find(x => sameName(x.name, $("rsWho").value)); $("rsEmp").value = e ? e.name : ""; updateRsQuote(); });
+$("rsCity").addEventListener("change", () => {
+  const on = $("rsCity").checked;
+  if (on) { $("rsWho").dataset.prev = $("rsWho").value; $("rsWho").value = CITY; $("rsEmp").value = ""; }
+  else if ($("rsWho").value === CITY) { $("rsWho").value = $("rsWho").dataset.prev || ""; const e = state.employees.find(x => sameName(x.name, $("rsWho").value)); $("rsEmp").value = e ? e.name : ""; }
+  $("rsWho").disabled = $("rsEmp").disabled = on; $("rsReachWrap").hidden = on; updateRsQuote(); });
+["rsAppr", "rsReach"].forEach(id => $(id).addEventListener("change", updateRsQuote));
+$("rsCart").addEventListener("click", e => { const b = e.target.closest("[data-rmrline]"); if (!b) return; rsLines = rsLines.filter(l => l.key !== b.dataset.rmrline); renderRsCart(); });
+$("rsCart").addEventListener("change", e => {
+  const t = e.target, k = t.dataset.rlineQty || t.dataset.rlinePrice, l = rsLines.find(x => x.key === k); if (!l) return;
+  if (t.dataset.rlineQty) { const v = Math.floor(Number(t.value)); if (v > 0) l.qty = v; else rsLines = rsLines.filter(x => x !== l); }
+  if (t.dataset.rlinePrice) l.price = round2(Math.max(0, Number(t.value) || 0));
+  renderRsCart(); });
+$("rawSellForm").addEventListener("submit", e => {
+  e.preventDefault(); if (readOnly || !orderStaff() || !unlocked) return;
+  if (testS) { toast("Test S is on: turn it off to confirm a real order."); return; }
+  if (testSale) { toast("Test sale is on: turn it off to confirm a real order."); return; }
+  const city = $("rsCity").checked, who = city ? CITY : $("rsWho").value.trim();
+  if (!who) { toast("Enter the customer's name, or pick an employee."); return; }
+  if (!rsLines.length && !addRsLine()) return;
+  if (isTestName(who)) { rsLines = []; renderRsCart(); toast("TEST sell order: nothing was changed or saved"); return; }
+  { const miss = rsMissing(); if (miss.length) { updateRsQuote(); toast(`Order blocked: missing ${miss.map(u => `${fmtQty(u.miss)} ${u.name}`).join(", ")}. Add the material first, or lower the quantity.`); return; } }
+  const cat = catalog(), free = $("rsAppr").checked, emp = city ? null : state.employees.find(x => sameName(x.name, who));
+  const lines = rsLines.map(l => { const it = cat.find(i => i.id === rsItemId(l.item)); if (!it) return null;
+    return { itemId: it.id, item: it.name, qty: l.qty, base: free ? 0 : l.price, listBase: it.base, perk: "", fixed: true }; }).filter(Boolean);
+  if (lines.length !== rsLines.length) { toast("An item isn't on the price list, so it can't be sold here."); return; }
+  const d = rsDiscount(), reach = !city && $("rsReach").checked, q = orderQuote(lines, 0, d.pct), finalPrice = free ? 0 : q.fin;
+  const existing = custByName(who); if (existing && !city && !!existing.reach !== reach) existing.reach = reach;
+  const order = { id: uid(), by: "ForgeMaster", who, lines, profit: 0, discount: d.pct, discountLabel: d.label, reach, emp: !!emp, final: finalPrice, note: "", debted: null, at: Date.now(), noComm: false, useEq: false };
+  recordSellPaid(order);
+  commit({ kind: "plus", text: `Sell order confirmed: ${who} paid ${coins(finalPrice)} coins for ${linesText(lines)}${free ? " (apprentice sale, no charge)" : ""}${d.pct ? ` (−${d.pct}% ${d.label})` : ""}` });
+  rsLines = []; $("rsAppr").checked = false;
+  if (city) { $("rsCity").checked = false; $("rsWho").disabled = $("rsEmp").disabled = false; $("rsWho").value = ""; $("rsReachWrap").hidden = false; }
+  renderRsCart(); toast("Sell order confirmed and paid"); });
 
 $("custForm").addEventListener("submit", e => {
   e.preventDefault(); if (readOnly || !unlocked) return;
@@ -7221,7 +7425,7 @@ function recordSellPaid(o) {
 // Commissions on a sale. Everyone who supplied 90%+ of their kind of material qualifies (ore, the ore inside ingots, the charcoal that
 // smelted them, or leather). The one whose materials cost the most gets 2% of the final price; if the top two are within 10% of each other
 // by material cost they split it as 3% each (6% in all). Anyone else who qualified is banked: their actual materials (e.g. 9 Iron, 9 Corundum)
-// wait in a queue, oldest first, and claim the next order made mostly of that kind of material that uses some of them, ahead of anyone
+// wait in a queue, oldest first, and claim the next order that uses some of them when nobody qualified outright (or when a streaking employee is held back), ahead of anyone
 // qualifying there. A claim gives up as much of each material as the orders it wins use. The ForgeMaster can switch commission off for one order.
 let COMMISSION_SPLIT_PCT = 3; const COMMISSION_CLOSE = 0.10;
 const STREAK_LIMIT = 2; let streakOverride = null;   // Test S: pretend win streaks
@@ -7297,7 +7501,7 @@ function beats(a, b) {
   return hiWins ? hi === a : lo === a;
 }
 // Who can never be a customer (removed from the customer list and rankings).
-const NOT_CUSTOMERS = new Set(["markarth trader"]), notCust = n => NOT_CUSTOMERS.has(String(n || "").trim().toLowerCase());
+const NOT_CUSTOMERS = new Set(["markarth trader", CITY.toLowerCase()]), notCust = n => NOT_CUSTOMERS.has(String(n || "").trim().toLowerCase());
 // Universal commission: up to 3 employees (chosen in the Employee roster, each with their own %) who earn a cut of every order nobody won on materials.
 // Until the ForgeMaster changes it: Acheron Ruu, Orlog and Oswald at 2% each.
 const UNIV_MAX = 3, UNIV_DEFAULT = [["Acheron Ruu", 2], ["Orlog", 2], ["Oswald", 2]];
@@ -7319,23 +7523,23 @@ function planCommission(final, t, off, cardCust) {
   const quals = []; for (const q of [...quals0].sort((a, b) => b.val - a.val)) { const m = quals.find(x => sameName(x.who, q.who)); if (m) m.val = round2(m.val + q.val); else quals.push({ ...q }); }
   const rv = t.roleVal || {}, sumV = Object.values(rv).reduce((a, v) => a + v, 0), ru = t.rawUse || {};
   const bank = [...(state.commBank || [])].sort((a, b) => (a.at || 0) - (b.at || 0)), claimLeft = b => Object.values(b.mats || {}).reduce((a, q) => a + q, 0);   // oldest claims first
-  // "Mostly" their kind of material: more than half the order's material cost. Poor Charcoal claims only need their kind to be the biggest
-  // (a tie counts), since Iron and Corundum Ingots are always half ore, half Poor Charcoal and those claims could otherwise wait forever.
-  const mostly = b => { const v = rv[b.role] || 0, poor = (b.mats && b.mats.poor > 1e-9) && (ru.poor || 0) > 0;
-    return poor ? v > 0 && Object.entries(rv).every(([r, x]) => r === b.role || v >= x - 1e-9) : v > sumV / 2; };
-  const bi = bank.findIndex(b => sumV > 0 && mostly(b) && claimLeft(b) > 1e-9 && Object.keys(b.mats || {}).some(k => (ru[k] || 0) > 0) && empOk(b.who));
-  const holderHere = bi >= 0 && quals.some(q => sameName(q.who, bank[bi].who) && q.role === bank[bi].role);   // they'd qualify on their own: the claim waits
+  // A waiting claim is paid on an order that uses any of its material when nobody qualified on the order outright (the oldest claim first).
+  // An order someone qualifies on goes to the qualifier, unless they are held back by the win streak rule below.
+  const bi = !quals.length && sumV > 0 ? bank.findIndex(b => claimLeft(b) > 1e-9 && Object.keys(b.mats || {}).some(k => (ru[k] || 0) > 0) && empOk(b.who)) : -1;
   // Win streak rule: whoever has won the last two commission conflicts in a row can't win another commission while anyone else still has a
   // deferred claim waiting. Their claim is banked instead (behind the ones already there), and their streak stays until they lose one.
   const pending = bank.filter(b => claimLeft(b) > 1e-9);
+  // Only claims banked BEFORE the streak was reached hold a streaking employee back; claims banked after it don't (commStreakAt = when it was reached).
+  const streakAtOf = n => { const e = empOk(n), k = e ? e.name : n; return streakOverride && k in streakOverride ? Infinity : (state.commStreakAt || {})[k] || Infinity; };
+  const blocks = q => pending.some(b => !b.paidAt && !sameName(b.who, q.who) && (b.at || 0) < streakAtOf(q.who));   // a claim that has paid out once counts as paid (its leftover can still be used later)
   const streakOf = n => { const e = empOk(n), k = e ? e.name : n; return streakOverride && k in streakOverride ? streakOverride[k] : ((state.commStreak || {})[k] || 0); };
   let winners = [], deferred = [], held = [];
-  if (bi >= 0 && !holderHere) { const b = bank[bi]; winners = [{ who: b.who, role: b.role, val: round2(rv[b.role] || 0), fromBank: b, rank: rankOf(b.who), pct: RANK_PCT[rankOf(b.who)] }]; deferred = quals; }
+  if (bi >= 0) { const b = bank[bi]; winners = [{ who: b.who, role: b.role, val: round2(rv[b.role] || 0), fromBank: b, rank: rankOf(b.who), pct: RANK_PCT[rankOf(b.who)] }]; deferred = []; }
   else if (quals.length) {
-    held = quals.filter(q => streakOf(q.who) >= STREAK_LIMIT && pending.some(b => !sameName(b.who, q.who)));
+    held = quals.filter(q => streakOf(q.who) >= STREAK_LIMIT && blocks(q));
     const pool = quals.filter(q => !held.includes(q));
     // Someone is held back by the streak rule: waiting claims are paid oldest first (newest last). The oldest one this order uses any of wins.
-    const hand = held.length ? bank.find(b => claimLeft(b) > 1e-9 && empOk(b.who) && !held.some(h => sameName(h.who, b.who)) && Object.keys(b.mats || {}).some(k => (ru[k] || 0) > 0)) : null;
+    const hand = held.length ? bank.find(b => claimLeft(b) > 1e-9 && empOk(b.who) && !held.some(h => sameName(h.who, b.who)) && held.some(h => (b.at || 0) < streakAtOf(h.who)) && Object.keys(b.mats || {}).some(k => (ru[k] || 0) > 0)) : null;
     if (hand) { winners = [{ who: hand.who, role: hand.role, val: round2(rv[hand.role] || 0), fromBank: hand, handover: held.map(h => h.who), rank: rankOf(hand.who), pct: RANK_PCT[rankOf(hand.who)] }];
       deferred = pool.filter(q => !sameName(q.who, hand.who)); }
     else if (pool.length) {
@@ -7372,23 +7576,24 @@ function applyCommission(o, plan) {
   const at = Date.now(), roleName = r => (ROLE[r] || { name: "materials" }).name.toLowerCase();
   if (plan.off) { state.log.unshift({ at, by: "ForgeMaster", fm: true, kind: "hold-c", text: `No commission on ${o.who}'s order (switched off for this order)` }); return; }
   const bank = state.commBank || (state.commBank = []), lead = plan.winners[0];
-  state.commStreak = state.commStreak || {};
+  state.commStreak = state.commStreak || {}; state.commStreakAt = state.commStreakAt || {};
   const combined = [];
   for (const d of plan.deferred) {
     if (bank.some(b => sameName(b.who, d.who) && b.role === d.role && Object.values(b.mats || {}).some(q => q > 1e-9))) combined.push(d);
-    if (!(plan.held || []).includes(d.who)) { const de = state.employees.find(e => sameName(e.name, d.who)); if (de) state.commStreak[de.name] = 0; }   // a lost conflict ends the streak
+    if (!(plan.held || []).includes(d.who)) { const de = state.employees.find(e => sameName(e.name, d.who)); if (de) { state.commStreak[de.name] = 0; delete state.commStreakAt[de.name]; } }   // a lost conflict ends the streak
     bank.push({ id: uid(), who: d.who, role: d.role, mats: { ...d.mats }, at, orderId: o.id, customer: o.who });
     state.log.unshift({ at, by: "ForgeMaster", fm: true, kind: "debt", text: `${d.who} also supplied ${Math.round(d.share * 100)}% of the ${roleName(d.role)} on ${o.who}'s order, but ${(plan.held || []).includes(d.who) ? `they have won the last ${STREAK_LIMIT} commission conflicts in a row, so their next win waits until every deferred claim is paid` : lead && lead.fromBank ? `${lead.who} had an earlier deferred claim` : `${plan.winners.map(w => w.who).join(" and ")} supplied more by material cost`}. ${d.who}'s claim on ${matsText(d.mats)} is banked for their next order.` });
   }
   for (const w of plan.winners) {
     const e = state.employees.find(e => sameName(e.name, w.who)); if (!e) continue;
-    if (w.fromBank) { const m = w.fromBank.mats || {}; for (const k of Object.keys(m)) { m[k] = round2(Math.max(0, m[k] - (plan.ru[k] || 0))); if (m[k] <= 1e-9) delete m[k]; }
+    if (w.fromBank) { w.fromBank.paidAt = at; const m = w.fromBank.mats || {}; for (const k of Object.keys(m)) { m[k] = round2(Math.max(0, m[k] - (plan.ru[k] || 0))); if (m[k] <= 1e-9) delete m[k]; }
       state.commBank = bank.filter(b => plan.claimLeft(b) > 1e-9); }
     const why = w.base ? "universal commission: nobody supplied 90% of a material" : w.fromBank ? "from your earlier deferred claim" : `${Math.round(w.share * 100)}% of its ${roleName(w.role)} was yours${w.split ? ", split with " + plan.winners.find(x => x !== w).who : ""}`;
     state.commissions = [{ id: uid(), orderId: o.id, at, customer: o.who, lines: orderLines(o).map(l => ({ qty: l.qty, name: l.item })), final: o.final, who: e.name, role: w.role,
       units: w.units ?? null, total: w.total ?? null, share: w.fromBank ? null : round2(w.share * 100), fromBank: !!w.fromBank, pct: w.pct, split: !!w.split, rank: w.rank || 0, amount: w.amount }, ...(state.commissions || [])].slice(0, 1000);
+    if (!w.fromBank && !w.base && (state.commStreak[e.name] || 0) >= STREAK_LIMIT) { state.commStreak[e.name] = 0; delete state.commStreakAt[e.name]; }   // the claims banked before their streak are paid: they start over
     if (plan.nQual >= 2 && !w.fromBank && !w.split) { const n = (state.commStreak[e.name] = (state.commStreak[e.name] || 0) + 1);
-      if (n === STREAK_LIMIT) state.log.unshift({ at, by: "ForgeMaster", fm: true, kind: "hold-c", text: `${e.name} has won ${n} commission conflicts in a row. Their next commission waits until every deferred claim in the bank is paid.` }); }
+      if (n === STREAK_LIMIT) { state.commStreakAt[e.name] = at; state.log.unshift({ at, by: "ForgeMaster", fm: true, kind: "hold-c", text: `${e.name} has won ${n} commission conflicts in a row. Their next commission waits until every deferred claim banked up to now is paid. Claims banked after this don't hold them back.` }); } }
     state.debts.push({ id: uid(), who: e.name, item: "coins", qty: w.amount, note: `${w.pct}% commission on ${o.who}'s order (${why})`, city: false, orderId: o.id, at });
     state.log.unshift({ at, by: "ForgeMaster", fm: true, kind: "debt", text: w.fromBank
       ? `${e.name} earns a ${w.pct}% commission (${coins(w.amount)} coins) on ${o.who}'s order from their deferred claim${w.handover ? ` (${w.handover.join(" and ")} won the last ${STREAK_LIMIT} conflicts in a row, so the waiting claim went first)` : ""} (${plan.claimLeft(w.fromBank) > 1e-9 ? `${matsText(w.fromBank.mats)} of claim left` : "claim used up"}). The forge owes it to them.`
@@ -7397,7 +7602,7 @@ function applyCommission(o, plan) {
   }
   state.commBank = mergeBank(state.commBank || []);
   for (const d of combined) { const c = state.commBank.find(b => sameName(b.who, d.who) && b.role === d.role); if (!c) continue;
-    state.log.unshift({ at, by: "ForgeMaster", fm: true, kind: "hold-c", text: `${d.who}'s new deferred claim (${matsText(d.mats)}) was combined with their earlier one: one claim of ${matsText(c.mats)} now waits for the next order made mostly of their ${roleName(d.role)}.` }); }
+    state.log.unshift({ at, by: "ForgeMaster", fm: true, kind: "hold-c", text: `${d.who}'s new deferred claim (${matsText(d.mats)}) was combined with their earlier one: one claim of ${matsText(c.mats)} now waits for the next order that uses their ${roleName(d.role)} and that nobody qualifies on.` }); }
 }
 // What an order would pay in commission, worked out on a copy of the stockpile so nothing changes. testEnv: the "Test S" sample stockpile.
 // ---- Clock in / out. Each browser tab's sign-in is a session { id, who (employee id, or "FM"), name, start, last, end }.
@@ -8244,6 +8449,8 @@ function normalize(d) {
     if (d.empProgress && typeof d.empProgress === "object") s.empProgress = d.empProgress;
     if (d.testStock) s.testStock = true;
     if (Array.isArray(d.ghosts)) s.ghosts = d.ghosts.filter(g => g && g.who && NAME[g.key] && g.qty > 0).map(g => ({ id: g.id || uid(), who: g.who, key: g.key, qty: round2(g.qty), at: Number(g.at) || 0, ...(g.craft ? { craft: true } : {}) }));
+    if (Array.isArray(d.netHist)) s.netHist = d.netHist.filter(x => x && Number(x.at) > 0 && Number.isFinite(Number(x.v))).map(x => ({ at: Number(x.at), s: round2(Number(x.s) || 0), f: round2(Number(x.f) || 0), v: round2(Number(x.v)) })).sort((a, b) => a.at - b.at).slice(-NET_KEEP);
+    if (d.commStreakAt && typeof d.commStreakAt === "object") s.commStreakAt = Object.fromEntries(Object.entries(d.commStreakAt).filter(([k, v]) => Number(v) > 0).map(([k, v]) => [k, Number(v)]));
     if (d.commStreak && typeof d.commStreak === "object") s.commStreak = Object.fromEntries(Object.entries(d.commStreak).filter(([k, v]) => Number(v) > 0).map(([k, v]) => [k, Math.floor(Number(v))]));
     if (Array.isArray(d.univComm)) { const seen = new Set(); s.univComm = d.univComm.filter(u => u && u.id && !seen.has(u.id) && seen.add(u.id)).slice(0, UNIV_MAX).map(u => ({ id: String(u.id), pct: Math.min(50, Math.max(0, Math.round((Number(u.pct) || 0) * 100) / 100)) })); }
     if (d.commRates && Array.isArray(d.commRates.ranks)) { const n = x => Math.min(50, Math.max(0, Math.round((Number(x) || 0) * 100) / 100));
