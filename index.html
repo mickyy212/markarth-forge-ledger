@@ -2048,7 +2048,7 @@ table.val thead th { color: #cdb995; }
     <div class="sec-head">
       <h2 id="myRankH">Promotion Progress</h2>
       <button type="button" class="watch-btn sell-watch" id="promoVidBtn" hidden>WATCH THIS!!</button>
-      <div class="promo-outdated" id="promoOutdated" role="note"><b>THE PROMOTION VIDEO IS OUTDATED.</b> All promotion commission rates have been raised: <b>Advanced now 3.5%, Expert 4.5%, Elite 6%.</b></div>
+      <div class="promo-outdated" id="promoOutdated" role="note"><b>THE PROMOTION VIDEO IS OUTDATED.</b> All promotion commission rates have been raised: <b id="promoRates">Advanced now 3.5%, Expert 4.5%, Elite 6%.</b></div>
       <button type="button" class="pm-toggle" id="testPromo" aria-pressed="false" hidden title="Shows this employee 80% of the way to their next rank. Nothing is saved.">Test Promotion</button>
       <button type="button" class="btn-ghost" id="promoCelebBtn" hidden title="Plays the promotion celebration (test only; nothing is saved)">Promotion celebration 🎉</button>
       <span class="hint">How close you are to your next rank and a bigger commission.</span>
@@ -3473,10 +3473,10 @@ const ingotRoleUnits = id => { const r = {}; for (const [k, q] of SMELT[id] || [
 const ingotRoleVal = id => { const r = {}; for (const [k, q] of SMELT[id] || []) { const sk = STOCK_MAT[k], role = roleOfKey(sk); if (role) r[role] = (r[role] || 0) + q * rawCost(sk); } return r; };
 function takeOrderStock(lines, opt) {
   const craftFor = (opt && opt.craftFor) || "", ingTake = {};
-  const use = (opt && opt.use) || orderStockUse(lines), short = [], credit = [], total = {}, roleVal = {}, rawUse = {};
+  const use = (opt && opt.use) || orderStockUse(lines), short = [], credit = [], total = {}, roleVal = {}, rawUse = {}, ingTaken = {};
   for (const u of use) {
     const take = Math.min(u.have, u.qty), left = round2(Math.max(0, u.have - u.qty));
-    if (u.ingot) { ingTake[u.key] = (ingTake[u.key] || 0) + take; credit.push(...drawIngots(u.key, take, u.have, craftFor)); for (const [r, n] of Object.entries(ingotRoleUnits(u.key))) total[r] = (total[r] || 0) + n * u.qty;
+    if (u.ingot) { ingTake[u.key] = (ingTake[u.key] || 0) + take; credit.push(...drawIngots(u.key, take, u.have, craftFor)); for (const [r, n] of Object.entries(ingotRoleUnits(u.key))) { total[r] = (total[r] || 0) + n * u.qty; ingTaken[r] = (ingTaken[r] || 0) + n * take; }
       for (const [r, v] of Object.entries(ingotRoleVal(u.key))) roleVal[r] = (roleVal[r] || 0) + v * u.qty;
       for (const [k, q] of SMELT[u.key] || []) { const sk = STOCK_MAT[k]; if (sk) rawUse[sk] = (rawUse[sk] || 0) + q * u.qty; } ingotsOf()[u.key] = left; }
     else { credit.push(...drawLots(u.key, take, u.have, craftFor)); const r = roleOfKey(u.key); if (r) { total[r] = (total[r] || 0) + u.qty; roleVal[r] = (roleVal[r] || 0) + u.qty * rawCost(u.key); } rawUse[u.key] = (rawUse[u.key] || 0) + u.qty; state.stock[u.key] = left; }
@@ -3512,6 +3512,10 @@ function takeOrderStock(lines, opt) {
     craftCost[c.role] = round2((craftCost[c.role] || 0) + c.units * (PRICE[c.key] ?? rawCost(c.key))); }
   for (const r in craftBy) craftBy[r] = round2(craftBy[r]);
   const craftOff = round2(craftSum);
+  // Ingots only: material in the ingots the forge owns itself (no owner tag) is left out of the total a share is measured against, so
+  // employees' ingot ore and charcoal compete only with each other (A 40% / Forge 60% = A has all of it). Raw ore and other materials are unchanged.
+  { const got = {}; for (const c of credit) if (c.ing && c.units > 1e-9) got[c.role] = (got[c.role] || 0) + c.units;
+    for (const [r, n] of Object.entries(ingTaken)) { const forge = Math.max(0, n - (got[r] || 0)); if (forge > 1e-9) total[r] = Math.max(0, (total[r] || 0) - forge); } }
   // Each employee's share of the raw material of their kind in this order (craft request material never earns commission)
   const by = new Map(); for (const c of credit.filter(c => !c.craft && c.units > 1e-9)) { const k = c.who + "|" + c.role, x = by.get(k) || { units: 0, val: 0, mats: {} }; x.units += c.units; x.val += c.val || 0; if (c.key) x.mats[c.key] = round2((x.mats[c.key] || 0) + c.units); by.set(k, x); }
   const shares = [...by].map(([k, x]) => { const [who, role] = k.split("|"); return { who, role, units: round2(x.units), val: round2(x.val), mats: x.mats, total: round2(total[role] || 0), share: total[role] ? x.units / total[role] : 0 }; });
@@ -5412,7 +5416,7 @@ function render() {
   applyRates();
   applyPrices();
   applyView();
-  renderMyRank(); fillRates(); fillUniv(); renderGhosts(); renderCraftMats(); if ($("buyCraftWrap")) syncBuyCraftVis();
+  renderMyRank(); fillRates(); fillPromoNote(); fillUniv(); renderGhosts(); renderCraftMats(); if ($("buyCraftWrap")) syncBuyCraftVis();
   renderIngots();
   renderCrown();
   placeEmployeeView();
@@ -6381,6 +6385,9 @@ $("univForm").addEventListener("submit", e => { e.preventDefault();
   document.activeElement && document.activeElement.blur();
   saveUniv(rows.map(r => ({ emp: state.employees.find(x => x.id === r.id), pct: Math.round(r.pct * 100) / 100 })).filter(u => u.emp)); });
 $("univReset").addEventListener("click", () => { $("univRows").dataset.sig = ""; saveUniv(null); });
+// The "promotion video is outdated" note shows the promotion rates currently saved in the commission settings.
+function fillPromoNote() { const el = $("promoRates"); if (!el) return; const f = n => String(+Number(n).toFixed(2));
+  const t = [1, 2, 3].map(r => `${RANK_NAME[r]} now ${f(RANK_PCT[r])}%`).join(", ") + "."; if (el.textContent !== t) el.textContent = t; }
 function fillRates() { if (document.activeElement && $("rateForm").contains(document.activeElement)) return;
   [$("rateN").value, $("rateA").value, $("rateE").value, $("rateL").value] = RANK_PCT.map(String); $("rateS").value = String(COMMISSION_SPLIT_PCT);
   const same = RANK_PCT.every((v, i) => v === DEFAULT_RATES.ranks[i]) && COMMISSION_SPLIT_PCT === DEFAULT_RATES.split;
