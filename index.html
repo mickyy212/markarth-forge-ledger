@@ -203,6 +203,12 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .test-ranks .chip { padding: 3px 8px; font-size: .78rem; }
 .net-spark-wrap { margin: 10px 0 6px; color: var(--ink-soft, #aaa); } .net-spark-wrap.gain { color: #7ac37a; } .net-spark-wrap.loss { color: #e07070; }
 .net-spark { display: block; width: 100%; height: 70px; }
+.pf-fold > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; }
+.pf-fold > summary::-webkit-details-marker { display: none; }
+.pf-fold > summary::before { content: ""; flex: none; width: 0; height: 0; border-left: 9px solid var(--accent, #e8892b); border-top: 6px solid transparent; border-bottom: 6px solid transparent; transition: transform .15s; }
+.pf-fold[open] > summary::before { transform: rotate(90deg); }
+.pf-fold > summary h3 { margin: 0; }
+.pf-fold[open] > summary { margin-bottom: 8px; }
 .pf-comm-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .ing-quick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
 .ing-adj { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -1836,23 +1842,24 @@ table.val thead th { color: #cdb995; }
       <div class="pie-wrap" id="pfPie"></div>
       <div id="pfMats"></div>
     </div>
-    <div class="panel">
-      <h3 class="sub-h">Paid sell orders</h3>
+    <details class="panel pf-fold" id="pfFoldSells" data-fold="sells" open>
+      <summary><h3 class="sub-h">Paid sell orders</h3></summary>
       <div id="pfRows"></div>
-    </div>
+    </details>
     <div id="pfOpen" hidden></div>
-    <div class="panel">
-      <h3 class="sub-h">Buy orders received</h3>
+    <details class="panel pf-fold" id="pfFoldBuys" data-fold="buys" open>
+      <summary><h3 class="sub-h">Buy orders received</h3></summary>
       <div class="ms-tiles" id="pfBuyTiles"></div>
       <div id="pfBuyRows"></div>
-    </div>
-    <div class="panel">
-      <div class="pf-comm-head"><h3 class="sub-h">Commissions</h3><button type="button" class="pm-toggle" id="testC" aria-pressed="false" title="Shows Claude's practice commission orders in this section only. Nothing is saved and profit isn't changed.">Test C</button></div>
+    </details>
+    <details class="panel pf-fold" id="pfFoldComm" data-fold="comm" open>
+      <summary><h3 class="sub-h">Commissions</h3></summary>
+      <div class="pf-comm-head" style="justify-content:flex-end;margin-bottom:6px"><button type="button" class="pm-toggle" id="testC" aria-pressed="false" title="Shows Claude's practice commission orders in this section only. Nothing is saved and profit isn't changed.">Test C</button></div>
       <p class="hint" style="margin:0 0 8px">2% of the sale price, owed to the employee who supplied 90% or more of an order's material of their kind. Counted against profit.</p>
       <div class="ms-tiles" id="pfCommTiles"></div>
       <div id="pfCommRows"></div>
       <div id="pfBank"></div>
-    </div>
+    </details>
     <div class="panel">
       <h3 class="sub-h">Change in net worth</h3>
       <div id="netChg"></div>
@@ -5826,6 +5833,11 @@ function renderNetChange() {
     ${rows.length ? `<div class="cat-wrap"><table class="val pie-table"><thead><tr><th scope="col">Day</th><th scope="col">Net worth at end of day</th><th scope="col">Change that day</th></tr></thead><tbody>
       ${rows.map(r => `<tr><td>${shortDate(r.x.at)}</td><td>${coins(r.x.v)}</td><td class="${cls(r.d) === "loss" ? "loss" : cls(r.d) === "gain" ? "gain" : ""}">${signed(r.d)}</td></tr>`).join("")}</tbody></table></div>` : ""}`;
 }
+// The Profit tab's collapsible panels: open or closed is remembered in this browser.
+const PF_FOLD_KEY = "forge-profit-folds";
+{ let saved = {}; try { saved = JSON.parse(localStorage.getItem(PF_FOLD_KEY) || "{}") || {}; } catch (_) {}
+  document.querySelectorAll("details.pf-fold").forEach(d => { if (saved[d.dataset.fold] === false) d.open = false;
+    d.addEventListener("toggle", () => { try { const m = JSON.parse(localStorage.getItem(PF_FOLD_KEY) || "{}") || {}; m[d.dataset.fold] = d.open; localStorage.setItem(PF_FOLD_KEY, JSON.stringify(m)); } catch (_) {} }); }); }
 function commit(entry) {
   const actor = unlocked ? "ForgeMaster" : (currentEmp() ? currentEmp().name : "");
   state.log.unshift({ at: Date.now(), by: actor, ...entry });
