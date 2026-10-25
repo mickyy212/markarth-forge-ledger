@@ -220,6 +220,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .wb-o { fill: var(--accent); background: var(--accent); }
 .wb-c { fill: var(--gold); background: var(--gold); }
 .when-chart g:hover rect.wb-o, .when-chart g:hover rect.wb-c { opacity: .8; }
+.eq-cats { display: grid; gap: 6px; margin-bottom: 10px; }
 .pf-comm-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .ing-quick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
 .ing-adj { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -5856,9 +5857,23 @@ function persist() {
 // ---- Net worth history: a reading (stockpile value + Forge funds) is saved whenever it changes, so the Profit tab can show how it moved ----
 const NET_KEEP = 1200, NET_MERGE_MS = 10 * 60000;
 function netReading() { const w = stockWorth(), f = forgeFunds(); return { s: w.total, f: f.now, v: round2(w.total + f.now) }; }
+// The unit prices net worth is counted at (stockpile items, and ingots at material cost). Saved with the history so a price edit can be told apart
+// from real activity.
+function netPrices() { const p = {}; for (const g of GROUPS) for (const o of g.items) if (PRICE[o.key] != null) p[o.key] = PRICE[o.key];
+  for (const i of INGOTS) p["i:" + i.key] = ingotMatCost(i.key); return p; }
 function recordNet() {
   if (readOnly || testP || !state.stock) return;
-  const r = netReading(), h = state.netHist || (state.netHist = []), last = h[h.length - 1], now = Date.now();
+  const h = state.netHist || (state.netHist = []), now = Date.now();
+  // Only real activity (sales, buys, smelting, stock changes) moves the history. When prices change, the stock on hand is worth a different
+  // amount without anything happening, so every earlier reading is re-valued by that same amount and no rise or drop appears.
+  { const px = netPrices(), old = state.netPx;
+    if (old && h.length) { let adj = 0;
+      for (const k of new Set([...Object.keys(px), ...Object.keys(old)])) { const was = old[k] ?? 0, is = px[k] ?? 0; if (Math.abs(is - was) < 1e-9) continue;
+        const q = k.startsWith("i:") ? ((state.ingots || {})[k.slice(2)] || 0) : (state.stock[k] || 0); adj += q * (is - was); }
+      adj = round2(adj);
+      if (Math.abs(adj) > 0.004) for (const x of h) { x.s = round2(x.s + adj); x.v = round2(x.v + adj); } }
+    state.netPx = px; }
+  const r = netReading(), last = h[h.length - 1];
   if (last && Math.abs(last.v - r.v) < 0.005 && Math.abs(last.s - r.s) < 0.005) return;   // nothing moved
   if (last && h.length > 1 && now - last.at < NET_MERGE_MS) Object.assign(last, { at: now, ...r });   // a burst of changes is one reading
   else h.push({ at: now, ...r });
@@ -5877,7 +5892,7 @@ function netPeriodStart() {
 function renderNetChange() {
   const box = $("netChg"); if (!box) return;
   const h = (state.netHist || []).filter(x => x && x.at > 0 && Number.isFinite(x.v)), now = netReading();
-  const tip = `<p class="hint" style="margin:0 0 8px">How net worth (stockpile value + Forge funds) has moved over the Period picked above. A reading is saved whenever it changes${h.length ? `; tracking started ${shortDate(h[0].at)}` : ""}.</p>`;
+  const tip = `<p class="hint" style="margin:0 0 8px">How net worth (stockpile value + Forge funds) has moved over the Period picked above. Only real activity counts (sales, buys, smelting, stock changes): when prices are edited, earlier readings are re-valued at the new prices so the edit shows no rise or drop. A reading is saved whenever it changes${h.length ? `; tracking started ${shortDate(h[0].at)}` : ""}.</p>`;
   if (!h.length) { box.innerHTML = tip + `<div class="empty">No readings yet. The first one is saved with the next change to the ledger.</div>`; return; }
   const start = netPeriodStart();
   let base = null; for (const x of h) if (x.at <= start) base = x;
@@ -6750,7 +6765,9 @@ $("sellGiftT").addEventListener("click", () => { if (!unlocked) return; sellGift
   toast(sellGift ? "Gifted materials on: enter the blacksmith fee. Nothing is taken from the stockpiles." : "Gifted materials off"); });
 $("sellGiftFee").addEventListener("input", e => { sellGiftFee = e.target.value; sellGiftAuto = e.target.value === ""; updateSellQuote(); });
 $("sellMats").addEventListener("change", e => { const c = e.target.closest("[data-giftmat]"); if (!c) return; if (c.checked) giftNot.delete(c.dataset.giftmat); else giftNot.add(c.dataset.giftmat); updateSellQuote(); });
-$("equipBody").addEventListener("change", e => { if (e.target.id !== "eqItem") return; equipItem = e.target.value; e.target.blur(); renderEquip(); });
+$("equipBody").addEventListener("click", e => { const c = e.target.closest("[data-ecat]"), m = e.target.closest("[data-emat]"); if (!c && !m) return;
+  if (c) { eqCat = c.dataset.ecat; eqMat = "all"; } else eqMat = m.dataset.emat; renderEquip(); });
+$("equipBody").addEventListener("change", e => { if (e.target.id === "eqAdvMat") { eqMat = e.target.value || "all"; renderEquip(); return; } if (e.target.id !== "eqItem") return; equipItem = e.target.value; e.target.blur(); renderEquip(); });
 $("equipBody").addEventListener("input", e => { if (e.target.id !== "eqQty") return; equipQty = e.target.value; renderEquip(); });
 $("equipBody").addEventListener("submit", e => { if (e.target.id !== "eqForm") return; e.preventDefault(); if (readOnly || !unlocked) return;
   const q = Math.floor(Number(equipQty)); if (!(q >= 1)) { toast("Enter how many to make."); return; }
@@ -8159,21 +8176,32 @@ function craftEquipment(itemId, qty, free) {
   commit({ kind: "minus", fm: true, text: `ForgeMaster crafted ${qty} ${it.name} from ${t.use.map(u => `${fmtQty(u.qty)} ${u.name}`).join(", ")} (now ${fmtQty(equipHave(itemId))} in crafted equipment)` });
   return "";
 }
+let eqCat = "all", eqMat = "all";   // Crafted equipment: category and material buttons
 function renderEquip() {
   const body = $("equipBody"), cat = catalog(), a = document.activeElement;
   const isArrows = i => /arrow/i.test(i.name);   // arrow bundles are listed under Common items here
   const makeable = i => (["Armor", "Weapons", "Jewelry"].includes(i.cat) || ["weapon-repair-kits", "armor-repair-kits", "keys"].includes(i.id) || (i.cat === "Common items" && isArrows(i))) && (eqFree || !!recipeFor(i.id));
   const eqGroup = i => isArrows(i) ? "Common items" : i.cat;
-  if (!equipItem || !cat.some(i => i.id === equipItem && makeable(i))) { const f = cat.find(makeable); equipItem = f ? f.id : ""; }
+  // Category and material buttons, like the Sell orders menu: All / Armor / Weapons, then materials up to Steel and an Advanced materials list.
+  const eqCatDef = ORDER_CATS.find(c => c.key === eqCat), inCat = i => eqCat === "all" || (eqCatDef && eqCatDef.cats.includes(i.cat));
+  const matSrc = MAT_CATS.includes(eqCat) ? [...new Set(cat.filter(i => inCat(i) && makeable(i)).map(matOf))] : [];
+  const mcut = matSrc.indexOf("Steel"), eqMats = mcut >= 0 ? matSrc.slice(0, mcut + 1) : matSrc;
+  const EQ_BASIC = new Set(["Fur", "Hide", "Studded", "Leather", "Common", "Iron", "Steel"]), eqAdv = mcut >= 0 ? matSrc.slice(mcut + 1).filter(m => !EQ_BASIC.has(m)) : [];
+  if (!MAT_CATS.includes(eqCat) || (!eqMats.includes(eqMat) && !eqAdv.includes(eqMat))) eqMat = "all";
+  const shown = i => makeable(i) && inCat(i) && (eqMat === "all" || matOf(i) === eqMat);
+  if (!equipItem || !cat.some(i => i.id === equipItem && shown(i))) { const f = cat.find(i => ["Common items", "Armor", "Weapons", "Jewelry"].includes(i.cat) && shown(i)); equipItem = f ? f.id : ""; }
   const q = Math.floor(Number(equipQty)), ok = q >= 1, use = ok && equipItem ? orderStockUse([{ itemId: equipItem, qty: q }]) : [], short = !eqFree && use.some(u => u.qty > u.have + 1e-9);
   const groups = new Map(); for (const b of equipOf()) { const g = groups.get(b.itemId) || { name: b.name, qty: 0, at: b.at, who: new Set() }; g.qty += b.qty; g.at = Math.min(g.at, b.at); for (const x of (b.per && b.per.shares) || []) g.who.add(x.who); if (b.free && b.qty > 1e-9) g.free = true; groups.set(b.itemId, g); }
-  const sig = JSON.stringify([equipItem, equipQty, eqFree, use, [...groups].map(([k, g]) => [k, g.qty, [...g.who], !!g.free]), catSig]);
+  const sig = JSON.stringify([eqCat, eqMat, equipItem, equipQty, eqFree, use, [...groups].map(([k, g]) => [k, g.qty, [...g.who], !!g.free]), catSig]);
   if (body.dataset.sig === sig) return;
   if (body.contains(a) && a.id === "eqQty") { $("eqNeed").innerHTML = eqNeedHtml(use, q, short, eqFree); $("eqMake").disabled = !ok || short; body.dataset.sig = ""; return; }
   body.dataset.sig = sig;
-  const opts = (() => { const items = cat.filter(i => ["Common items", "Armor", "Weapons", "Jewelry"].includes(i.cat) && makeable(i));
+  const opts = (() => { const items = cat.filter(i => ["Common items", "Armor", "Weapons", "Jewelry"].includes(i.cat) && shown(i));
     return CAT_ORDER.map(c => { const xs = items.filter(i => eqGroup(i) === c); return xs.length ? `<optgroup label="${esc(c)}">${xs.map(i => `<option value="${esc(i.id)}">${esc(i.name)} (${coins(i.base)})</option>`).join("")}</optgroup>` : ""; }).join(""); })();
-  body.innerHTML = `<form id="eqForm" class="eq-form"><label>Item<select id="eqItem">${opts}</select></label>
+  const eqChips = `<div class="eq-cats"><div class="chips cat-chips" role="group" aria-label="Item category">` + ORDER_CATS.filter(c => ["all", "armor", "weapons"].includes(c.key)).map(c => `<button type="button" class="chip" data-ecat="${c.key}" aria-pressed="${c.key === eqCat}">${c.name}</button>`).join("") + `</div>`
+    + (MAT_CATS.includes(eqCat) && (eqMats.length || eqAdv.length) ? `<div class="chips cat-chips mat-chips" role="group" aria-label="Material"><span class="chip-label">Material</span>` + ["all", ...eqMats].map(m => `<button type="button" class="chip" data-emat="${esc(m)}" aria-pressed="${m === eqMat}">${m === "all" ? "All" : esc(m)}</button>`).join("")
+      + (eqAdv.length ? `<label class="adv-mat${eqAdv.includes(eqMat) ? " on" : ""}">Advanced materials<select id="eqAdvMat" aria-label="Advanced materials"><option value="">Pick…</option>${eqAdv.map(m => `<option value="${esc(m)}" ${m === eqMat ? "selected" : ""}>${esc(m)}</option>`).join("")}</select></label>` : "") + `</div>` : "") + `</div>`;
+  body.innerHTML = eqChips + `<form id="eqForm" class="eq-form"><label>Item<select id="eqItem">${opts || `<option value="">Nothing to make here</option>`}</select></label>
       <label>How many<input id="eqQty" type="number" min="1" step="1" value="${esc(equipQty)}"></label>
       <button type="submit" class="btn-return" id="eqMake" ${!ok || short ? "disabled" : ""}>Make it</button>
       <button type="button" class="pm-toggle" id="eqFreeT" aria-pressed="${eqFree}" title="On: items are made without using any materials. The stockpiles aren't touched, and no employee's materials are in them (so selling them pays no commission).">No material cost</button></form>
@@ -8577,6 +8605,10 @@ function normalize(d) {
     if (d.empProgress && typeof d.empProgress === "object") s.empProgress = d.empProgress;
     if (d.testStock) s.testStock = true;
     if (Array.isArray(d.ghosts)) s.ghosts = d.ghosts.filter(g => g && g.who && NAME[g.key] && g.qty > 0).map(g => ({ id: g.id || uid(), who: g.who, key: g.key, qty: round2(g.qty), at: Number(g.at) || 0, ...(g.craft ? { craft: true } : {}) }));
+    // Net worth history was reset on Oct 25, 2026 (new Reach Exchange prices), so the price change doesn't show as a drop: readings start fresh from here.
+    if (!d.netReset1025) d = { ...d, netHist: [] };
+    s.netReset1025 = true;
+    if (d.netPx && typeof d.netPx === "object" && d.netReset1025) s.netPx = Object.fromEntries(Object.entries(d.netPx).filter(([, v]) => Number.isFinite(Number(v))).map(([k, v]) => [k, Number(v)]));
     if (Array.isArray(d.netHist)) s.netHist = d.netHist.filter(x => x && Number(x.at) > 0 && Number.isFinite(Number(x.v))).map(x => ({ at: Number(x.at), s: round2(Number(x.s) || 0), f: round2(Number(x.f) || 0), v: round2(Number(x.v)) })).sort((a, b) => a.at - b.at).slice(-NET_KEEP);
     if (d.commStreakAt && typeof d.commStreakAt === "object") s.commStreakAt = Object.fromEntries(Object.entries(d.commStreakAt).filter(([k, v]) => Number(v) > 0).map(([k, v]) => [k, Number(v)]));
     if (d.commStreak && typeof d.commStreak === "object") s.commStreak = Object.fromEntries(Object.entries(d.commStreak).filter(([k, v]) => Number(v) > 0).map(([k, v]) => [k, Math.floor(Number(v))]));
