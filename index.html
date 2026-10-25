@@ -7349,17 +7349,19 @@ $("rawSellForm").addEventListener("submit", e => {
   if (city) { $("rsCity").checked = false; $("rsWho").disabled = $("rsEmp").disabled = false; $("rsWho").value = ""; $("rsReachWrap").hidden = false; }
   renderRsCart(); toast("Sell order confirmed and paid"); });
 
-// ---- Pouch (Ingot view): what the ForgeMaster is carrying, against a 269 carry weight. Kept in this browser only. ----
-// Ore and ingots weigh 1 each, leather 2, leather strips 0.1; armor and weapon are a fixed base weight (32 unless changed).
-const POUCH_KEY = "forge-pouch", POUCH_MAX = 269, POUCH_BASE = 32;
+// ---- Pouch (Ingot view): what the ForgeMaster is carrying, against a 265 carry weight. Kept in this browser only. ----
+// Ore and ingots weigh 1 each, charcoal 0.5, firewood 5, leather 2, leather strips 0.1; armor and weapon are a fixed base weight (27 unless changed).
+const POUCH_KEY = "forge-pouch", POUCH_MAX = 265, POUCH_BASE = 27, POUCH_OLD_BASE = 32;
 const POUCH_ITEMS = [
   ...["iron", "corundum", "silver", "gold", "orichalcum", "quicksilver", "moonstone", "malachite", "ebony"].map(k => ({ id: "s:" + k, name: k === "moonstone" ? "Moonstone Ore" : NAME[k] + " Ore", w: 1, grp: "Ores" })),
   ...INGOTS.map(i => ({ id: "i:" + i.key, name: i.name, w: 1, grp: "Ingots" })), { id: "s:dwarven", name: "Dwarven Metal Ingot", w: 1, grp: "Ingots" },
+  ...["poor", "regular", "briquettes", "coke"].map(k => ({ id: "s:" + k, name: NAME[k], w: 0.5, grp: "Charcoal" })), { id: "s:firewood", name: NAME.firewood, w: 5, grp: "Charcoal" },
   { id: "s:leather", name: "Leather", w: 2, grp: "Hunting gear" }, { id: "s:leatherstrips", name: "Leather Strips", w: 0.1, grp: "Hunting gear" }];
 const POUCH_BY = Object.fromEntries(POUCH_ITEMS.map(i => [i.id, i]));
 function pouchLoad() { let p = null; try { p = JSON.parse(localStorage.getItem(POUCH_KEY) || "null"); } catch (_) {}
   const items = {}; for (const [k, q] of Object.entries((p && p.items) || {})) if (POUCH_BY[k] && Number(q) > 0) items[k] = Math.floor(Number(q));
-  const base = p && Number.isFinite(Number(p.base)) && Number(p.base) >= 0 ? Number(p.base) : POUCH_BASE;
+  let base = p && Number.isFinite(Number(p.base)) && Number(p.base) >= 0 ? Number(p.base) : POUCH_BASE;
+  if (base === POUCH_OLD_BASE) base = POUCH_BASE;   // the old built-in base (32) moves to the new one (27)
   return { base, items }; }
 let pouch = pouchLoad();
 const pouchSave = () => { try { localStorage.setItem(POUCH_KEY, JSON.stringify(pouch)); } catch (_) {} };
@@ -7383,7 +7385,7 @@ function renderPouch() {
       <td><input type="number" min="0" step="1" class="pouch-q" data-pq="${i.id}" value="${pouch.items[i.id]}" aria-label="How many ${esc(i.name)}"></td><td>${pouchFmt(pouch.items[i.id] * i.w)}</td>
       <td><button type="button" class="btn-ghost" data-prm="${i.id}">Remove</button></td></tr>`).join("")}</tbody></table></div>
       <button type="button" class="btn-ghost" id="pouchClear" style="margin-top:8px">Empty pouch</button>`
-    : `<div class="empty">The pouch is empty. Add ore, ingots or leather above.</div>`;
+    : `<div class="empty">The pouch is empty. Add ore, ingots, charcoal or leather above.</div>`;
   const list = $("pouchList"), typing = list.contains(document.activeElement) && document.activeElement.matches(".pouch-q");
   if (list.dataset.html !== html) { if (typing) list.dataset.stale = "1"; else { list.dataset.html = html; list.dataset.stale = ""; list.innerHTML = html; } }   // never redrawn under someone typing a number
 }
