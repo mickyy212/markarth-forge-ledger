@@ -209,6 +209,17 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .pf-fold[open] > summary::before { transform: rotate(90deg); }
 .pf-fold > summary h3 { margin: 0; }
 .pf-fold[open] > summary { margin-bottom: 8px; }
+.when-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; margin: 10px 0 2px; font-size: .85rem; }
+.when-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.when-legend .hint { flex-basis: 100%; }
+.when-fig { margin: 12px 0 0; }
+.when-fig figcaption { font-weight: 700; font-size: .9rem; margin-bottom: 4px; }
+.when-chart { display: block; width: 100%; height: auto; }
+.when-chart text { font-size: 11px; fill: var(--muted); font-family: var(--mono, monospace); }
+.when-chart .wb-axis { stroke: var(--line); }
+.wb-o { fill: var(--accent); background: var(--accent); }
+.wb-c { fill: var(--gold); background: var(--gold); }
+.when-chart g:hover rect.wb-o, .when-chart g:hover rect.wb-c { opacity: .8; }
 .pf-comm-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .ing-quick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
 .ing-adj { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -686,6 +697,9 @@ ul.loan-list li .hint { grid-column: 2 / -1; font-size: .8rem; }
 .clocked-strip .dot, .fm-on-badge .dot { width: 10px; height: 10px; border-radius: 50%; background: #3ecf6e; box-shadow: 0 0 0 3px rgba(62,207,110,.25); flex: none; }
 .fm-on-badge { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border: 2px solid #3ecf6e; border-radius: 10px; background: rgba(62,207,110,.1); align-self: center; }
 .fm-on-badge[hidden] { display: none; }
+.fm-on-badge.off { border-color: #e5484d; background: rgba(229,72,77,.12); }
+.fm-on-badge.off .dot { background: #e5484d; box-shadow: 0 0 0 3px rgba(229,72,77,.25); }
+.fm-on-badge.off b { color: #ff8a8d; }
 .fm-on-badge b { display: block; color: #7fe3a0; font-size: .85rem; }
 .fm-on-badge .big { display: block; font-size: 1.15rem; font-weight: 800; letter-spacing: .03em; line-height: 1.2; }
 .clock-note { flex: 1 1 260px; max-width: 460px; margin: 0; align-self: center; padding: 8px 12px; border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 6px; background: var(--surface); font-size: .85rem; line-height: 1.45; }
@@ -1177,7 +1191,7 @@ table.val thead th { color: #cdb995; }
   <div class="fm-sign" id="topSigns">
   <p class="mobile-note" id="mobileNote" hidden><span>You're on a phone. Everything works here, but the ledger is easiest to use on a computer.</span><button type="button" class="btn-ghost" id="mobileNoteX">Got it</button></p>
   <p class="clock-note" id="clockNote" hidden><b>You're clocked in.</b> Signing in clocks you in, and signing out or closing the website clocks you out. <b>No amount of hours is required.</b> This is purely for logistics: it shows when you're around, to make buying easier.</p>
-  <div class="fm-on-badge" id="fmOnBadge" hidden><span class="dot" aria-hidden="true"></span><span><b>ForgeMaster is clocked in</b><span class="big">CONTACT FORGEMASTER FOR QUESTIONS</span></span></div>
+  <div class="fm-on-badge" id="fmOnBadge" hidden><span class="dot" aria-hidden="true"></span><span><b id="fmOnHead">ForgeMaster is clocked in</b><span class="big" id="fmOnLine">CONTACT FORGEMASTER FOR QUESTIONS</span></span></div>
   <div class="panel lock top-emp" id="topEmp" role="region" aria-labelledby="topEmpH">
     <form id="topEmpForm" class="fm-sign-form">
       <span class="pin-note">Default PIN: <b>1234</b><br>(changeable in Pending menu)</span>
@@ -1902,6 +1916,10 @@ table.val thead th { color: #cdb995; }
       <button type="button" class="chip" data-trp="today" aria-pressed="false">Today</button>
       <button type="button" class="chip" data-trp="30" aria-pressed="false">Last 30 days</button>
       <button type="button" class="chip" data-trp="7" aria-pressed="false">Last 7 days</button>
+    </div>
+    <div class="panel">
+      <h3 class="sub-h">When customers buy</h3>
+      <div id="trWhen"></div>
     </div>
     <div class="panel">
       <h3 class="sub-h">What customers buy</h3>
@@ -3690,11 +3708,48 @@ const pctTxt = (n, d) => d ? `${Math.round(n / d * 1000) / 10}%` : "–";
 const trBar = (n, d) => `<span class="tr-bar"><i style="width:${d ? Math.max(2, Math.round(n / d * 100)) : 0}px"></i><b>${pctTxt(n, d)}</b></span>`;
 let trPeriod = "all";
 const inTr = at => trPeriod === "all" ? true : trPeriod === "today" ? new Date(at).toDateString() === new Date().toDateString() : trPeriod === "month" ? (() => { const d = new Date(at), n = new Date(); return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth(); })() : at >= Date.now() - Number(trPeriod) * 86400000;
+// ---- When customers buy: orders and coins by hour of day and by day of week (viewer's own clock) ----
+const WK_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const hrLabel = h => `${h % 12 || 12}${h < 12 ? "am" : "pm"}`;
+function whenChart(slots, labels, title, fullLabel, W) {
+  const H = W < 500 ? 150 : 170, padL = 4, padB = 22, top = 8, n = slots.length, gw = (W - padL * 2) / n, bw = Math.max(2, gw * 0.36);
+  const maxO = Math.max(1, ...slots.map(s => s.n)), maxC = Math.max(1, ...slots.map(s => s.c)), ch = H - padB - top;
+  const bars = slots.map((s, i) => { const x = padL + i * gw + gw / 2, ho = s.n / maxO * ch, hc = s.c / maxC * ch;
+    const tip = `${fullLabel(i)}: ${s.n} order${s.n === 1 ? "" : "s"}, ${coins(round2(s.c))} coins${s.n ? ` (avg ${coins(round2(s.c / s.n))})` : ""}`;
+    return `<g><title>${esc(tip)}</title><rect x="${round2(x - gw / 2)}" y="${top}" width="${round2(gw)}" height="${ch}" fill="transparent"/>
+      ${s.n ? `<rect class="wb-o" x="${round2(x - bw - 1)}" y="${round2(top + ch - ho)}" width="${round2(bw)}" height="${round2(Math.max(1, ho))}" rx="2"/>` : ""}
+      ${s.c > 0 ? `<rect class="wb-c" x="${round2(x + 1)}" y="${round2(top + ch - hc)}" width="${round2(bw)}" height="${round2(Math.max(1, hc))}" rx="2"/>` : ""}
+      ${labels[i] ? `<text x="${round2(x)}" y="${H - 6}" text-anchor="middle">${labels[i]}</text>` : ""}</g>`; }).join("");
+  return `<figure class="when-fig"><figcaption>${title}</figcaption><svg class="when-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(title)}: orders and coins">
+    <line x1="0" x2="${W}" y1="${top + ch + 0.5}" y2="${top + ch + 0.5}" class="wb-axis"/>${bars}</svg></figure>`;
+}
+function renderWhenBuy(sales) {
+  const box = $("trWhen"); if (!box) return;
+  const W = Math.round(Math.min(900, Math.max(300, box.clientWidth || 640)));   // drawn at the panel's own width, so the labels stay readable on phones
+  const list = sales.filter(x => !/^Donation/i.test(x.text) && x.at > 0);
+  if (!list.length) { box.innerHTML = `<div class="empty">No sell orders ${trPeriod === "all" ? "logged yet" : "in this period"}.</div>`; return; }
+  const hrs = Array.from({ length: 24 }, () => ({ n: 0, c: 0 })), days = Array.from({ length: 7 }, () => ({ n: 0, c: 0 }));
+  for (const x of list) { const d = new Date(x.at), h = hrs[d.getHours()], w = days[d.getDay()]; h.n++; h.c += x.final; w.n++; w.c += x.final; }
+  const best = (arr, f) => { let bi = -1, bv = 0; arr.forEach((s, i) => { const v = f(s); if (v > bv + 1e-9) { bv = v; bi = i; } }); return bi; };
+  const minN = list.length >= 20 ? 2 : 1, avg = s => s.n >= minN ? s.c / s.n : 0;
+  const bh = best(hrs, s => s.n), vh = best(hrs, s => s.c), ah = best(hrs, avg), bd = best(days, s => s.n), vd = best(days, s => s.c), ad = best(days, avg);
+  const hr = i => i < 0 ? "–" : `${hrLabel(i)}–${hrLabel((i + 1) % 24)}`, dy = i => i < 0 ? "–" : WK_NAMES[i];
+  const tile = (k, v, sub) => `<div class="ms-tile"><span>${k}</span><b>${v}</b>${sub ? `<span class="hint" style="text-transform:none;letter-spacing:0">${sub}</span>` : ""}</div>`;
+  box.innerHTML = `<div class="ms-tiles">
+      ${tile("Busiest hour", hr(bh), bh >= 0 ? `${hrs[bh].n} orders` : "")}${tile("Most coins by hour", hr(vh), vh >= 0 ? `${coins(round2(hrs[vh].c))} coins` : "")}${tile("Biggest average order", hr(ah), ah >= 0 ? `${coins(round2(avg(hrs[ah])))} coins each` : "")}
+      ${tile("Busiest day", dy(bd), bd >= 0 ? `${days[bd].n} orders` : "")}${tile("Most coins by day", dy(vd), vd >= 0 ? `${coins(round2(days[vd].c))} coins` : "")}${tile("Biggest average order by day", dy(ad), ad >= 0 ? `${coins(round2(avg(days[ad])))} coins each` : "")}
+    </div>
+    <div class="when-legend"><span><i class="wb-o"></i>Orders (buy volume)</span><span><i class="wb-c"></i>Coins spent (sale value)</span><span class="hint">Each bar is scaled to its own highest value. Hover or tap a bar for the numbers. Times are in your own time zone.</span></div>
+    ${whenChart(hrs, hrs.map((_, i) => i % (W < 500 ? 6 : 3) === 0 ? hrLabel(i) : ""), "By hour of the day", i => hr(i), W)}
+    ${whenChart(days, WK_NAMES, "By day of the week", i => ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][i], W)}
+    ${list.length < 20 ? `<p class="hint tr-note">Only ${list.length} order${list.length === 1 ? "" : "s"} logged${trPeriod === "all" ? "" : " in this period"}, so these patterns are rough. They get clearer with every order.</p>` : ""}`;
+}
 function renderTrends() {
   $("trendSec").hidden = !unlocked; if (!unlocked) return;
   $("trPeriod").querySelectorAll("[data-trp]").forEach(b => b.setAttribute("aria-pressed", b.dataset.trp === trPeriod));
   // Sell orders: every paid sale (customers' records), including apprentices' and donations.
   const sales = paidSales().filter(x => inTr(x.at)), N = sales.length;
+  renderWhenBuy(sales);
   const kinds = new Map(), items = new Map();
   for (const x of sales) {
     const seen = new Set(), base = x.lines.reduce((a, l) => a + (Number(l.base) || 0) * (Number(l.qty) || 0), 0);
@@ -4756,7 +4811,7 @@ function renderOrders() {
   }
   updateSellQuote(); updateBuyQuote();
 }
-const blank = () => ({ clock: { sessions: [] }, tailor: { goods: {}, sales: [], test: [], orders: [] }, stock: Object.fromEntries(ALL.map(o => [o.key, 0])), ingots: {}, pending: [], debts: [], edebts: [], levels: null, status: {}, loyalty: null, prices: {}, contribValue: {}, buyCfg: null, buys: [], buyHistory: [], payments: [], sells: [], customers: [], catalog: null, recipes: {}, debtSales: [], debtRequests: [], purchaseReqs: [], resolveReqs: [], saleRemovals: [], employees: [], contrib: {}, log: [] });
+const blank = () => ({ clockHist: {}, tailor: { goods: {}, sales: [], test: [], orders: [] }, stock: Object.fromEntries(ALL.map(o => [o.key, 0])), ingots: {}, pending: [], debts: [], edebts: [], levels: null, status: {}, loyalty: null, prices: {}, contribValue: {}, buyCfg: null, buys: [], buyHistory: [], payments: [], sells: [], customers: [], catalog: null, recipes: {}, debtSales: [], debtRequests: [], purchaseReqs: [], resolveReqs: [], saleRemovals: [], employees: [], contrib: {}, log: [] });
 let empFilter = "";
 let fmView = "all", bsMode = "sell", purchaseMode = true;   // Purchase mode: only Buy / Sell, Stockpiles and Profit tabs
 const PM_VIEWS = ["buysell", "stock", "profit", "equip"];
@@ -5175,10 +5230,14 @@ function bankSet(emp, fn) {
   if (onbBank) touch(onbBank); bankSave(touch);
 }
 function bankDrop(emp) { const drop = b => { delete b.emps[emp.id]; }; if (onbBank) drop(onbBank); bankSave(drop); }
+let lastBankAt = 0, lastBankFull = 0;
 async function bankPull() {
   if (!db) return;
   try {
-    const { data, error } = await db.from("ledger").select("data").eq("id", ONB_ROW).maybeSingle(); if (error) throw error;
+    if (lastBankAt && onbBank && Date.now() - lastBankFull < 30 * 60000) { const { data: t, error: te } = await db.from("ledger").select("updated_at").eq("id", ONB_ROW).maybeSingle(); if (te) throw te;
+      if (t && Date.parse(t.updated_at) === lastBankAt) return; }   // nothing changed: no download, no redraw
+    const { data, error } = await db.from("ledger").select("data, updated_at").eq("id", ONB_ROW).maybeSingle(); if (error) throw error;
+    if (data) { lastBankAt = Date.parse(data.updated_at) || 0; lastBankFull = Date.now(); }
     if (data) onbBank = normBank(data.data);
     else if (!readOnly && state.employees) {   // first time: bring over everything the employee records already hold
       const b = normBank(null);
@@ -5772,9 +5831,10 @@ function persist() {
   const snapshot = JSON.parse(JSON.stringify(state));
   pendingSaves++;
   writing = writing.then(async () => {
-    const { error } = await db.from("ledger").upsert({ id: "main", data: snapshot, updated_at: new Date().toISOString() });
+    const ts = new Date().toISOString();
+    const { error } = await db.from("ledger").upsert({ id: "main", data: snapshot, updated_at: ts });
     if (error) throw error;
-    lastServer = snapshot;
+    lastServer = snapshot; lastMainAt = Date.parse(ts); lastFullPull = Date.now();
   }).catch(() => {
     // The change didn't reach the shared ledger: put the page back to what everyone else sees
     if (lastServer) state = normalize(lastServer);
@@ -7622,30 +7682,73 @@ function applyCommission(o, plan) {
 // unlock and out only when they close the site (locking or viewing as an employee keeps them clocked in). A closed tab can't report, so every open
 // session sends a heartbeat (last = now) every 3 minutes; one with no heartbeat for 7 minutes ended at its last heartbeat.
 // Each clock save re-reads the shared ledger first and changes only clock data, so it never undoes someone else's edit.
-const CLOCK_BEAT = 10 * 1000, CLOCK_STALE = 30 * 1000;   // an open tab checks in every 10 seconds; 30 seconds of silence = clocked out
-const clockOf = () => state.clock || (state.clock = { sessions: [] });
+const CLOCK_BEAT = 30 * 1000, CLOCK_STALE = 90 * 1000;   // an open tab checks in every 30 seconds; 90 seconds of silence = clocked out
+// Clock-ins live in their own small database row ("clock"), so a check-in never rewrites or re-downloads the whole ledger.
+// The row holds only recent sessions; finished ones are folded into the ledger's compact history (state.clockHist: per person, merged
+// [start, end] in seconds) and then dropped from the row. If the database won't take the extra row, clock-ins fall back to the ledger row.
+var clockMode = "row", clockReady = false;
+let clockRow = { sessions: [] }, clockRead = 0, clockHistPush = 0, clockMigrated = false;
+const CLOCK_KEEP = 2 * 3600000;
+const curSessions = () => clockMode === "main" ? (state.clock || (state.clock = { sessions: [] })).sessions : clockRow.sessions;
+let clockViewKey = "", clockViewHist = null, clockView = { sessions: [] };
+function clockOf() {
+  const cur = curSessions(), h = state.clockHist || {}, key = cur.length + ":" + cur.reduce((a, x) => a + (x.last || 0) + (x.end || 0), 0);
+  if (h !== clockViewHist || key !== clockViewKey) { clockViewHist = h; clockViewKey = key; const hs = [];
+    for (const [who, iv] of Object.entries(h)) iv.forEach(([a, b], i) => hs.push({ id: `h:${who}:${i}`, who, start: a * 1000, last: b * 1000, end: b * 1000 }));
+    clockView = { sessions: [...hs, ...cur] }; }
+  return clockView;
+}
+const normSessions = arr => (Array.isArray(arr) ? arr : []).filter(x => x && x.id && x.who && x.start > 0 && x.last >= x.start).map(x => ({ ...x }));
+function histMerge(list) { const iv = list.filter(r => Array.isArray(r) && r[1] >= r[0]).map(r => [Math.floor(r[0]), Math.ceil(r[1])]).sort((a, b) => a[0] - b[0]), out = [];
+  for (const [a, b] of iv) { const l = out[out.length - 1]; if (l && a <= l[1]) l[1] = Math.max(l[1], b); else out.push([a, b]); } return out.slice(-3000); }
+function histAdd(h, who, start, end) { h[who] = histMerge([...(h[who] || []), [start / 1000, end / 1000]]); }
+const histCovers = (h, who, start, end) => (h[who] || []).some(([a, b]) => a <= Math.floor(start / 1000) && b >= Math.ceil(end / 1000));
 const ssGet = k => { try { return JSON.parse(sessionStorage.getItem(k) || "null"); } catch (_) { return null; } };
 const ssSet = (k, v) => { try { v == null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
 const clockEmp = () => { const e = !unlocked && !fmAs ? currentEmp() : null; return e && !isTailor(e) ? e : null; };
 const clockIdent = () => `${(clockEmp() || {}).id || ""}|${unlocked ? "FM" : fmAs ? "FMas" : ""}`;
 let clockBusy = false, clockLastIdent = null, clockBeatAt = 0;
+async function clockFetch() {
+  const { data, error } = await db.from("ledger").select("data").eq("id", "clock").maybeSingle(); if (error) throw error;
+  clockRow = { sessions: normSessions(data && data.data && data.data.sessions) }; clockRead = Date.now();
+}
+async function clockInit() {
+  try { const { data, error } = await db.from("ledger").select("data").eq("id", "clock").maybeSingle(); if (error) throw error;
+    if (!data) { const { error: e2 } = await db.from("ledger").insert({ id: "clock", data: { sessions: [] }, updated_at: new Date().toISOString() }); if (e2) throw e2; }
+    clockMode = "row"; clockRow = { sessions: normSessions(data && data.data && data.data.sessions) }; clockRead = Date.now(); delete state.clock;
+  } catch (_) { clockMode = "main"; }
+  clockReady = true; renderClockUI();
+}
+// Close sessions that went quiet, fold finished ones into the ledger's history, and drop them from the clock row once the history has them.
+function clockTidy() {
+  const now = Date.now(), h = state.clockHist || (state.clockHist = {}), need = [];
+  for (const x of clockRow.sessions) if (!x.end && now - x.last > CLOCK_STALE) x.end = x.last;
+  clockRow.sessions = clockRow.sessions.filter(x => { if (!x.end || now - x.end <= CLOCK_KEEP) return true; if (histCovers(h, x.who, x.start, x.end)) return false; need.push(x); return true; }).slice(-500);
+  if (need.length && !readOnly && now - clockHistPush > 5 * 60000) { clockHistPush = now; for (const x of need) histAdd(h, x.who, x.start, x.end); persist(); }
+}
 async function clockSync(beat) {
-  if (!db || readOnly || clockBusy) return;
+  if (!db || readOnly || clockBusy || !clockReady) return;
   const now = Date.now(), emp = clockEmp(), cur = ssGet("clock-emp"), fm = ssGet("clock-fm"), muts = [];
-  const live = sid => clockOf().sessions.some(x => x.id === sid && !x.end);
-  const start = (who, name) => { const sid = uid(); muts.push(() => clockOf().sessions.push({ id: sid, who, name, start: now, last: now })); return sid; };
-  if (cur && (!emp || cur.who !== emp.id)) { muts.push(() => { const x = clockOf().sessions.find(y => y.id === cur.sid); if (x && !x.end) { x.last = now; x.end = now; } }); ssSet("clock-emp", null); }
-  if (emp && (!cur || cur.who !== emp.id || !live(cur.sid))) ssSet("clock-emp", { sid: start(emp.id, emp.name), who: emp.id });
-  if (fm && !unlocked && !fmAs) { muts.push(() => { const x = clockOf().sessions.find(y => y.id === fm.sid); if (x && !x.end) { x.last = now; x.end = now; } }); ssSet("clock-fm", null); }   // Lock clocks the ForgeMaster out ("Sign in as" doesn't)
-  if (unlocked && (!fm || !live(fm.sid))) ssSet("clock-fm", { sid: start("FM", "ForgeMaster") });
-  if (beat || now - clockBeatAt >= CLOCK_BEAT) { const ids = [ssGet("clock-emp"), ssGet("clock-fm")].filter(Boolean).map(x => x.sid);
-    if (ids.length) { clockBeatAt = now; muts.push(() => { for (const x of clockOf().sessions) if (ids.includes(x.id) && !x.end) x.last = Date.now(); }); } }
-  if (!muts.length) return;
+  const S = () => curSessions();
+  const live = sid => S().some(x => x.id === sid && !x.end && now - x.last <= CLOCK_STALE);
+  const start = (who, name) => { const sid = uid(); muts.push(() => S().push({ id: sid, who, name, start: now, last: now })); return { sid, who, name, start: now }; };
+  if (cur && (!emp || cur.who !== emp.id)) { muts.push(() => { const x = S().find(y => y.id === cur.sid); if (x && !x.end) { x.last = now; x.end = now; } }); ssSet("clock-emp", null); }
+  if (emp && (!cur || cur.who !== emp.id || !live(cur.sid))) ssSet("clock-emp", start(emp.id, emp.name));
+  if (fm && !unlocked && !fmAs) { muts.push(() => { const x = S().find(y => y.id === fm.sid); if (x && !x.end) { x.last = now; x.end = now; } }); ssSet("clock-fm", null); }   // Lock clocks the ForgeMaster out ("Sign in as" doesn't)
+  if (unlocked && (!fm || !live(fm.sid))) ssSet("clock-fm", start("FM", "ForgeMaster"));
+  if (beat || now - clockBeatAt >= CLOCK_BEAT) { const mine = [ssGet("clock-emp"), ssGet("clock-fm")].filter(Boolean);
+    if (mine.length) { clockBeatAt = now; muts.push(() => { for (const m of mine) { const x = S().find(y => y.id === m.sid);
+      if (x && !x.end) x.last = Date.now(); else if (!x && m.who) S().push({ id: m.sid, who: m.who, name: m.name || "", start: m.start || now, last: Date.now() }); } }); } }   // re-added if another tab's save lost it
+  // One-time move: the ledger row still carries the old clock list, so save it without it.
+  if (clockMode === "row" && !clockMigrated && lastServer && lastServer.clock && muts.length) { clockMigrated = true; persist(); }
+  if (!muts.length) { if (clockMode === "row" && now - clockRead >= CLOCK_BEAT) { try { await clockFetch(); renderClockUI(); } catch (_) {} } return; }
   clockBusy = true;
   try {
-    if (pendingSaves === 0) { try { const { data } = await db.from("ledger").select("data").eq("id", "main").maybeSingle(); if (data) applyRemote(data.data); } catch (_) {} }
-    muts.forEach(f => f()); clockOf().sessions = clockOf().sessions.slice(-6000); persist();
-  } finally { clockBusy = false; }
+    if (clockMode === "row") { await clockFetch(); muts.forEach(f => f()); clockTidy();
+      const { error } = await db.from("ledger").upsert({ id: "clock", data: { sessions: clockRow.sessions }, updated_at: new Date().toISOString() }); if (error) throw error; }
+    else { if (pendingSaves === 0) { try { await pull(true); } catch (_) {} } muts.forEach(f => f()); persist(); }
+  } catch (_) {} finally { clockBusy = false; }
+  renderClockUI();
 }
 setInterval(() => clockSync(false), CLOCK_BEAT);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) clockSync(true); });   // check in as soon as a tab comes back to the front
@@ -7716,7 +7819,10 @@ function renderClockUI() {
   { const strip = $("clockedStrip"), on = unlocked && purchaseMode && !fmAs ? state.employees.filter(x => clockedIn(x.id)).sort((a, b) => a.name.localeCompare(b.name)) : [];
     const html = on.length ? `<span class="lbl">Clocked in</span>${on.map(x => `<span class="who"><span class="dot" aria-hidden="true"></span>${esc(x.name)}</span>`).join("")}` : "";
     strip.hidden = !on.length; if (strip.dataset.sig !== html) { strip.dataset.sig = html; strip.innerHTML = html; } }
-  $("fmOnBadge").hidden = !(e && clockedIn("FM"));
+  // Employees always see the ForgeMaster's status: green while clocked in, red while clocked out.
+  { const b = $("fmOnBadge"), on = clockedIn("FM"); b.hidden = !e; b.classList.toggle("off", !on);
+    $("fmOnHead").textContent = on ? "ForgeMaster is clocked in" : "ForgeMaster is clocked out";
+    $("fmOnLine").textContent = on ? "CONTACT FORGEMASTER FOR QUESTIONS" : "PLEASE SEND QUESTIONS BY PIGEON"; }
   $("clockNote").hidden = !(e && !fmAs && ["prospector", "woodcutter", "hunter"].includes(e.prof));
   const show = !unlocked && fmAs && !!e && !isTailor(e); if (!show) hrTab = "page";
   $("hrTabs").hidden = !show; document.body.classList.toggle("hours-mode", show && hrTab === "hours"); $("hoursSec").hidden = !(show && hrTab === "hours");
@@ -8477,8 +8583,11 @@ function normalize(d) {
       orders: (Array.isArray(d.tailor.orders) ? d.tailor.orders : []).filter(x => x && x.id && x.who && TL_NAME[x.item]).slice(0, 500),
       ingReq: (Array.isArray(d.tailor.ingReq) ? d.tailor.ingReq : []).filter(x => x && x.id && TL_ING[x.item] && x.qty > 0).slice(0, 200) };
     if (Array.isArray(d.fmAvail) && d.fmAvail.length === 7) s.fmAvail = d.fmAvail.map(day => (Array.isArray(day) ? day : []).filter(r => Array.isArray(r) && r[0] >= 0 && r[1] > r[0] && r[1] <= 2880).map(r => [Math.round(r[0]), Math.round(r[1])]).slice(0, 6));
-    if (d.clock && Array.isArray(d.clock.sessions)) s.clock = { sessions: d.clock.sessions.filter(x => x && x.id && x.who && x.start > 0 && x.last >= x.start)
-      .map(x => (!x.end && Date.now() - x.last > CLOCK_STALE ? { ...x, end: x.last } : { ...x })).slice(-6000) };
+    { const h = {}; if (d.clockHist && typeof d.clockHist === "object") for (const [who, iv] of Object.entries(d.clockHist)) if (Array.isArray(iv)) h[who] = histMerge(iv);
+      const open = [];
+      if (d.clock && Array.isArray(d.clock.sessions)) for (const x of d.clock.sessions) { if (!x || !x.id || !x.who || !(x.start > 0) || !(x.last >= x.start)) continue;
+        const end = x.end || (Date.now() - x.last > CLOCK_STALE ? x.last : 0); if (end) histAdd(h, x.who, x.start, end); else open.push({ ...x }); }
+      s.clockHist = h; if (!(clockReady && clockMode === "row")) s.clock = { sessions: open }; }
     if (Array.isArray(d.commBank)) s.commBank = mergeBank(d.commBank.filter(b => b && b.id && b.who && b.mats && Object.keys(b.mats).length));
     if (Array.isArray(d.commissions)) s.commissions = d.commissions.filter(c => c && c.id && c.who).slice(0, 1000);
     if (d.statusManual && typeof d.statusManual === "object") s.statusManual = Object.fromEntries(Object.keys(d.statusManual).filter(k => NAME[k]).map(k => [k, true]));
@@ -8530,7 +8639,7 @@ function applyRemote(data) {
   if (!readOnly && fresh && rest !== null && rest === lastInRest) {
     lastServer = data;
     if (clk === lastInClock) return;   // nothing changed
-    lastInClock = clk; state.clock = normalize(data).clock;   // only clock check-ins changed
+    lastInClock = clk; if (clockMode === "main") state.clock = normalize(data).clock;   // only clock check-ins changed (old-style saves)
     renderClockUI(); if (tailorView()) renderTailorTab();
     return;
   }
@@ -8546,10 +8655,17 @@ function applyRemote(data) {
   $("mobileNoteX").addEventListener("click", () => { gone = true; try { localStorage.setItem("mobile-note-x", "1"); } catch (_) {} sync(); }); }
 // Safety redraw: at least once a minute while the page is on screen, so anything that changes with time is never left stale.
 setInterval(() => { if (!document.hidden && !readOnly && Date.now() - lastFullAt >= 60000) { lastFullAt = Date.now(); render(); } }, 15000);
-async function pull() {
-  const { data, error } = await db.from("ledger").select("data").eq("id", "main").maybeSingle();
+// Checking for changes asks only for the ledger's "last saved" time (a few bytes); the whole ledger downloads only when that changed,
+// or at least every 30 minutes as a safety net.
+let lastMainAt = 0, lastFullPull = 0;
+async function pull(force) {
+  if (!force && lastMainAt && Date.now() - lastFullPull < 30 * 60000) {
+    const { data, error } = await db.from("ledger").select("updated_at").eq("id", "main").maybeSingle(); if (error) throw error;
+    if (data && Date.parse(data.updated_at) === lastMainAt) return;
+  }
+  const { data, error } = await db.from("ledger").select("data, updated_at").eq("id", "main").maybeSingle();
   if (error) throw error;
-  if (data) applyRemote(data.data);
+  if (data) { if (pendingSaves === 0) { lastMainAt = Date.parse(data.updated_at) || 0; lastFullPull = Date.now(); } applyRemote(data.data); }
   else { await db.from("ledger").insert({ id: "main", data: blank() }); applyRemote(blank()); }
 }
 readOnly = true; $("sync").textContent = "Connecting…"; render();
@@ -8566,14 +8682,14 @@ readOnly = true; $("sync").textContent = "Connecting…"; render();
     render(); return;
   }
   db = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseKey);
-  try { await pull(); await bankPull(); }
+  try { await pull(true); await bankPull(); await clockInit(); }
   catch (_) {
     $("sync").textContent = "Not connected";
     noticeText = "Couldn't reach the shared ledger. Check your internet connection and reload. If this keeps happening, the database setup may not be finished.";
     render(); return;
   }
   db.channel("ledger-main")
-    .on("postgres_changes", { event: "*", schema: "public", table: "ledger", filter: "id=eq.main" }, p => applyRemote(p.new && p.new.data))
+    .on("postgres_changes", { event: "*", schema: "public", table: "ledger", filter: "id=eq.main" }, p => { if (p.new && p.new.updated_at && pendingSaves === 0) lastMainAt = Date.parse(p.new.updated_at) || lastMainAt; applyRemote(p.new && p.new.data); })
     .subscribe();
   db.channel("onboarding-bank").on("postgres_changes", { event: "*", schema: "public", table: "ledger", filter: "id=eq." + ONB_ROW }, () => bankPull()).subscribe();
   setInterval(() => { if (!document.hidden) { pull().catch(() => {}); bankPull(); } }, 20000);
