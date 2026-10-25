@@ -221,6 +221,17 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .wb-c { fill: var(--gold); background: var(--gold); }
 .when-chart g:hover rect.wb-o, .when-chart g:hover rect.wb-c { opacity: .8; }
 .eq-cats { display: grid; gap: 6px; margin-bottom: 10px; }
+.pouch-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px; }
+.pouch-top .fl { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.pouch-top .fv { font-family: var(--mono, monospace); font-size: 1.6rem; font-weight: 700; }
+.pouch-top .fv.neg { color: var(--danger, #e07b6c); }
+.pouch-base { display: grid; gap: 4px; font-size: .85rem; } .pouch-base input { width: 110px; }
+.pouch-bar { height: 10px; border-radius: 6px; background: var(--line); overflow: hidden; margin: 10px 0 12px; }
+.pouch-bar span { display: block; height: 100%; background: var(--ok, #6cc193); transition: width .2s; }
+.pouch-bar span.near { background: var(--gold, #c99a1e); } .pouch-bar span.over { background: var(--danger, #e07b6c); }
+.pouch-add { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin-bottom: 10px; } .pouch-add label { display: grid; gap: 4px; font-size: .85rem; }
+#pouchList .cat-wrap { max-height: none; }
+.pouch-add select { min-width: 220px; } .pouch-add input { width: 90px; } .pouch-q { width: 80px; }
 .pf-comm-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .ing-quick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
 .ing-adj { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -1396,6 +1407,9 @@ table.val thead th { color: #cdb995; }
   <section aria-labelledby="craftH" id="craftSec" data-views="stock" hidden>
     <div class="sec-head"><h2 id="craftH">Crafted ingots</h2><span class="hint">Smelt stockpile ore and fuel into ingots. The ore and fuel come out of the stockpile; the ingots go onto the ingot stockpile.</span></div>
     <div class="panel" id="craftBody"></div>
+  </section>
+  <section aria-label="Pouch" id="pouchSec" data-views="stock" hidden>
+    <details class="ingot-lvl" id="pouchDet"><summary>Pouch</summary><div class="panel" id="pouchBody"></div></details>
   </section>
   <section aria-label="Ingot sufficiency goals" id="ingotLvlSec" data-views="stock" hidden>
     <details class="ingot-lvl" id="ingotLvlDet"><summary>Ingot sufficiency goals</summary><div class="panel" id="ingotLvlBody"></div></details>
@@ -4834,7 +4848,7 @@ try { fmView = sessionStorage.getItem("fm-view") || "all"; } catch (_) {}
 let apView = "sell", apFor = "", apStock = "forge";
 function applyView() {
   $("fmTabs").hidden = !unlocked;
-  $("ingotBar").hidden = $("ingotSec").hidden = $("craftSec").hidden = $("ingotLvlSec").hidden = $("ingClaimSec").hidden = true;
+  $("ingotBar").hidden = $("ingotSec").hidden = $("craftSec").hidden = $("pouchSec").hidden = $("ingotLvlSec").hidden = $("ingClaimSec").hidden = true;
   if (unlocked && priceMode) fmView = "prices";
   else if (unlocked && fmView === "prices") fmView = "buysell";
   if (unlocked && !priceMode && purchaseMode && !PM_VIEWS.includes(fmView)) { fmView = "buysell"; bsMode = "sell"; }
@@ -4864,8 +4878,8 @@ function applyView() {
   document.querySelectorAll("[data-views]").forEach(el => el.classList.toggle("view-off", v !== "all" && !el.dataset.views.split(" ").includes(v)));
   $("bsToggle").hidden = v !== "buysell";
   // Ingot view (ForgeMaster, Stockpiles tab): only the ingot stockpile and Crafted ingots show.
-  if (unlocked && v === "stock") { $("ingotBar").hidden = false; $("ingotSec").hidden = $("craftSec").hidden = $("ingotLvlSec").hidden = $("ingClaimSec").hidden = !ingotView;
-    if (ingotView) document.querySelectorAll("[data-views]").forEach(el => { if (!["ingotBar", "ingotSec", "craftSec", "ingotLvlSec", "ingClaimSec"].includes(el.id) && el.dataset.views.split(" ").includes("stock")) el.classList.add("view-off"); }); }
+  if (unlocked && v === "stock") { $("ingotBar").hidden = false; $("ingotSec").hidden = $("craftSec").hidden = $("pouchSec").hidden = $("ingotLvlSec").hidden = $("ingClaimSec").hidden = !ingotView;
+    if (ingotView) document.querySelectorAll("[data-views]").forEach(el => { if (!["ingotBar", "ingotSec", "craftSec", "pouchSec", "ingotLvlSec", "ingClaimSec"].includes(el.id) && el.dataset.views.split(" ").includes("stock")) el.classList.add("view-off"); }); }
   document.querySelectorAll("[data-bs]").forEach(el => { if (el.tagName === "SECTION") el.classList.toggle("bs-off", v === "buysell" && el.dataset.bs !== bsMode); });
   $("bsToggle").querySelectorAll("[data-bs]").forEach(b => b.setAttribute("aria-selected", b.dataset.bs === bsMode));
   $("fmTabs").querySelectorAll("[data-view]").forEach(b => { b.setAttribute("aria-selected", b.dataset.view === v); b.hidden = priceMode ? b.dataset.view !== "prices" : b.dataset.view === "prices" || b.dataset.view === "all" || (purchaseMode ? !PM_VIEWS.includes(b.dataset.view) : PM_VIEWS.includes(b.dataset.view)); });
@@ -7334,6 +7348,58 @@ $("rawSellForm").addEventListener("submit", e => {
   rsLines = []; $("rsAppr").checked = false;
   if (city) { $("rsCity").checked = false; $("rsWho").disabled = $("rsEmp").disabled = false; $("rsWho").value = ""; $("rsReachWrap").hidden = false; }
   renderRsCart(); toast("Sell order confirmed and paid"); });
+
+// ---- Pouch (Ingot view): what the ForgeMaster is carrying, against a 269 carry weight. Kept in this browser only. ----
+// Ore and ingots weigh 1 each, leather 2, leather strips 0.1; armor and weapon are a fixed base weight (32 unless changed).
+const POUCH_KEY = "forge-pouch", POUCH_MAX = 269, POUCH_BASE = 32;
+const POUCH_ITEMS = [
+  ...["iron", "corundum", "silver", "gold", "orichalcum", "quicksilver", "moonstone", "malachite", "ebony"].map(k => ({ id: "s:" + k, name: k === "moonstone" ? "Moonstone Ore" : NAME[k] + " Ore", w: 1, grp: "Ores" })),
+  ...INGOTS.map(i => ({ id: "i:" + i.key, name: i.name, w: 1, grp: "Ingots" })), { id: "s:dwarven", name: "Dwarven Metal Ingot", w: 1, grp: "Ingots" },
+  { id: "s:leather", name: "Leather", w: 2, grp: "Hunting gear" }, { id: "s:leatherstrips", name: "Leather Strips", w: 0.1, grp: "Hunting gear" }];
+const POUCH_BY = Object.fromEntries(POUCH_ITEMS.map(i => [i.id, i]));
+function pouchLoad() { let p = null; try { p = JSON.parse(localStorage.getItem(POUCH_KEY) || "null"); } catch (_) {}
+  const items = {}; for (const [k, q] of Object.entries((p && p.items) || {})) if (POUCH_BY[k] && Number(q) > 0) items[k] = Math.floor(Number(q));
+  const base = p && Number.isFinite(Number(p.base)) && Number(p.base) >= 0 ? Number(p.base) : POUCH_BASE;
+  return { base, items }; }
+let pouch = pouchLoad();
+const pouchSave = () => { try { localStorage.setItem(POUCH_KEY, JSON.stringify(pouch)); } catch (_) {} };
+const pouchFmt = n => (Math.round(n * 10) / 10).toLocaleString(undefined, { maximumFractionDigits: 1 });
+function renderPouch() {
+  const box = $("pouchBody"); if (!box) return;
+  if (!box.dataset.built) { box.dataset.built = "1";
+    const grps = [...new Set(POUCH_ITEMS.map(i => i.grp))];
+    box.innerHTML = `<div class="pouch-top"><div id="pouchTotal"></div><label class="pouch-base">Armor &amp; weapon (base)<input id="pouchBase" type="number" min="0" step="0.1" inputmode="decimal"></label></div>
+      <div class="pouch-bar" aria-hidden="true"><span id="pouchFill"></span></div>
+      <form id="pouchForm" class="pouch-add"><label>Item<select id="pouchItem">${grps.map(g => `<optgroup label="${g}">${POUCH_ITEMS.filter(i => i.grp === g).map(i => `<option value="${i.id}">${esc(i.name)} (${i.w} each)</option>`).join("")}</optgroup>`).join("")}</select></label>
+        <label>How many<input id="pouchQty" type="number" min="1" step="1" value="1" inputmode="numeric"></label><button type="submit" class="btn-return">Add</button></form>
+      <div id="pouchList"></div>`; }
+  const used = Object.entries(pouch.items).reduce((a, [k, q]) => a + q * POUCH_BY[k].w, 0), tot = pouch.base + used, left = POUCH_MAX - tot, over = left < -1e-9;
+  if (document.activeElement !== $("pouchBase")) $("pouchBase").value = pouch.base;
+  $("pouchTotal").innerHTML = `<div class="fl">Carry weight</div><div class="fv${over ? " neg" : ""}">${pouchFmt(tot)} / ${POUCH_MAX}</div>
+    <div class="hint">${over ? `<b class="loss">Over by ${pouchFmt(-left)}</b>` : `${pouchFmt(left)} left`} · base ${pouchFmt(pouch.base)} + pouch ${pouchFmt(used)}</div>`;
+  const f = $("pouchFill"); f.style.width = Math.min(100, tot / POUCH_MAX * 100) + "%"; f.classList.toggle("over", over); f.classList.toggle("near", !over && left < POUCH_MAX * 0.1);
+  const rows = POUCH_ITEMS.filter(i => pouch.items[i.id] > 0);
+  const html = rows.length ? `<div class="cat-wrap"><table class="val"><thead><tr><th scope="col">Item</th><th scope="col">How many</th><th scope="col">Weight</th><th scope="col"><span class="vh">Remove</span></th></tr></thead><tbody>${rows.map(i => `<tr><td>${esc(i.name)}</td>
+      <td><input type="number" min="0" step="1" class="pouch-q" data-pq="${i.id}" value="${pouch.items[i.id]}" aria-label="How many ${esc(i.name)}"></td><td>${pouchFmt(pouch.items[i.id] * i.w)}</td>
+      <td><button type="button" class="btn-ghost" data-prm="${i.id}">Remove</button></td></tr>`).join("")}</tbody></table></div>
+      <button type="button" class="btn-ghost" id="pouchClear" style="margin-top:8px">Empty pouch</button>`
+    : `<div class="empty">The pouch is empty. Add ore, ingots or leather above.</div>`;
+  const list = $("pouchList"), typing = list.contains(document.activeElement) && document.activeElement.matches(".pouch-q");
+  if (list.dataset.html !== html) { if (typing) list.dataset.stale = "1"; else { list.dataset.html = html; list.dataset.stale = ""; list.innerHTML = html; } }   // never redrawn under someone typing a number
+}
+$("pouchBody").addEventListener("submit", e => { if (e.target.id !== "pouchForm") return; e.preventDefault();
+  const k = $("pouchItem").value, q = Math.floor(Number($("pouchQty").value)); if (!POUCH_BY[k] || !(q > 0)) { toast("Enter a whole number above 0."); return; }
+  pouch.items[k] = (pouch.items[k] || 0) + q; pouchSave(); $("pouchQty").value = 1; renderPouch(); });
+$("pouchBody").addEventListener("change", e => {
+  if (e.target.id === "pouchBase") { const v = Number(e.target.value); pouch.base = Number.isFinite(v) && v >= 0 ? Math.round(v * 10) / 10 : POUCH_BASE; pouchSave(); renderPouch(); return; }
+  const k = e.target.dataset.pq; if (!k) return; const q = Math.floor(Number(e.target.value)); if (q > 0) pouch.items[k] = q; else delete pouch.items[k]; pouchSave(); e.target.blur(); renderPouch(); });
+$("pouchBody").addEventListener("focusout", () => setTimeout(() => { if ($("pouchList").dataset.stale) renderPouch(); }, 0));
+$("pouchBody").addEventListener("click", e => { const r = e.target.closest("[data-prm]");
+  if (r) { delete pouch.items[r.dataset.prm]; pouchSave(); renderPouch(); return; }
+  if (e.target.closest("#pouchClear")) { pouch.items = {}; pouchSave(); renderPouch(); toast("Pouch emptied"); } });
+{ let open = null; try { open = localStorage.getItem("forge-pouch-open"); } catch (_) {} if (open === "1") $("pouchDet").open = true;
+  $("pouchDet").addEventListener("toggle", () => { try { localStorage.setItem("forge-pouch-open", $("pouchDet").open ? "1" : "0"); } catch (_) {} }); }
+renderPouch();
 
 $("custForm").addEventListener("submit", e => {
   e.preventDefault(); if (readOnly || !unlocked) return;
