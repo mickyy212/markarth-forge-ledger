@@ -209,6 +209,17 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .pf-fold[open] > summary::before { transform: rotate(90deg); }
 .pf-fold > summary h3 { margin: 0; }
 .pf-fold[open] > summary { margin-bottom: 8px; }
+.when-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; margin: 10px 0 2px; font-size: .85rem; }
+.when-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.when-legend .hint { flex-basis: 100%; }
+.when-fig { margin: 12px 0 0; }
+.when-fig figcaption { font-weight: 700; font-size: .9rem; margin-bottom: 4px; }
+.when-chart { display: block; width: 100%; height: auto; }
+.when-chart text { font-size: 11px; fill: var(--muted); font-family: var(--mono, monospace); }
+.when-chart .wb-axis { stroke: var(--line); }
+.wb-o { fill: var(--accent); background: var(--accent); }
+.wb-c { fill: var(--gold); background: var(--gold); }
+.when-chart g:hover rect.wb-o, .when-chart g:hover rect.wb-c { opacity: .8; }
 .pf-comm-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .ing-quick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
 .ing-adj { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -1902,6 +1913,10 @@ table.val thead th { color: #cdb995; }
       <button type="button" class="chip" data-trp="today" aria-pressed="false">Today</button>
       <button type="button" class="chip" data-trp="30" aria-pressed="false">Last 30 days</button>
       <button type="button" class="chip" data-trp="7" aria-pressed="false">Last 7 days</button>
+    </div>
+    <div class="panel">
+      <h3 class="sub-h">When customers buy</h3>
+      <div id="trWhen"></div>
     </div>
     <div class="panel">
       <h3 class="sub-h">What customers buy</h3>
@@ -3690,11 +3705,48 @@ const pctTxt = (n, d) => d ? `${Math.round(n / d * 1000) / 10}%` : "–";
 const trBar = (n, d) => `<span class="tr-bar"><i style="width:${d ? Math.max(2, Math.round(n / d * 100)) : 0}px"></i><b>${pctTxt(n, d)}</b></span>`;
 let trPeriod = "all";
 const inTr = at => trPeriod === "all" ? true : trPeriod === "today" ? new Date(at).toDateString() === new Date().toDateString() : trPeriod === "month" ? (() => { const d = new Date(at), n = new Date(); return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth(); })() : at >= Date.now() - Number(trPeriod) * 86400000;
+// ---- When customers buy: orders and coins by hour of day and by day of week (viewer's own clock) ----
+const WK_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const hrLabel = h => `${h % 12 || 12}${h < 12 ? "am" : "pm"}`;
+function whenChart(slots, labels, title, fullLabel, W) {
+  const H = W < 500 ? 150 : 170, padL = 4, padB = 22, top = 8, n = slots.length, gw = (W - padL * 2) / n, bw = Math.max(2, gw * 0.36);
+  const maxO = Math.max(1, ...slots.map(s => s.n)), maxC = Math.max(1, ...slots.map(s => s.c)), ch = H - padB - top;
+  const bars = slots.map((s, i) => { const x = padL + i * gw + gw / 2, ho = s.n / maxO * ch, hc = s.c / maxC * ch;
+    const tip = `${fullLabel(i)}: ${s.n} order${s.n === 1 ? "" : "s"}, ${coins(round2(s.c))} coins${s.n ? ` (avg ${coins(round2(s.c / s.n))})` : ""}`;
+    return `<g><title>${esc(tip)}</title><rect x="${round2(x - gw / 2)}" y="${top}" width="${round2(gw)}" height="${ch}" fill="transparent"/>
+      ${s.n ? `<rect class="wb-o" x="${round2(x - bw - 1)}" y="${round2(top + ch - ho)}" width="${round2(bw)}" height="${round2(Math.max(1, ho))}" rx="2"/>` : ""}
+      ${s.c > 0 ? `<rect class="wb-c" x="${round2(x + 1)}" y="${round2(top + ch - hc)}" width="${round2(bw)}" height="${round2(Math.max(1, hc))}" rx="2"/>` : ""}
+      ${labels[i] ? `<text x="${round2(x)}" y="${H - 6}" text-anchor="middle">${labels[i]}</text>` : ""}</g>`; }).join("");
+  return `<figure class="when-fig"><figcaption>${title}</figcaption><svg class="when-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(title)}: orders and coins">
+    <line x1="0" x2="${W}" y1="${top + ch + 0.5}" y2="${top + ch + 0.5}" class="wb-axis"/>${bars}</svg></figure>`;
+}
+function renderWhenBuy(sales) {
+  const box = $("trWhen"); if (!box) return;
+  const W = Math.round(Math.min(900, Math.max(300, box.clientWidth || 640)));   // drawn at the panel's own width, so the labels stay readable on phones
+  const list = sales.filter(x => !/^Donation/i.test(x.text) && x.at > 0);
+  if (!list.length) { box.innerHTML = `<div class="empty">No sell orders ${trPeriod === "all" ? "logged yet" : "in this period"}.</div>`; return; }
+  const hrs = Array.from({ length: 24 }, () => ({ n: 0, c: 0 })), days = Array.from({ length: 7 }, () => ({ n: 0, c: 0 }));
+  for (const x of list) { const d = new Date(x.at), h = hrs[d.getHours()], w = days[d.getDay()]; h.n++; h.c += x.final; w.n++; w.c += x.final; }
+  const best = (arr, f) => { let bi = -1, bv = 0; arr.forEach((s, i) => { const v = f(s); if (v > bv + 1e-9) { bv = v; bi = i; } }); return bi; };
+  const minN = list.length >= 20 ? 2 : 1, avg = s => s.n >= minN ? s.c / s.n : 0;
+  const bh = best(hrs, s => s.n), vh = best(hrs, s => s.c), ah = best(hrs, avg), bd = best(days, s => s.n), vd = best(days, s => s.c), ad = best(days, avg);
+  const hr = i => i < 0 ? "–" : `${hrLabel(i)}–${hrLabel((i + 1) % 24)}`, dy = i => i < 0 ? "–" : WK_NAMES[i];
+  const tile = (k, v, sub) => `<div class="ms-tile"><span>${k}</span><b>${v}</b>${sub ? `<span class="hint" style="text-transform:none;letter-spacing:0">${sub}</span>` : ""}</div>`;
+  box.innerHTML = `<div class="ms-tiles">
+      ${tile("Busiest hour", hr(bh), bh >= 0 ? `${hrs[bh].n} orders` : "")}${tile("Most coins by hour", hr(vh), vh >= 0 ? `${coins(round2(hrs[vh].c))} coins` : "")}${tile("Biggest average order", hr(ah), ah >= 0 ? `${coins(round2(avg(hrs[ah])))} coins each` : "")}
+      ${tile("Busiest day", dy(bd), bd >= 0 ? `${days[bd].n} orders` : "")}${tile("Most coins by day", dy(vd), vd >= 0 ? `${coins(round2(days[vd].c))} coins` : "")}${tile("Biggest average order by day", dy(ad), ad >= 0 ? `${coins(round2(avg(days[ad])))} coins each` : "")}
+    </div>
+    <div class="when-legend"><span><i class="wb-o"></i>Orders (buy volume)</span><span><i class="wb-c"></i>Coins spent (sale value)</span><span class="hint">Each bar is scaled to its own highest value. Hover or tap a bar for the numbers. Times are in your own time zone.</span></div>
+    ${whenChart(hrs, hrs.map((_, i) => i % (W < 500 ? 6 : 3) === 0 ? hrLabel(i) : ""), "By hour of the day", i => hr(i), W)}
+    ${whenChart(days, WK_NAMES, "By day of the week", i => ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][i], W)}
+    ${list.length < 20 ? `<p class="hint tr-note">Only ${list.length} order${list.length === 1 ? "" : "s"} logged${trPeriod === "all" ? "" : " in this period"}, so these patterns are rough. They get clearer with every order.</p>` : ""}`;
+}
 function renderTrends() {
   $("trendSec").hidden = !unlocked; if (!unlocked) return;
   $("trPeriod").querySelectorAll("[data-trp]").forEach(b => b.setAttribute("aria-pressed", b.dataset.trp === trPeriod));
   // Sell orders: every paid sale (customers' records), including apprentices' and donations.
   const sales = paidSales().filter(x => inTr(x.at)), N = sales.length;
+  renderWhenBuy(sales);
   const kinds = new Map(), items = new Map();
   for (const x of sales) {
     const seen = new Set(), base = x.lines.reduce((a, l) => a + (Number(l.base) || 0) * (Number(l.qty) || 0), 0);
