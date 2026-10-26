@@ -232,6 +232,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .pouch-add { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin-bottom: 10px; } .pouch-add label { display: grid; gap: 4px; font-size: .85rem; }
 #pouchList .cat-wrap { max-height: none; }
 .pouch-add select { min-width: 220px; } .pouch-add input { width: 90px; } .pouch-q { width: 80px; }
+.bp-add { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin: 4px 0 10px; } .bp-add label { display: grid; gap: 4px; font-size: .85rem; } .bp-add .hint { flex-basis: 100%; }
 .pf-comm-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .ing-quick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
 .ing-adj { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -1482,7 +1483,7 @@ table.val thead th { color: #cdb995; }
   <section aria-labelledby="valH" id="valueSec" data-views="stock" hidden>
     <div class="sec-head">
       <h2 id="valH">Stockpile value</h2>
-      <span class="log-tools"><span class="hint" id="valHint">ForgeMaster only. Resale value at current prices, in coins.</span><button type="button" class="pm-toggle" id="valIngToggle" aria-pressed="true">Include ingots</button><button class="btn-ghost" id="valEdit" type="button">Edit prices</button></span>
+      <span class="log-tools"><span class="hint" id="valHint">ForgeMaster only. Resale value at current prices, in coins.</span><button type="button" class="pm-toggle" id="valIngToggle" aria-pressed="true">Include ingots</button><button type="button" class="pm-toggle" id="moonCorrT" aria-pressed="false" title="On: items made with Refined Moonstone cost it at 154 instead of 144. Bosmer, Altmer Elven and Bosmer Plate Sets and Altmer Gilded Set +90; Bosmer Wild, Dunmer and Glass Sets +50; Bosmer Blade, Altmer Elven Sword, Glass Sword and Glass Bow +10; Bosmer Bow and Altmer Elven Bow +20. Off: back to the price list.">Moonstone correction</button><button class="btn-ghost" id="valEdit" type="button">Edit prices</button></span>
     </div>
     <div class="panel val-panel">
       <div class="val-wrap">
@@ -2118,8 +2119,6 @@ table.val thead th { color: #cdb995; }
       <h2 id="myRankH">Promotion Progress</h2>
       <button type="button" class="watch-btn sell-watch" id="promoVidBtn" hidden>WATCH THIS!!</button>
       <div class="promo-outdated" id="promoOutdated" role="note"><b>THE PROMOTION VIDEO IS OUTDATED.</b> All promotion commission rates have been raised: <b id="promoRates">Advanced now 3.5%, Expert 4.5%, Elite 6%.</b></div>
-      <button type="button" class="pm-toggle" id="testPromo" aria-pressed="false" hidden title="Shows this employee 80% of the way to their next rank. Nothing is saved.">Test Promotion</button>
-      <button type="button" class="btn-ghost" id="promoCelebBtn" hidden title="Plays the promotion celebration (test only; nothing is saved)">Promotion celebration 🎉</button>
       <span class="hint">How close you are to your next rank and a bigger commission.</span>
     </div>
     <div class="pp-banner" id="ppBanner" hidden></div>
@@ -2472,10 +2471,22 @@ let sellLines = [];   // the basket being built in the sell order form: [{ itemI
 const linesText = lines => lines.map(l => `${l.qty} × ${l.item}`).join(", ");
 function orderLines(o) { return Array.isArray(o.lines) ? o.lines : [{ itemId: o.itemId, item: o.item, qty: o.qty, base: o.base }]; }
 const openCust = new Set();
-function catalog() {
+// The saved price list, exactly as stored. Anything that changes and saves the price list starts from this.
+function rawCatalog() {
   const base = state.catalog && state.catalog.length ? state.catalog : DEFAULT_CATALOG;
   const missing = QUICK_ITEMS.filter(q => !base.some(i => i.id === q.id));
   return missing.length ? [...missing, ...base] : base;
+}
+// "Moonstone correction" (Stockpile value): while on, these items cost Refined Moonstone at 154 instead of 144, +10 coins per Refined
+// Moonstone in them. Off, they go back to the saved price list. Nothing is saved into the price list itself.
+const MOON_CORR = { "bosmer-set": 90, "altmer-elven-set": 90, "bosmer-plate-set": 90, "altmer-gilded-set": 90, "bosmer-wild-set": 50, "dunmer-set": 50, "glass-set": 50,
+  "bosmer-blade": 10, "altmer-elven-sword": 10, "glass-sword": 10, "bosmer-bow": 20, "altmer-elven-bow": 20, "glass-bow": 10 };
+let catCache = { src: null, on: false, out: null };
+function catalog() {
+  const raw = rawCatalog(), on = !!(state && state.moonCorr);
+  if (!on) return raw;
+  if (catCache.src !== raw || !catCache.on) catCache = { src: raw, on: true, out: raw.map(i => MOON_CORR[i.id] ? { ...i, base: round2(i.base + MOON_CORR[i.id]) } : i) };
+  return catCache.out;
 }
 const round2 = n => Math.round(n * 100) / 100;
 const isFixed = l => l.fixed === true || (l.it && l.it.cat === "Common items");
@@ -4082,7 +4093,7 @@ async function fetchPriceSheet() {
   render();
 }
 function setCatalogPrice(id, v) {
-  const cat = catalog().map(i => ({ ...i })), it = cat.find(i => i.id === id); if (!it) return null;
+  const cat = rawCatalog().map(i => ({ ...i })), it = cat.find(i => i.id === id); if (!it) return null;
   const was = it.base; it.base = round2(v); state.catalog = cat; return { name: it.name, was, now: it.base };
 }
 function priceChanges() {
@@ -5506,10 +5517,9 @@ function renderGhosts() {
 function renderMyRank() {
   const emp = !unlocked && currentEmp(), sec = $("myRankSec"), show = !!emp && !isApprentice(emp) && RANK_PROFS.has(emp.prof);
   sec.hidden = !show; const canTest = fmAs || (!!emp && sameName(emp.name, "Oswald"));   // the promotion tests are for the ForgeMaster viewing as an employee, and for Oswald
-  $("testPromo").hidden = $("promoCelebBtn").hidden = !(show && canTest); if (!show) { $("ppBanner").hidden = true; return; }
+  if (!show) { $("ppBanner").hidden = true; return; }
   { const pb = $("promoVidBtn"), sn = videoSeen("promo", emp); pb.hidden = false; pb.textContent = sn ? "Need help?" : "WATCH THIS!!"; pb.classList.toggle("seen", sn); }
   if (!canTest) testPromo = false;
-  $("testPromo").setAttribute("aria-pressed", testPromo);
   const vemp = testPromo && testBump ? { ...emp, rank: Math.min(TOP_RANK, (emp.rank || 0) + testBump) } : emp;   // test promotions already won
   let x = rankStatus(vemp);
   if (testPromo && !x.top && testSim) x = { ...x, bought: round2(testSim.b), used: round2(testSim.u), buyLeft: round2(Math.max(0, x.need - testSim.b)), useLeft: round2(Math.max(0, RANK_USED * x.need - testSim.u)) };   // test: pretend orders
@@ -5569,7 +5579,7 @@ function render() {
     }).join("") : "");
     if (!typing) $("valBody").innerHTML = html;   // don't redraw under someone typing a price
     $("valEdit").textContent = valEditing ? "Done" : "Edit prices";
-    $("valIngToggle").setAttribute("aria-pressed", valIngots);
+    $("valIngToggle").setAttribute("aria-pressed", valIngots); $("moonCorrT").setAttribute("aria-pressed", !!state.moonCorr);
     $("valHint").textContent = valEditing ? "Type a new price and press Enter. Clear a box to go back to the built-in price." : "ForgeMaster only. Resale value at current prices, in coins.";
     $("valStock").textContent = coins(vs); $("valHeld").textContent = coins(vh);
     $("valBig").textContent = coins(vs) + " coins"; $("valAll").textContent = coins(vs + vh) + " coins";
@@ -5693,10 +5703,13 @@ function render() {
           : `<button class="btn-ghost" data-act="rmEmp" data-id="${e.id}">Remove</button>`}
       </div></div>`; }).join("")
     : `<div class="empty">No employees yet. Add a name and PIN above. Give each person their PIN so they can sign in.</div>`;
-  { const bps = state.employees.filter(isTailor).sort((a, b) => a.name.localeCompare(b.name));   // Business Partners aren't on the roster, but their PINs are shown here too
-    if (bps.length) $("rosterRows").insertAdjacentHTML("beforeend", `<h3 class="sub-h" style="margin-top:10px">Business Partners</h3>` + bps.map(e => `<div class="r-row"><div><div class="nm">${esc(e.name)} <span class="hint">Resident Tailor</span></div><div class="sub">PIN ${rosterPin(e)}</div></div>
+  { const bps = state.employees.filter(isTailor).sort((a, b) => a.name.localeCompare(b.name));   // Business Partners (Resident Tailors) aren't on the roster: added and removed here
+    const bpForm = `<form class="bp-add" id="bpAddForm"><label>Business partner name<input id="bpName" maxlength="40" placeholder="Name" autocomplete="off"></label><label>PIN<input id="bpNewPin" type="text" class="pin" inputmode="numeric" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" maxlength="12" placeholder="${DEFAULT_PIN}"></label><button class="btn-add" type="submit">Add business partner</button><span class="hint">Joins as Resident Tailor and signs in under Business Partner.</span></form>`;
+    $("rosterRows").insertAdjacentHTML("beforeend", `<h3 class="sub-h" style="margin-top:10px">Business Partners</h3>` + bpForm + (bps.length ? bps.map(e => `<div class="r-row"><div><div class="nm">${esc(e.name)} <span class="hint">Resident Tailor</span></div><div class="sub">PIN ${rosterPin(e)}</div></div>
       <div class="r-acts"><input id="rp-${e.id}" type="text" class="pin" inputmode="numeric" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" maxlength="12" placeholder="New PIN" aria-label="New PIN for ${esc(e.name)}" data-pin-for="${e.id}">
-      <button class="btn-ghost" data-act="setPin" data-id="${e.id}">Change PIN</button></div></div>`).join("")); }
+      <button class="btn-ghost" data-act="setPin" data-id="${e.id}">Change PIN</button>
+      ${confirmRemove === e.id ? `<button class="btn-danger" data-act="rmEmpYes" data-id="${e.id}">Confirm remove</button><button class="btn-ghost" data-act="rmEmpNo">Cancel</button>` : `<button class="btn-ghost" data-act="rmEmp" data-id="${e.id}">Remove</button>`}</div></div>`).join("")
+      : `<div class="empty">No business partners. The Resident Tailor role is kept: add one above and they get the Tailored goods tab.</div>`)); }
   for (const [id, v] of pendQtyDrafts) { const el = $("pq-" + id); if (el) el.value = v; else pendQtyDrafts.delete(id); }
   if (pendFocus && $("pq-" + pendFocus)) $("pq-" + pendFocus).focus();
   for (const [id, v] of pinDrafts) { const el = $("rp-" + id); if (el) el.value = v; else pinDrafts.delete(id); }
@@ -6259,7 +6272,7 @@ $("priceSec").addEventListener("click", e => {
   if (done.length) { commit({ kind: "hold-c", fm: true, text: `Recipe${done.length > 1 ? "s" : ""} updated from the Markarth ledger: ${done.join("; ")}` }); toast(done.length > 1 ? `${done.length} recipes updated` : "Recipe updated"); }
 });
 function addSheetItems(list) {
-  const cat = catalog().map(i => ({ ...i })), added = [], map = { ...(state.priceMap || {}) };
+  const cat = rawCatalog().map(i => ({ ...i })), added = [], map = { ...(state.priceMap || {}) };
   for (const x of list) {
     const name = String(x.name || "").trim(); if (!name || !PT_CATS.includes(x.cat)) continue;
     let it = cat.find(i => i.name.toLowerCase() === name.toLowerCase());
@@ -6629,10 +6642,7 @@ function testPromoStep() {
   }
   renderMyRank();
 }
-$("testPromo").addEventListener("click", () => { testPromo = !testPromo; stopTestTick(); testSim = null;
-  if (testPromo) { testBump = 0; const c = currentEmp(); testSimStart(c ? c.rank || 0 : 0); testTick = setInterval(testPromoStep, 1000); }
-  renderMyRank(); toast(testPromo ? "Test Promotion on: a pretend buy or sell order every second (nothing saved)" : "Test Promotion off"); });
-$("promoCelebBtn").addEventListener("click", () => { const c = currentEmp(); if (!c) return; celebReal = false; celebrate(c, Math.min(TOP_RANK, (c.rank || 0) + 1)); });
+// Test Promotion and Promotion celebration buttons were removed (Oct 26, 2026); real promotions still celebrate.
 $("pfxClose").addEventListener("click", stopCelebrate);
 document.addEventListener("keydown", e => { if (e.key === "Escape" && celebOn) stopCelebrate(); });
 $("myRankSec").addEventListener("click", e => { if (e.target.id !== "ppReplay") return; const c = currentEmp(); if (!c) return;
@@ -6893,6 +6903,15 @@ $("pinResetYes").addEventListener("click", async () => {
   $("pinResetAsk").hidden = true; $("pinResetAll").hidden = false;
   commit({ kind: "hold-c", fm: true, text: `ForgeMaster reset every employee's PIN to ${DEFAULT_PIN}` }); toast(`All PINs are now ${DEFAULT_PIN}`);
 });
+$("rosterRows").addEventListener("submit", async e => { if (e.target.id !== "bpAddForm") return; e.preventDefault(); if (readOnly || !unlocked) return;
+  const name = $("bpName").value.trim(), pin = cleanPin($("bpNewPin").value) || DEFAULT_PIN;
+  if (!name) { toast("Enter a name."); return; }
+  if (pin.length < 4) { toast("Use a PIN of at least 4 characters."); return; }
+  if (isEmpName(name)) { toast(`${name} is already on the roster.`); return; }
+  const pinHash = await hashPin(name, pin);
+  state.employees.push({ id: uid(), name, pinHash, pin, prof: "tailor", at: Date.now() });
+  commit({ kind: "hold-c", fm: true, text: `ForgeMaster added ${name} as a business partner (Resident Tailor)` });
+});
 $("rosterForm").addEventListener("submit", async e => {
   e.preventDefault(); if (readOnly || !unlocked) return;
   const name = $("rName").value.trim(), pin = cleanPin($("rPin").value) || DEFAULT_PIN, prof = $("rProf").value;
@@ -6930,7 +6949,10 @@ document.addEventListener("click", async e => {
     for (const m of Object.keys(state.contribValue || {})) {
       for (const n of Object.keys(state.contribValue[m])) if (n.toLowerCase() === emp.name.toLowerCase()) delete state.contribValue[m][n];
     }
-    commit({ kind: "minus", fm: true, text: `ForgeMaster removed ${emp.name} from the roster` });
+    // A Resident Tailor's records go with them: tailored goods, their sales, orders, ingot requests and any coins or goods owed either way.
+    if (isTailor(emp)) { state.tailor = { goods: {}, sales: [], test: [], orders: [], ingReq: [] };
+      const mine = x => x && sameName(x.who, emp.name); state.debts = state.debts.filter(x => !mine(x)); state.edebts = state.edebts.filter(x => !mine(x)); }
+    commit({ kind: "minus", fm: true, text: isTailor(emp) ? `ForgeMaster removed ${emp.name} as a business partner (Resident Tailor); their tailored goods, sales and records were cleared` : `ForgeMaster removed ${emp.name} from the roster` });
   }
   if (act === "setPin") {
     const emp = state.employees.find(x => x.id === b.dataset.id); if (!emp) return;
@@ -7403,6 +7425,9 @@ $("pouchBody").addEventListener("click", e => { const r = e.target.closest("[dat
   $("pouchDet").addEventListener("toggle", () => { try { localStorage.setItem("forge-pouch-open", $("pouchDet").open ? "1" : "0"); } catch (_) {} }); }
 renderPouch();
 
+$("moonCorrT").addEventListener("click", () => { if (readOnly || !unlocked) return; state.moonCorr = !state.moonCorr;
+  commit({ kind: "hold-c", fm: true, text: state.moonCorr ? "Moonstone correction on: Refined Moonstone items priced at 154 per Refined Moonstone (Bosmer and Altmer sets +90, Bosmer Wild, Dunmer and Glass sets +50, Bosmer Blade, Altmer Elven Sword, Glass Sword and Glass Bow +10, Bosmer and Altmer Elven bows +20)" : "Moonstone correction off: those items are back to the price list" });
+  toast(state.moonCorr ? "Moonstone correction on" : "Moonstone correction off"); });
 $("custForm").addEventListener("submit", e => {
   e.preventDefault(); if (readOnly || !unlocked) return;
   const name = $("custName").value.trim(), reach = $("custReach").checked;
@@ -7488,7 +7513,7 @@ function saveCatPrice(id) {
   if (readOnly || !unlocked) return;
   const v = Number($("cb-" + id).value);
   if (!(v >= 0) || $("cb-" + id).value === "") { toast("Enter a price of 0 or more."); return; }
-  const cat = catalog().map(i => ({ ...i })), it = cat.find(i => i.id === id); if (!it) return;
+  const cat = rawCatalog().map(i => ({ ...i })), it = cat.find(i => i.id === id); if (!it) return;
   const msgs = [];
   const rIn = $("cr-" + id);
   if (rIn) {
@@ -7508,7 +7533,7 @@ $("catForm").addEventListener("submit", e => {
   e.preventDefault(); if (readOnly || !unlocked) return;
   const name = $("catName").value.trim(), cat = $("catCat").value, base = round2(Number($("catBase").value));
   if (!name || !(base >= 0)) { toast("Enter a name and a base cost."); return; }
-  const list = catalog().map(i => ({ ...i }));
+  const list = rawCatalog().map(i => ({ ...i }));
   if (list.some(i => i.name.toLowerCase() === name.toLowerCase())) { toast(`${name} is already on the price list.`); return; }
   let id = slug(name); while (list.some(i => i.id === id)) id += "-x";
   list.push({ id, cat, name, base }); state.catalog = list;
@@ -8385,7 +8410,7 @@ document.addEventListener("click", e => {
   }
   if (act === "catSave") saveCatPrice(id);
   if (act === "catRm") {
-    const list = catalog().filter(i => i.id !== id), it = catalog().find(i => i.id === id); if (!it) return;
+    const list = rawCatalog().filter(i => i.id !== id), it = rawCatalog().find(i => i.id === id); if (!it) return;
     state.catalog = list;
     commit({ kind: "minus", fm: true, text: `Price list: removed ${it.name}` });
   }
@@ -8676,6 +8701,7 @@ function normalize(d) {
     // Net worth history was reset on Oct 25, 2026 (new Reach Exchange prices), so the price change doesn't show as a drop: readings start fresh from here.
     if (!d.netReset1025) d = { ...d, netHist: [] };
     s.netReset1025 = true;
+    if (d.moonCorr) s.moonCorr = true;
     if (d.netPx && typeof d.netPx === "object" && d.netReset1025) s.netPx = Object.fromEntries(Object.entries(d.netPx).filter(([, v]) => Number.isFinite(Number(v))).map(([k, v]) => [k, Number(v)]));
     if (Array.isArray(d.netHist)) s.netHist = d.netHist.filter(x => x && Number(x.at) > 0 && Number.isFinite(Number(x.v))).map(x => ({ at: Number(x.at), s: round2(Number(x.s) || 0), f: round2(Number(x.f) || 0), v: round2(Number(x.v)) })).sort((a, b) => a.at - b.at).slice(-NET_KEEP);
     if (d.commStreakAt && typeof d.commStreakAt === "object") s.commStreakAt = Object.fromEntries(Object.entries(d.commStreakAt).filter(([k, v]) => Number(v) > 0).map(([k, v]) => [k, Number(v)]));
