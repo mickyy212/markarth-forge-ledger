@@ -5696,7 +5696,10 @@ function render() {
   { const bps = state.employees.filter(isTailor).sort((a, b) => a.name.localeCompare(b.name));   // Business Partners aren't on the roster, but their PINs are shown here too
     if (bps.length) $("rosterRows").insertAdjacentHTML("beforeend", `<h3 class="sub-h" style="margin-top:10px">Business Partners</h3>` + bps.map(e => `<div class="r-row"><div><div class="nm">${esc(e.name)} <span class="hint">Resident Tailor</span></div><div class="sub">PIN ${rosterPin(e)}</div></div>
       <div class="r-acts"><input id="rp-${e.id}" type="text" class="pin" inputmode="numeric" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other" maxlength="12" placeholder="New PIN" aria-label="New PIN for ${esc(e.name)}" data-pin-for="${e.id}">
-      <button class="btn-ghost" data-act="setPin" data-id="${e.id}">Change PIN</button></div></div>`).join("")); }
+      <button class="btn-ghost" data-act="setPin" data-id="${e.id}">Change PIN</button>
+      ${confirmRemove === e.id
+        ? `<button class="btn-danger" data-act="rmEmpYes" data-id="${e.id}">Confirm remove</button><button class="btn-ghost" data-act="rmEmpNo">Cancel</button>`
+        : `<button class="btn-ghost" data-act="rmEmp" data-id="${e.id}">Remove</button>`}</div></div>`).join("")); }
   for (const [id, v] of pendQtyDrafts) { const el = $("pq-" + id); if (el) el.value = v; else pendQtyDrafts.delete(id); }
   if (pendFocus && $("pq-" + pendFocus)) $("pq-" + pendFocus).focus();
   for (const [id, v] of pinDrafts) { const el = $("rp-" + id); if (el) el.value = v; else pinDrafts.delete(id); }
